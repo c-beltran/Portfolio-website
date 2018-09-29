@@ -47,6 +47,10 @@
 	margin-top: 60px;
 }
 
+p span{
+	font-style: italic;
+}
+
 /*Tooltip*/
 .tooltip {
     position: relative;
