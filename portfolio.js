@@ -35,19 +35,12 @@ function amountscrolled(){
       }
       else if(pctScrolled == 13){
         html.style.width = 90 + '%';
-        html.style.display = "block";
         css.style.width = 70 + '%';
-        css.style.display = "block";
         js.style.width = 73 + '%';
-        js.style.display = "block";
         node.style.width = 73 + '%';
-        node.style.display = "block";
         java.style.width = 70 + '%';
-        java.style.display = "block";
         ror.style.width = 50 + '%';
-        ror.style.display = "block";
         git.style.width = 90 + '%';
-        git.style.display = "block";
       } 
     }    
   }

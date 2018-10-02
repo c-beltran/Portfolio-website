@@ -64,7 +64,7 @@ background: linear-gradient(0deg, rgba(58,34,218,0.7091211484593838) 22%, rgba(5
 }
 
 #html, #css, #js, #node, #java, #ruby, #git {
-  width: 1%;
+  width: 10%;
   height: 30px;
   background-color: #4CAF50;
 }/*End of progress bar*/
