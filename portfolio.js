@@ -41,6 +41,15 @@ function amountscrolled(){
         java.style.width = 70 + '%';
         ror.style.width = 50 + '%';
         git.style.width = 90 + '%';
+      }
+       else if(pctScrolled == 25){
+        html.style.width = 90 + '%';
+        css.style.width = 70 + '%';
+        js.style.width = 73 + '%';
+        node.style.width = 73 + '%';
+        java.style.width = 70 + '%';
+        ror.style.width = 50 + '%';
+        git.style.width = 90 + '%';
       } 
     }    
   }
