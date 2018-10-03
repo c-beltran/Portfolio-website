@@ -35,9 +35,9 @@
 }
 
 #sec2-background{
-	background: rgb(34,210,218);
-	background: linear-gradient(180deg, rgba(34,210,218,1) 22%, rgba(5,209,254,1) 96%);
+	background-color: #ffffff;
 	margin-top: 80px;
+	color: black;
 }
 
 .columns:last-child {
@@ -67,6 +67,8 @@ background: linear-gradient(0deg, rgba(58,34,218,0.7091211484593838) 22%, rgba(5
   width: 10%;
   height: 30px;
   background-color: #4CAF50;
+  color: #ffffff;
+  text-decoration: bold;
 }/*End of progress bar*/
 
 /*Tooltip*/
