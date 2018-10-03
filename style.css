@@ -68,7 +68,8 @@ background: linear-gradient(0deg, rgba(58,34,218,0.7091211484593838) 22%, rgba(5
   height: 30px;
   background-color: #4CAF50;
   color: #ffffff;
-  text-decoration: bold;
+  font-weight: bold;
+  padding-top: 5px;
 }/*End of progress bar*/
 
 /*Tooltip*/
