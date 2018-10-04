@@ -4,65 +4,66 @@
 	<title>Carlos Alberto</title>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<!-- style sheet -->
 	<link rel="stylesheet" type="text/css" href="style.css">
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.7.1/css/bulma.min.css">
-    <script defer src="https://use.fontawesome.com/releases/v5.1.0/js/all.js"></script>
-   	<link href="https://fonts.googleapis.com/css?family=News+Cycle" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/meyer-reset/2.0/reset.min.css">
-    <script type="text/javascript" src="portfolio.js"></script>
+	<link href="https://fonts.googleapis.com/css?family=News+Cycle" rel="stylesheet">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/meyer-reset/2.0/reset.min.css">
+	<script defer src="https://use.fontawesome.com/releases/v5.1.0/js/all.js"></script>
+	<script type="text/javascript" src="portfolio.js"></script>
 	
 	<style type="text/css">
-		body{
-			font-family: 'News Cycle', sans-serif;
-			background: rgb(0,201,3);
-			background: linear-gradient(180deg,
-				rgba(0,201,3,1) 0%,
-				rgba(75,204,96,1) 3%,
-				rgba(0,212,255,1) 40%,
-				rgba(0,212,255,1) 5%);
-			background-repeat: no-repeat;
-			color: #f1f1f1;
-		}
-		#nav {
-			list-style-type: none;
-			margin: 0;
-			padding: 0;
-			overflow: hidden;
-			background-color: #333;
-			z-index: 100;
-		}
+	body{
+		font-family: 'News Cycle', sans-serif;
+		background: rgb(0,201,3);
+		background: linear-gradient(180deg,
+			rgba(0,201,3,1) 0%,
+			rgba(75,204,96,1) 3%,
+			rgba(0,212,255,1) 40%,
+			rgba(0,212,255,1) 5%);
+		background-repeat: no-repeat;
+		color: #f1f1f1;
+	}
+	#nav {
+		list-style-type: none;
+		margin: 0;
+		padding: 0;
+		overflow: hidden;
+		background-color: #333;
+		z-index: 100;
+	}
 
-		#nav li {
-			display: inline-block;
-		}
+	#nav li {
+		display: inline-block;
+	}
 
-		#nav li a {
-			font-family: arial;
-			display: inline-block;
-			color: white;
-			text-align: center;
-			padding: 15px 16px;
-			text-decoration: none;
-		}
+	#nav li a {
+		font-family: arial;
+		display: inline-block;
+		color: white;
+		text-align: center;
+		padding: 15px 16px;
+		text-decoration: none;
+	}
 
-		#nav li a:hover:not(.active) {
-			background-color: #111;
-		}
+	#nav li a:hover:not(.active) {
+		background-color: #111;
+	}
 
-		.active {
-			background-color: #3cd09c;
-		}
+	.active {
+		background-color: #3cd09c;
+	}
 
-		.sticky {
-			position: fixed;
-			top: 0;
-			width: 100%;
-		}
+	.sticky {
+		position: fixed;
+		top: 0;
+		width: 100%;
+	}
 
-		.sticky + .content {
-			padding-top: 60px;
-		}
-	</style>
+	.sticky + .content {
+		padding-top: 60px;
+	}
+</style>
 </head>
 <body>
 
@@ -73,7 +74,7 @@
 			<li><a href="https://www.linkedin.com/in/c-beltran/" target="_blank"><i class="fab fa-linkedin fa-lg"></i></a></li>
 			<li><a href="https://github.com/c-beltran" target="_blank"><i class="fab fa-github-square fa-lg"></i></a></li>
 			<li><a href="mailto:carlosbeltran90@gmail.com"><i class="fas fa-envelope-square fa-lg"></i></a></li>
-			<li class="resume has-background-danger has-text-weight-bold resume"><a class="navbar-item" href="public/Resume.pdf" target="_blank">Download Resume</a></li>
+			<li class="resume has-background-danger has-text-weight-bold"><a class="navbar-item" href="public/Resume.pdf" target="_blank">Download Resume</a></li>
 		</ul>
 	</div>
 	<!-- 	end of Nav-Bar-->	
@@ -113,46 +114,71 @@
 		</div>
 	</section>
 	<section id="sec2-background">
-		<div class="container">
+		<div class="container is-fluid">
 			<div class="columns">
 				<div class="column">
 					<div>
-						<div class="center-text title is-2 has-text-danger has-text-weight-bold">
+						<div class="center-text title is-1 has-text-dark has-text-weight-bold tooltip">
 							About Me
+							<i class="fas fa-star fa-xs"></i>
+							<span class="tooltiptext">Fun fact! <br/>I am also a mechanic, I like to work on cars.</span>
 						</div>
-						About me: I'm always trying to find ways on how i can help people through technology. This project in particular is for the local pharmacy I once worked for. It allowed me to learn the basics of HTML, CSS and JavaScript. It was a fun project to do specially knowing that it would help the pharmacy grow their customer base.
+						<p class="subtitle is-4 has-text-dark has-text-justified" style="padding-top: 20px">
+							It was when I jailbroke my first iPod touch that I knew I wanted to be involved in the tech field. Although it took me a while to decide what I wanted to specialize in, I now know that solving complex problems as a developer is where I belong. I find attending hackathons enjoyable because I get to solve real problems through code. When im not coding, you can find me outdoors enjoying a good hike or a cold drink! 
+						</p>
 					</div>
 				</div>
 				<div class="column">
-					<div class="center-text title is-2 has-text-danger">
+					<div class="center-text title is-1 has-text-dark">
 						Skills
 					</div>
 					<div class="myProgress">
-						<div id="html"><span style="padding-left: 5px">HTML</span><span style="float: right;">100%</span></div>
+						<div id="html">
+							<span style="padding-left: 5px">HTML</span>
+							<span style="float: right;">85%</span>
+						</div>
 					</div>
 					<br />
 					<div class="myProgress">
-						<div id="css"><span style="padding-left: 5px">CSS</span></div>
+						<div id="css">
+							<span style="padding-left: 5px">CSS</span>
+							<span style="float: right;">65%</span>
+						</div>
 					</div>
 					<br />
 					<div class="myProgress">
-						<div id="js"><span style="padding-left: 5px">JavaScript</span></div>
+						<div id="js">
+							<span style="padding-left: 5px">JavaScript</span>
+							<span style="float: right;">70%</span>
+						</div>
 					</div>
 					<br />
 					<div class="myProgress">
-						<div id="node"><span style="padding-left: 5px">Node.js</span></div>
+						<div id="node">
+							<span style="padding-left: 5px">Node.js</span>
+							<span style="float: right;">70%</span>
+						</div>
 					</div>
 					<br />
 					<div class="myProgress">
-						<div id="java"><span style="padding-left: 5px">Java</span></div>
+						<div id="java">
+							<span style="padding-left: 5px">Java</span>
+							<span style="float: right;">75%</span>
+						</div>
 					</div>
 					<br />
 					<div class="myProgress">
-						<div id="ruby"><span style="padding-left: 5px">Ruby on Rails</span></div>
+						<div id="ruby">
+							<span style="padding-left: 5px">Ruby on Rails</span>
+							<span style="float: right;">50%</span>
+						</div>
 					</div>
 					<br />
 					<div class="myProgress">
-						<div id="git"><span style="padding-left: 5px">Git</span></div>
+						<div id="git">
+							<span style="padding-left: 5px">Git</span>
+							<span style="float: right;">85%</span>
+						</div>
 					</div>
 				</div>
 			</div>
@@ -160,74 +186,154 @@
 	</section>	
 	<section id="sec3-background">
 		<div class="container">
-			<div class="columns" style="padding-bottom: 40px;">
+			<div style="padding-bottom: 40px;">
 				<div class="column"> 
-					<div class="center-text title is-2 has-text-white" id="move-down">
+					<div class="center-text title is-1 has-text-white" id="move-down">
 						<div class="tooltip">
 							Projects
 							<i class="fas fa-star fa-xs"></i>
 							<span class="tooltiptext">Fun fact! <br/>I like to tinker with software and hardware.</span>
 						</div>
 					</div>
-					<h3 class="is-size-3 has-text-black-bis">Static Website for Meacham Pharmacy</h3>
-					<p class="subtitle is-4 has-text-white has-text-justified">
-					I'm always trying to find ways on how i can help people through technology. This project in particular is for the local pharmacy I once worked for. It allowed me to learn the basics of HTML, CSS and JavaScript. It was a fun project to do specially knowing that it would help the pharmacy grow their customer base.
-					</p>
-					<a class="button is-dark has-text-weight-semibold" href="https://c-beltran.github.io/pharmacyProject/" target="_blank">View Website</a>
-				</div>
-			</div>
-			<div class="columns" style="padding-bottom: 40px;">
-				<div class="column">
-					<h3 class="is-size-3 has-text-black-bis">Color Game</h3>
-					<p class="subtitle is-4 has-text-white has-text-justified">A good way to learn is by creating something fun! and so i decided to create a color game for my baby niece while enhancing my knowledge in JavaScript, Bootstrap and JQuery. Although my niece is too young to know the colors, she loved the fact that the game contains sound effects! </p>
-					<a class="button is-dark has-text-weight-semibold" href="https://c-beltran.github.io/ColorGame/" target="_blank">Check out my Color Game!</a>
-				</div>
-			</div>
-			<div class="columns" style="padding-bottom: 40px;">
-				<div class="column">
-					<h3 class="is-size-3 has-text-black-bis">Day/Night Vision Security Camera</h3>
-					<p class="subtitle is-4 has-text-white has-text-justified">During the summer of 2018, I decided to create a project using my Raspberry Pi. After researching what I wanted to do I found a project that caught my attention. Using <i>MotionEyeOS, Google Drive, and an outdoor camera</i> I was able to use my networking skills and transform my Raspberri Pi into a motion sensored security camera .</p>
-					<a class="button is-dark has-text-weight-semibold" href="https://medium.com/@carlosbeltran90/create-a-day-night-vision-surveillance-camera-using-raspberry-pi-with-motioneyeos-and-google-548b7189fa58" target="_blank">Read More About This Project</a>
-				</div>
-			</div>
-			<div class="columns">
-				<div class="column">
-					<div class="center-text title is-2 has-text-white">
-						<div class="tooltip">
-							Currently Working On...
-							<i class="fas fa-star fa-xs"></i>
-							<span class="tooltiptext">Fun fact! <br/>I like to stay busy by utilizing my time towards things that will enhance my learning and provide benefit to others.</span>
+
+					<div class="columns">
+						<div class="column">
+
+							<div class="box">
+								<div class="card-content">
+									<p class="title center-text">
+										Static Website for Meacham Pharmacy
+									</p>
+									<p class="subtitle has-text-justified" style="padding-top: 20px">
+										I'm always trying to find ways on how i can help people through technology. This project in particular is for the local pharmacy I once worked for. It allowed me to learn the basics of HTML, CSS and JavaScript. It was a fun project to do, specially knowing that it would help the pharmacy have a place in the internet where people would easily find them.
+									</p>
+								</div>
+								<footer class="card-footer">
+									<p class="card-footer-item">
+										<span>
+											<a class="button is-dark has-text-weight-semibold" href="https://c-beltran.github.io/pharmacyProject/" target="_blank">View Website</a>
+										</span>
+									</p>
+								</footer>
+							</div>
+						</div>
+						<div class="column">
+							<div class="box">
+								<div class="card-content">
+									<p class="title center-text">
+										Color Game
+									</p>
+									<p class="subtitle has-text-justified" style="padding-top: 20px">
+										A good way to learn is by creating something fun! and so i decided to create a color game for my baby niece while enhancing my knowledge in JavaScript, Bootstrap and JQuery. Although my niece is too young to know the colors, she loved the fact that the game contains sound effects!
+									</p>
+								</div>
+								<footer class="card-footer">
+									<p class="card-footer-item">
+										<span>
+											<a class="button is-dark has-text-weight-semibold" href="https://c-beltran.github.io/ColorGame/" target="_blank">Check out my Color Game!</a>
+										</span>
+									</p>
+								</footer>
+							</div>
+						</div>
+
+						<div class="column">
+							<div class="box">
+								<div class="card-content">
+									<p class="title center-text">
+										Day/Night Vision Security Camera
+									</p>
+									<p class="subtitle has-text-justified" style="padding-top: 20px">
+										During the summer of 2018, I decided to create a project using my Raspberry Pi. After researching what I wanted to do I found a project that caught my attention. Using <i>MotionEyeOS, Google Drive, and an outdoor camera</i> I was able to use my networking skills and transform my Raspberri Pi into a motion sensored security camera .</p>
+									</p>
+								</div>
+								<footer class="card-footer">
+									<p class="card-footer-item">
+										<span>
+											<a class="button is-dark has-text-weight-semibold" href="https://medium.com/@carlosbeltran90/create-a-day-night-vision-surveillance-camera-using-raspberry-pi-with-motioneyeos-and-google-548b7189fa58" target="_blank">Read More About This Project</a>
+										</span>
+									</p>
+								</footer>
+							</div>
 						</div>
 					</div>
-					<h3 class="is-size-3 has-text-black-bis">Tutor Connect</h3>
-					<p class="subtitle is-4 has-text-white has-text-justified">This is a work in progress. Currently colaborating with other three (3) friends. Tutor Connect's mission is to provide college students with information of their campus tutoring centers. In addition, tutoring centers will be able to create their own profile and post notices, update schedules, and receive feedback, all of this in one place! <span>Updates of this project will be posted soon!</span></p>
-				</div>
-			</div>
-			<div class="columns">
-				<div class="column">
-					<h3 class="is-size-3 has-text-black-bis">Store Inventory Recorder</h3>
-					<p class="subtitle is-4 has-text-white has-text-justified">Im working on improving one of my weaknesses which is algorithms. One way of doing so, is by creating a JAVA application which will help stores keep track of their current inventory. Algorithms used will help with storage, organizing and searching. So far I have been sucessful implementing a nested HashMap that stores the product details. <span>This is another Work in progress!</span></p>
 				</div>
 			</div>
 		</div>
-	</div>
-    </section>
+		<div class="center-text title is-1 has-text-white">
+			<div class="tooltip">
+				Currently Working On...
+				<i class="fas fa-star fa-xs"></i>
+				<span class="tooltiptext">Fun fact! <br/>I like to stay busy by utilizing my time towards things that will enhance my learning and provide benefit to others.</span>
+			</div>
+		</div>
+		<div class="container is-fluid">
+			<div class="columns">
+				<div class="column">
+					<div class="box">
+						<div class="card-content">
+							<p class="title center-text">
+								Tutor Connect
+							</p>
+							<p class="subtitle has-text-justified" style="padding-top: 20px">
+								his is a work in progress. Currently colaborating with other three (3) friends. Tutor Connect's mission is to provide college students with information of their campus tutoring centers. In addition, tutoring centers will be able to create their own profile and post notices, update schedules, and receive feedback, all of this in one place! <span>Updates of this project will be posted soon!</span>
+							</p>
+						</div>
+						<footer class="card-footer">
+							<p class="card-footer-item">
+								<span>
+									<a class="button is-dark has-text-weight-semibold" href="https://c-beltran.github.io/ColorGame/" target="_blank">Check out my Color Game!</a>
+								</span>
+							</p>
+						</footer>
+					</div>
+				</div>
+
+				<div class="column">
+					<div class="box">
+						<div class="card-content">
+							<p class="title center-text">
+								Store Inventory Recorder
+							</p>
+							<p class="subtitle has-text-justified" style="padding-top: 20px">
+								Im working on improving one of my weaknesses which is algorithms. One way of doing so, is by creating a JAVA application which will help stores keep track of their current inventory. Algorithms used will help with storage, organizing and searching. So far I have been sucessful implementing a nested HashMap that stores the product details. <span>This is another Work in progress!</span>
+							</p>
+						</div>
+						<footer class="card-footer">
+							<p class="card-footer-item">
+								<span>
+									<a class="button is-dark has-text-weight-semibold" href="https://c-beltran.github.io/ColorGame/" target="_blank">Check out my Color Game!</a>
+								</span>
+							</p>
+						</footer>
+					</div>
+				</div>
+			</div>
+		</div>
+	</section>
+	<footer>
+		<div class="has-background-dark has-text-weight-bold" style="height: 50px">
+			<div style="text-align: center; padding-top: 15px;">
+				Handcrafted by me <span><i class="far fa-copyright"></i></span> twentyeighteen
+			</div>
+		</div>
+	</footer>
 
     <!-- This JS script is to make the header stick on
-    the top of the page when you scroll down -->
-	<script>
-		window.onscroll = function() {myFunction()};
-		var navbar = document.getElementById("nav");
-		var sticky = navbar.offsetTop;
+    	the top of the page when you scroll down -->
+    	<script>
+    		window.onscroll = function() {myFunction()};
+    		var navbar = document.getElementById("nav");
+    		var sticky = navbar.offsetTop;
 
-		function myFunction() {
-			if (window.pageYOffset >= sticky) {
-				navbar.classList.add("sticky")
-			} else {
-				navbar.classList.remove("sticky");
-			}
-		}
-	</script>
+    		function myFunction() {
+    			if (window.pageYOffset >= sticky) {
+    				navbar.classList.add("sticky")
+    			} else {
+    				navbar.classList.remove("sticky");
+    			}
+    		}
+    	</script>
 
-</body>
-</html>
+    </body>
+    </html>

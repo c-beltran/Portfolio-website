@@ -34,31 +34,31 @@ function amountscrolled(){
         clearInterval(id);
       }
       else if(pctScrolled == 15){
-        html.style.width = 90 + '%';
-        css.style.width = 70 + '%';
-        js.style.width = 73 + '%';
-        node.style.width = 73 + '%';
-        java.style.width = 70 + '%';
+        html.style.width = 85 + '%';
+        css.style.width = 65 + '%';
+        js.style.width = 70 + '%';
+        node.style.width = 70 + '%';
+        java.style.width = 75 + '%';
         ror.style.width = 50 + '%';
-        git.style.width = 90 + '%';
+        git.style.width = 85 + '%';
       }
        else if(pctScrolled == 25){
-        html.style.width = 90 + '%';
-        css.style.width = 70 + '%';
-        js.style.width = 73 + '%';
-        node.style.width = 73 + '%';
-        java.style.width = 70 + '%';
+        html.style.width = 85 + '%';
+        css.style.width = 65 + '%';
+        js.style.width = 70 + '%';
+        node.style.width = 70 + '%';
+        java.style.width = 75 + '%';
         ror.style.width = 50 + '%';
-        git.style.width = 90 + '%';
+        git.style.width = 85 + '%';
       }
       else if(pctScrolled == 35){
-        html.style.width = 90 + '%';
-        css.style.width = 70 + '%';
-        js.style.width = 73 + '%';
-        node.style.width = 73 + '%';
-        java.style.width = 70 + '%';
+        html.style.width = 85 + '%';
+        css.style.width = 65 + '%';
+        js.style.width = 70 + '%';
+        node.style.width = 70 + '%';
+        java.style.width = 75 + '%';
         ror.style.width = 50 + '%';
-        git.style.width = 90 + '%';
+        git.style.width = 85 + '%';
       } 
     }    
   }

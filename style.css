@@ -37,6 +37,8 @@
 #sec2-background{
 	background-color: #ffffff;
 	margin-top: 80px;
+	padding-top: 50px;
+	padding-bottom: 80px;
 	color: black;
 }
 
@@ -54,13 +56,14 @@ p span{
 
 #sec3-background{
 background: rgb(58,34,218);
-background: linear-gradient(0deg, rgba(58,34,218,0.7091211484593838) 22%, rgba(5,209,254,1) 96%);
+background: linear-gradient(0deg, rgba(58,34,218,0.7091211484593838) 22%, rgba(5,209,254,1) 60%);
 }
 
 /*Progress Bar*/
 .myProgress {
   width: 100%;
   background-color: #ddd;
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
 }
 
 #html, #css, #js, #node, #java, #ruby, #git {
@@ -70,6 +73,8 @@ background: linear-gradient(0deg, rgba(58,34,218,0.7091211484593838) 22%, rgba(5
   color: #ffffff;
   font-weight: bold;
   padding-top: 5px;
+  border-top-right-radius: 20px;
+  border-bottom-right-radius: 20px;
 }/*End of progress bar*/
 
 /*Tooltip*/
