@@ -50,14 +50,30 @@
 	margin-top: 60px;
 }
 
-p span{
-	font-style: italic;
-}
-
 #sec3-background{
 	background: rgb(58,34,218);
 	background: linear-gradient(346deg, rgba(58,34,218,0.7091211484593838) 22%, rgba(5,209,254,1) 96%);
 	padding-bottom: 60px;
+}
+
+#sec4-background{
+	background-color: #ffffff;
+}
+
+.work-exp{
+	padding-top: 10px;
+}
+
+.work-exp p{
+	font-weight: bold;
+}
+
+.work-exp ul{
+	padding-top: 10px;
+	line-height: 1.3rem;
+	letter-spacing: .5px;
+	display: list-item;
+	list-style-type: disc;
 }
 
 /*Progress Bar*/
@@ -93,7 +109,7 @@ p span{
 		text-align: center;
 		border-radius: 6px;
 		padding: 5px 0;
-		
+
 		/* Position the tooltip */
 		position: absolute;
 		width: 200px;
