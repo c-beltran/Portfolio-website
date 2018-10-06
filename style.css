@@ -52,7 +52,7 @@
 
 #sec3-background{
 	background: rgb(58,34,218);
-	background: linear-gradient(346deg, rgba(58,34,218,0.7091211484593838) 22%, rgba(5,209,254,1) 96%);
+	background: linear-gradient(346deg, rgba(58,34,218,0.5091211484593838) 22%, rgba(5,209,254,1) 96%);
 	padding-bottom: 60px;
 }
 
@@ -74,6 +74,9 @@
 	letter-spacing: .5px;
 	display: list-item;
 	list-style-type: disc;
+}
+#home{
+	display: block;
 }
 
 /*Progress Bar*/

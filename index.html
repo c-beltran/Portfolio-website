@@ -16,7 +16,7 @@
 	body{
 		font-family: 'News Cycle', sans-serif;
 		background: rgb(0,201,3);
-		background: linear-gradient(180deg,
+		background: linear-gradient(145deg,
 			rgba(0,201,3,1) 0%,
 			rgba(75,204,96,1) 3%,
 			rgba(0,212,255,1) 40%,
@@ -63,6 +63,12 @@
 	.sticky + .content {
 		padding-top: 60px;
 	}
+	/*Mobile responsiveness for nav bar*/
+	@media (min-width: 320px) and (max-width: 480px) {
+		.resume{
+			width: 108px;
+		}
+	}
 </style>
 </head>
 <body>
@@ -70,7 +76,7 @@
 	<!-- Beggining of Nav-Bar -->
 	<div>
 		<ul id="nav">
-			<li><a href="#">Home</a></li>
+			<li><a href="#"><span id="home">Home</span></a></li>
 			<li><a href="https://www.linkedin.com/in/c-beltran/" target="_blank"><i class="fab fa-linkedin fa-lg"></i></a></li>
 			<li><a href="https://github.com/c-beltran" target="_blank"><i class="fab fa-github-square fa-lg"></i></a></li>
 			<li><a href="mailto:carlosbeltran90@gmail.com"><i class="fas fa-envelope-square fa-lg"></i></a></li>
@@ -118,7 +124,7 @@
 			<div class="columns">
 				<div class="column">
 					<div>
-						<div class="center-text title is-1 has-text-dark has-text-weight-bold tooltip" style="padding-bottom: 20px;">
+						<div class="center-text title is-1 has-text-dark has-text-weight-bold tooltip" style="padding-bottom: 20px;" >
 							About Me
 							<i class="fas fa-star fa-xs"></i>
 							<span class="tooltiptext">Fun fact! <br/>I am also a mechanic, I like to work on cars.</span>
@@ -322,73 +328,73 @@
 		<div class="container">
 			<div class="columns is-centered">
 				<div class="column is-narrow">
-			<table class="table center-text">
-				<tbody>
-					<tr>
-						<th>
-							<span class="is-size-3">2017 - Present</span>
-							<p>Aug</p>
-						</th>
-						<th>
-							<span class="has-text-weight-bold is-size-3">Front-End Developer & Head of QA</span>
-							<div class="work-exp">
-								<p class="is-size-5">Healthie Inc., New York, NY</p>
-								<ul>
-									<li>In charge of writing & performing tests to ensure the quality of the software.</li>
-									<li>Performed QA testing on Android and IOS applications before releasing new updates.</li>
-									<li>Communicate any bugs found to rest of the tech team and write reproduction steps</li>
-									<li>Learn Ruby on rails and assist in web application such as bug fixing</li>
-									<li>Contribute with tech-team in daily standups and meetings with suggestions on how to improve the company product.</li>
-									<li>Contribute in website redesign in creating landing pages utlizing Zeplin's design mockups.</li>
-								</ul>
-							</div>
-						</th>
-						<th>
-						</th>
-					</tr>
-					<tr>
-						<th>
-							<span class="is-size-3">2017 - 2018</span>
-							<p>Aug<span style="margin-left: 60px">Aug</span></p>
-						</th>
-						<th>
-							<span class="has-text-weight-bold is-size-3">Wordpress Freelancer </span>(Part-time)
-							<div class="work-exp">
-								<p class="is-size-5">Howard Brill's Immigration Law, Hempstead, NY</p>
-								<ul>
-									<li>Prepared sale presentation and website wireframe.</li>
-									<li>Attend meetings and discuss progress of website with client.</li>
-									<li>Utilized Wordpress and integration technologies to accomplish project</li>
-									<li>Learned a lot about the freelancing industry and time management.</li>
-								</ul>
-							</div> 
-						</th>
-					</tr>
-					<tr>
-						<th>
-							<span class="is-size-3">2013 - Present</span>
-							<p>Jun</p>
-						</th>
-						<th>
-							<span class="has-text-weight-bold is-size-3">Automotive Technician </span>(Part-time)
-							<div class="work-exp">
-								<p class="is-size-5">Star Toyota, Flushing, NY</p>
-								<ul>
-									<li>Diagnose mechanical and electrical problems, remove and replace automotive parts.</li>
-									<li>Interact with customers to explain critical car repairs, deliver customer satisfaction.</li>
-									<li>Provide clear clarification of repairs made to service writers, ensure safety of customers.</li>
-								</ul>
-							</div>
-						</th>
-					</tr>
-				</tbody>
-			</table>
-		</div>
-	</div>
+					<table class="table">
+						<tbody>
+							<tr>
+								<th>
+									<span class="is-size-3">2017 - Present</span>
+									<p>Aug</p>
+								</th>
+								<th>
+									<span class="has-text-weight-bold is-size-3">Front-End Developer & Head of QA</span>
+									<div class="work-exp">
+										<p class="is-size-5">Healthie Inc., New York, NY</p>
+										<ul>
+											<li>In charge of writing & performing tests to ensure the quality of the software.</li>
+											<li>Performed QA testing on Android and IOS applications before releasing new updates.</li>
+											<li>Communicate any bugs found to rest of the tech team and write reproduction steps</li>
+											<li>Learn Ruby on rails and assist in web application such as bug fixing</li>
+											<li>Contribute with tech-team in daily standups and meetings with suggestions on how to improve the company product.</li>
+											<li>Contribute in website redesign in creating landing pages utlizing Zeplin's design mockups.</li>
+										</ul>
+									</div>
+								</th>
+								<th>
+								</th>
+							</tr>
+							<tr>
+								<th style="padding-top: 50px;">
+									<span class="is-size-3">2017 - 2018</span>
+									<p>Aug<span style="margin-left: 60px">Aug</span></p>
+								</th>
+								<th style="padding-top: 50px;">
+									<span class="has-text-weight-bold is-size-3">Wordpress Freelancer </span>(Part-time)
+									<div class="work-exp">
+										<p class="is-size-5">Howard Brill's Immigration Law, Hempstead, NY</p>
+										<ul>
+											<li>Prepared sale presentation and website wireframe.</li>
+											<li>Attend meetings and discuss progress of website with client.</li>
+											<li>Utilized Wordpress and integration technologies to accomplish project</li>
+											<li>Learned a lot about the freelancing industry and time management.</li>
+										</ul>
+									</div> 
+								</th>
+							</tr>
+							<tr>
+								<th style="padding-top: 50px;">
+									<span class="is-size-3">2013 - Present</span>
+									<p>Jun</p>
+								</th>
+								<th style="padding-top: 50px;">
+									<span class="has-text-weight-bold is-size-3">Automotive Technician </span>(Part-time)
+									<div class="work-exp">
+										<p class="is-size-5">Star Toyota, Flushing, NY</p>
+										<ul>
+											<li>Diagnose mechanical and electrical problems, remove and replace automotive parts.</li>
+											<li>Interact with customers to explain critical car repairs, deliver customer satisfaction.</li>
+											<li>Provide clear clarification of repairs made to service writers, ensure safety of customers.</li>
+										</ul>
+									</div>
+								</th>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</div>
 		</div>
 	</section>
-	<footer>
-		<div class="has-background-dark has-text-weight-bold" style="height: 50px">
+	<footer class="footer">
+		<div class="has-text-dark has-text-weight-bold" style="height: 50px">
 			<div style="text-align: center; padding-top: 15px;">
 				Handcrafted by me <span><i class="far fa-copyright"></i></span> twentyeighteen
 			</div>
