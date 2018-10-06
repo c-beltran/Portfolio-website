@@ -1,4 +1,4 @@
-/*loading bar animation*/
+/*loading animation bar*/
 
 //this function gets the height of the whole html document
 function getDocHeight() {
