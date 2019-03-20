@@ -19,8 +19,10 @@ function amountscrolled(){
   var java = document.getElementById("java");      
   var ror = document.getElementById("ruby");
   var git = document.getElementById("git");
+  var rspec = document.getElementById("rspec");
+  var capy = document.getElementById("capy");
   var upArrow = document.getElementById("toggle-up");
-    var home = document.getElementById("home");
+  var home = document.getElementById("home");
   var id = setInterval(frame, 10);
 
   var winheight= window.innerHeight || (document.documentElement || document.body).clientHeight
@@ -37,30 +39,36 @@ function amountscrolled(){
       }
       else if(pctScrolled == 15){
         html.style.width = 85 + '%';
-        css.style.width = 65 + '%';
+        css.style.width = 70 + '%';
         js.style.width = 70 + '%';
         node.style.width = 70 + '%';
         java.style.width = 75 + '%';
         ror.style.width = 50 + '%';
         git.style.width = 85 + '%';
+        rspec.style.width = 70 + '%';
+        capy.style.width = 80 + '%';
       }
       else if(pctScrolled == 25){
         html.style.width = 85 + '%';
-        css.style.width = 65 + '%';
+        css.style.width = 70 + '%';
         js.style.width = 70 + '%';
         node.style.width = 70 + '%';
         java.style.width = 75 + '%';
         ror.style.width = 50 + '%';
         git.style.width = 85 + '%';
+        rspec.style.width = 70 + '%';
+        capy.style.width = 80 + '%';
       }
       else if(pctScrolled == 35){
         html.style.width = 85 + '%';
-        css.style.width = 65 + '%';
+        css.style.width = 70 + '%';
         js.style.width = 70 + '%';
         node.style.width = 70 + '%';
         java.style.width = 75 + '%';
         ror.style.width = 50 + '%';
         git.style.width = 85 + '%';
+        rspec.style.width = 70 + '%';
+        capy.style.width = 80 + '%';
       }
     }   
   }
