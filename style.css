@@ -86,7 +86,7 @@
 	box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
 }
 
-#html, #css, #js, #node, #java, #ruby, #git, #capy, #rspec {
+#golang, #html, #css, #js, #node, #java, #ruby, #git, #capy, #rspec {
 	width: 10%;
 	height: 30px;
 	background-color: #4CAF50;
@@ -117,7 +117,7 @@
 	position: absolute;
 	width: 200px;
 	bottom: 100%;
-	left: 50%; 
+	left: 50%;
 	margin-left: -60px;
 }
 
