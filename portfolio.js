@@ -12,15 +12,16 @@ function getDocHeight() {
 
 //calculates the amount the person scrolls down and up a page
 function amountscrolled(){
+  var golang = document.getElementById("golang");
   var html = document.getElementById("html");
   var css = document.getElementById("css");
   var js = document.getElementById("js");
   var node = document.getElementById("node");
-  var java = document.getElementById("java");      
+  var pg = document.getElementById("pg");
   var ror = document.getElementById("ruby");
   var git = document.getElementById("git");
-  var rspec = document.getElementById("rspec");
-  var capy = document.getElementById("capy");
+  var glab = document.getElementById("glab");
+  var cloudf = document.getElementById("cloudf");
   var upArrow = document.getElementById("toggle-up");
   var home = document.getElementById("home");
   var id = setInterval(frame, 10);
@@ -38,39 +39,42 @@ function amountscrolled(){
         clearInterval(id);
       }
       else if(pctScrolled == 15){
-        html.style.width = 85 + '%';
+        golang.style.width = 87 + '%';
+        html.style.width = 82 + '%';
         css.style.width = 70 + '%';
         js.style.width = 70 + '%';
         node.style.width = 70 + '%';
-        java.style.width = 75 + '%';
+        pg.style.width = 80 + '%';
         ror.style.width = 50 + '%';
         git.style.width = 85 + '%';
-        rspec.style.width = 70 + '%';
-        capy.style.width = 80 + '%';
+        glab.style.width = 70 + '%';
+        cloudf.style.width = 75 + '%';
       }
       else if(pctScrolled == 25){
-        html.style.width = 85 + '%';
+        golang.style.width = 87 + '%';
+        html.style.width = 82 + '%';
         css.style.width = 70 + '%';
         js.style.width = 70 + '%';
         node.style.width = 70 + '%';
-        java.style.width = 75 + '%';
+        pg.style.width = 80 + '%';
         ror.style.width = 50 + '%';
         git.style.width = 85 + '%';
-        rspec.style.width = 70 + '%';
-        capy.style.width = 80 + '%';
+        glab.style.width = 70 + '%';
+        cloudf.style.width = 75 + '%';
       }
       else if(pctScrolled == 35){
-        html.style.width = 85 + '%';
+        golang.style.width = 87 + '%';
+        html.style.width = 82 + '%';
         css.style.width = 70 + '%';
         js.style.width = 70 + '%';
         node.style.width = 70 + '%';
-        java.style.width = 75 + '%';
+        pg.style.width = 80 + '%';
         ror.style.width = 50 + '%';
         git.style.width = 85 + '%';
-        rspec.style.width = 70 + '%';
-        capy.style.width = 80 + '%';
+        glab.style.width = 70 + '%';
+        cloudf.style.width = 75 + '%';
       }
-    }   
+    }
   }
 
   window.addEventListener("scroll", function(){

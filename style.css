@@ -86,7 +86,7 @@
 	box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
 }
 
-#golang, #html, #css, #js, #node, #java, #ruby, #git, #capy, #rspec {
+#golang, #html, #css, #js, #node, #pg, #ruby, #git, #cloudf, #glab {
 	width: 10%;
 	height: 30px;
 	background-color: #4CAF50;
