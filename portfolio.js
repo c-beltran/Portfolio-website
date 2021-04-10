@@ -77,6 +77,19 @@ function amountscrolled(){
     }
   }
 
+  function openCard(){
+    console.log("hello")
+
+    var info = document.getElementById("card-info")
+    console.log(info.style.display)
+    if (info.style.display === "none") {
+      info.style.display = "block";
+      info.style.width = 100;
+      info.style.borderRadius = "5px";
+      console.log(info)
+    }
+  }
+
   window.addEventListener("scroll", function(){
     amountscrolled()
   }, false)

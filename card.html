@@ -8,267 +8,184 @@
   <meta name="description" content="The HTML5 Herald">
   <meta name="author" content="SitePoint">
 
-  <link rel="stylesheet" href="css/styles.css?v=1.0">
  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet" media="screen" />
-
+ <script type="text/javascript" src="portfolio.js"></script>
 
 </head>
 
 <style>
-@import url('https://fonts.googleapis.com/css?family=Abel');
+@import 'https://fonts.googleapis.com/css?family=Open+Sans|Roboto:300';
 
-html, body {
-  background: #FCEEB5;
-  font-family: Abel, Arial, Verdana, sans-serif;
+$padding:30px;
+
+* { box-sizing: border-box; }
+
+body {
+  background: #F9F8FC;
+  background: -webkit-linear-gradient(top left, #F9F8FC, #61AEB6);
+  background: -moz-linear-gradient(top left, #F9F8FC, #61AEB6);
 }
+.container {
+  perspective: 800px;
 
-.center {
+  /* Styling */
+  color: #fff;
+  font-family: 'Open Sans', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 4px;
+
+  /* Center it */
   position: absolute;
   top: 50%;
   left: 50%;
-  -webkit-transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%);
 }
-
 .card {
-  width: 450px;
-  height: 250px;
-  background-color: #fff;
-  background: linear-gradient(#f8f8f8, #fff);
-  box-shadow: 0 8px 16px -8px rgba(0,0,0,0.4);
-  border-radius: 6px;
-  overflow: hidden;
-  position: relative;
-  margin: 1.5rem;
-}
+  /* Styling */
+  width: 700px;
+  height: 400px;
+  background: rgb(20,20,20);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.16), 0 3px 6px rgba(0, 0, 0, 0.23);
 
-.card h1 {
-  text-align: center;
+  /* Card flipping effects */
+  transform-style: preserve-3d;
+  transition: 0.6s;
 }
-
-.card .additional {
+.side {
   position: absolute;
-  width: 150px;
-  height: 100%;
-  background: linear-gradient(#dE685E, #EE786E);
-  transition: width 0.4s;
-  overflow: hidden;
-  z-index: 2;
-}
-
-.card.green .additional {
-  background: linear-gradient(#92bCa6, #A2CCB6);
-}
-
-
-.card:hover .additional {
   width: 100%;
-  border-radius: 0 5px 5px 0;
-}
-
-.card .additional .user-card {
-  width: 150px;
   height: 100%;
-  position: relative;
-  float: left;
+  backface-visibility: hidden;
+  /* Fix Chrome rendering bug */
+  transform: rotate(0deg) translateZ(1px);
 }
 
-.card .additional .user-card::after {
-  content: "";
-  display: block;
-  position: absolute;
-  top: 10%;
-  right: -2px;
-  height: 80%;
-  border-left: 2px solid rgba(0,0,0,0.025);*/
+/* Flip the card on hover */
+.container:hover .card,
+.back {
+  transform: rotateY(-180deg) translateZ(1px);
 }
 
-.card .additional .user-card .level,
-.card .additional .user-card .points {
-  top: 15%;
-  color: #fff;
-  text-transform: uppercase;
-  font-size: 0.75em;
-  font-weight: bold;
-  background: rgba(0,0,0,0.15);
-  padding: 0.125rem 0.75rem;
-  border-radius: 100px;
-  white-space: nowrap;
-}
-
-.card .additional .user-card .points {
-  top: 85%;
-}
-
-.card .additional .user-card svg {
-  top: 50%;
-}
-
-.card .additional .more-info {
-  width: 300px;
-  float: left;
-  position: absolute;
-  left: 150px;
-  height: 100%;
-}
-
-.card .additional .more-info h1 {
-  color: #fff;
-  margin-bottom: 0;
-}
-
-.card.green .additional .more-info h1 {
-  color: #224C36;
-}
-
-.card .additional .coords {
-  margin: 0 1rem;
-  color: #fff;
-  font-size: 1rem;
-}
-
-.card.green .additional .coords {
-  color: #325C46;
-}
-
-.card .additional .coords span + span {
-  float: right;
-}
-
-.card .additional .stats {
-  font-size: 2rem;
-  display: flex;
-  position: absolute;
-  bottom: 1rem;
-  left: 1rem;
-  right: 1rem;
-  top: auto;
-  color: #fff;
-}
-
-.card.green .additional .stats {
-  color: #325C46;
-}
-
-.card .additional .stats > div {
-  flex: 1;
+/* Front styling */
+.front {
+  /* Center the name + outline (almost) */
+  line-height: 390px; /* Height - some (because visual center is a little higher than actual center) */
   text-align: center;
 }
-
-.card .additional .stats i {
+.logo {
   display: block;
+  padding: 15px 40px;
+
+  text-transform: uppercase;
+  font-family: 'Roboto', sans-serif;
+  font-size: 1.4em;
+  font-weight: normal;
+  line-height: 32px;
+  letter-spacing: 8px;
 }
 
-.card .additional .stats div.title {
+/* Back styling */
+.back {
+  background: #15CCC0;
+  padding: $padding;
+}
+.name {
+  color: #3B3B3B;
+  margin-bottom: 0;
+  text-align: center;
+  letter-spacing: 2px;
+}
+p {
+  margin: 0.8em 0;
+}
+.info {
+  position: absolute;
+  bottom: $padding;
+  left: $padding;
+  color: #3b3b3b;
+}
+
+.property {
+  color: #fff;
+  margin-left: 40px;
+  letter-spacing: 3px;
+  text-transform: none;
+}
+
+/*===*/
+.side-box{
+  margin-left: 50%;
+  margin-top: 40px;
+}
+
+.title {
   font-size: 0.75rem;
   font-weight: bold;
-  text-transform: uppercase;
 }
 
-.card .additional .stats div.value {
-  font-size: 1.5rem;
-  font-weight: bold;
-  line-height: 1.5rem;
-}
-
-.card .additional .stats div.value.infinity {
-  font-size: 2.5rem;
-}
-
-.card .general {
-  width: 300px;
-  height: 100%;
-  position: absolute;
-  top: 0;
-  right: 0;
-  z-index: 1;
-  box-sizing: border-box;
-  padding: 1rem;
-  padding-top: 0;
-}
-
-.card .general .more {
-  position: absolute;
-  bottom: 1rem;
-  right: 1rem;
-  font-size: 0.9em;
+.footer{
+ margin-top: 8%;
+ margin-left: 6%;
+ display: inline-flex;
 }
 
 
+/* Make semi-responsive */
+@media (max-width:700px) {
+  .card { transform: scale(.5); }
+  .container:hover .card { transform: scale(.5) rotateY(-180deg) translateZ(1px); }
+}
 
 </style>
 
 <body>
 
-	<div class="center">
-
+<div class="container">
   <div class="card">
-    <div class="additional">
-      <div class="user-card">
-        <div class="level center">
-           <strong>Carlos A. Beltran</strong>
-        </div>
-        <div class="points center">
-          <a href="tel:516-324-4687" style="text-decoration: none; color: #ffffff; ">(516) 324-4687</a>
-        </div>
-       		<img src="public/selfie.jpg"
-       		style="width: 125px; height: 125px; border-radius: 50%; margin: auto; display: block; margin-top: 40%;">
-      </div>
-      <div class="more-info">
-        <h1>Web Developer</h1>
-        <div class="coords">
-          <span style="font-size: 18px;">Budget Friendly, Effective & Efficient</span>
-        </div>
-        <div class="coords">
-          <span><strong style="font-size: 16px;">I offer mobil friendly Website solutions to:</strong></span>
-        </div>
-        <div class="coords">
-          <span>* Any type of business</span>
-          <span>* Personal use</span>
-        </div>
-        <div class="coords">
-        	<span>* Social events </span>
-        	<span>* Updating old website</span>
-        </div>
-        <div class="stats">
-          <div>
-            <!-- <div class="title">Awards</div> -->
-            <i class="fa fa-dollar-sign"></i>
-            <div class="title" style="margin-top: 10px;">Affordable</div>
-          </div>
-          <div>
-             <!-- <div class="value">27</div> -->
-            <i class="fa fa-user-check"></i>
-            <div class="title" style="margin-top: 10px;">Trusted</div>
-          </div>
-          <div>
-          	<a href="mailto:carlosbeltran90@gmail.com" style="text-decoration: none; color: #ffffff">
-            	<!-- <div class="value">123</div> -->
-            	<i class="fa fa-envelope"></i>
-            	<div class="title" style="margin-top: 10px;">Email Me</div>
-            </a>
-          </div>
-          <div>
-          	<a href="https://cbeltran.com" target="_blank" style="text-decoration: none; color: #ffffff">
-          	  	<!-- <div class="value infinity">∞</div> -->
-            	<i class="fa fa-globe"></i>
-            	<div class="title" style="margin-top: 10px;">Portfolio</div>
-            </a>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="general">
-      <h1>Web Developer</h1>
-      <p>
-      	Focused to bring customer satisfaction and offer the best possible solution for your needs. Join the many business that are taking advantage of the internet traffic, start by building your website, let me help you in this journey.
-      </p>
-      <span class="more"><i class="fas fa-redo"></i></span>
 
-
+    <div class="front side">
+      <img src="public/selfie.jpg" style="width: 125px; height: 125px; border-radius: 50%; margin: auto; display: block; margin-top: 10%;">
+      <h1 class="logo" style="margin: 0; padding-bottom: 2px;">Web Development</h1>
+      <h3 class="logo" style="margin: 0; padding-bottom: 2px; font-size: 1.0em; text-transform: none; letter-spacing: 4px;">By</h3>
+      <h3 class="logo" style="margin: 0; padding-bottom: 2px; font-size: 1.0em; text-transform: none; ">Carlos Beltran</h3>
     </div>
+
+    <div class="back side">
+      <h3 class="name">Web design and development for any occasion</h3>
+      <!-- <div>Front-end developer</div> -->
+        <div class="info">
+          <p style="margin-top: 40px;"><span class="property"><i class="fa fa-star" style="margin-right: 10px"></i>Any type of business</span></p>
+          <p><span class="property"><i class="fa fa-star" style="margin-right: 10px"></i>Personal use</span></p>
+          <p><span class="property"><i class="fa fa-star" style="margin-right: 10px"></i>Social events</span></p>
+          <p><span class="property" style="margin-top: 0;"><i class="fa fa-star" style="margin-right: 10px"></i>Update existing website<br></span></p>
+          <p><span class="property" style="margin-top: 0;"><i class="fa fa-phone-volume" style="margin-right: 10px; margin-top: 20px; color: #3B3B3B;"></i><a href="tel:516-324-4687" style="text-decoration: none; color: #3B3B3B;">(516) 324-4687</a><br></span></p>
+          <p><span class="property" style="margin-top: 0;"><i class="fa fa-globe" style="margin-right: 10px; margin-top: 0; color: #3B3B3B;"></i><a href="https://cbeltran.com" style="text-decoration: none; color: #3B3B3B;">cbeltran.com</a><br></span></p>
+        </div>
+        <div class="info-2 side-box">
+          <p style="text-transform: none; letter-spacing: 3px; color: #3B3B3B; text-align: left; font-family: Abel, Arial, Verdana, sans-serif; line-height:1.4">Focused to bring customer satisfaction and offer the best possible solution for your needs. Join the many business that are taking advantage of the internet traffic, start by building your website, let me help you in this journey.</p>
+        </div>
+        <div>
+          <div class="footer">
+            <i class="fa fa-dollar-sign fa-2x" style="text-align: center"></i>
+            <div class="title" >Budget <br> friendly</div>
+          </div>
+          <div class="footer">
+            <i class="fa fa-user-check fa-2x" style="text-align: center; "></i>
+            <div class="title"><br>Trusted</div>
+          </div>
+          <div class="footer">
+            <i class="fa fa-bolt fa-2x" style="text-align: center; "></i>
+            <div class="title"><br>Efficient</div>
+          </div>
+          <div class="footer">
+            <i class="fa fa-lightbulb fa-2x" style="text-align: center; "></i>
+            <div class="title"><br>Creative</div>
+          </div>
+        </div>
+    </div>
+
   </div>
 </div>
 
-  <script src="js/scripts.js"></script>
 </body>
 </html>
