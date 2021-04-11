@@ -1,12 +1,12 @@
 <!doctype html>
-<!-- Author: Alvaro Montoro -->
+<!-- Author credit: Alvaro Montoro -->
 <html lang="en">
 <head>
   <meta charset="utf-8">
 
   <title>Carlos Web Design</title>
-  <meta name="description" content="The HTML5 Herald">
-  <meta name="author" content="SitePoint">
+  <meta name="Web Design - long island" content="web developer, new york">
+  <meta name="Carlos" content="SitePoint">
 
  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet" media="screen" />
  <script type="text/javascript" src="portfolio.js"></script>
@@ -58,12 +58,6 @@ body {
   backface-visibility: hidden;
   /* Fix Chrome rendering bug */
   transform: rotate(0deg) translateZ(1px);
-}
-
-/* Flip the card on hover */
-.container:hover .card,
-.back {
-  transform: rotateY(-180deg) translateZ(1px);
 }
 
 /* Front styling */
@@ -140,19 +134,18 @@ p {
 
 <body>
 
-<div class="container">
+<div class="container" id="flip" onclick="openCard()">
   <div class="card">
 
-    <div class="front side">
+    <div class="front side" id="flip-front">
       <img src="public/selfie.jpg" style="width: 125px; height: 125px; border-radius: 50%; margin: auto; display: block; margin-top: 10%;">
       <h1 class="logo" style="margin: 0; padding-bottom: 2px;">Web Development</h1>
       <h3 class="logo" style="margin: 0; padding-bottom: 2px; font-size: 1.0em; text-transform: none; letter-spacing: 4px;">By</h3>
       <h3 class="logo" style="margin: 0; padding-bottom: 2px; font-size: 1.0em; text-transform: none; ">Carlos Beltran</h3>
     </div>
 
-    <div class="back side">
+    <div class="back side" id="flip-back" style="display: none;">
       <h3 class="name">Web design and development for any occasion</h3>
-      <!-- <div>Front-end developer</div> -->
         <div class="info">
           <p style="margin-top: 40px;"><span class="property"><i class="fa fa-star" style="margin-right: 10px"></i>Any type of business</span></p>
           <p><span class="property"><i class="fa fa-star" style="margin-right: 10px"></i>Personal use</span></p>

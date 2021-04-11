@@ -78,15 +78,15 @@ function amountscrolled(){
   }
 
   function openCard(){
-    console.log("hello")
+    var back = document.getElementById("flip-back")
+    var front = document.getElementById("flip-front")
 
-    var info = document.getElementById("card-info")
-    console.log(info.style.display)
-    if (info.style.display === "none") {
-      info.style.display = "block";
-      info.style.width = 100;
-      info.style.borderRadius = "5px";
-      console.log(info)
+    if (back.style.display === "none") {
+      back.style.display = "block";
+      front.style.display = "none"
+    } else {
+      front.style.display = "block"
+      back.style.display = "none"
     }
   }
 
