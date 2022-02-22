@@ -18,7 +18,6 @@ function amountscrolled(){
   var js = document.getElementById("js");
   var node = document.getElementById("node");
   var pg = document.getElementById("pg");
-  var ror = document.getElementById("ruby");
   var git = document.getElementById("git");
   var glab = document.getElementById("glab");
   var cloudf = document.getElementById("cloudf");
@@ -45,9 +44,8 @@ function amountscrolled(){
         js.style.width = 70 + '%';
         node.style.width = 70 + '%';
         pg.style.width = 80 + '%';
-        ror.style.width = 50 + '%';
         git.style.width = 85 + '%';
-        glab.style.width = 70 + '%';
+        glab.style.width = 50 + '%';
         cloudf.style.width = 75 + '%';
       }
       else if(pctScrolled == 25){
@@ -57,9 +55,8 @@ function amountscrolled(){
         js.style.width = 70 + '%';
         node.style.width = 70 + '%';
         pg.style.width = 80 + '%';
-        ror.style.width = 50 + '%';
         git.style.width = 85 + '%';
-        glab.style.width = 70 + '%';
+        glab.style.width = 50 + '%';
         cloudf.style.width = 75 + '%';
       }
       else if(pctScrolled == 35){
@@ -69,9 +66,8 @@ function amountscrolled(){
         js.style.width = 70 + '%';
         node.style.width = 70 + '%';
         pg.style.width = 80 + '%';
-        ror.style.width = 50 + '%';
         git.style.width = 85 + '%';
-        glab.style.width = 70 + '%';
+        glab.style.width = 50 + '%';
         cloudf.style.width = 75 + '%';
       }
     }
