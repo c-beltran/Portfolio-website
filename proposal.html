@@ -10,32 +10,15 @@
 		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/meyer-reset/2.0/reset.min.css">
 	
         <style type="text/css">
-            html {
-  height: 100%;
-}
+            @import url('https://fonts.googleapis.com/css2?family=Mochiy+Pop+P+One&display=swap');
+
 body {
-    background-color: rgb(247, 211, 211);
-    /* font-family: Signika Negative, Asap, sans-serif; */
-    /* color:rgb(24, 22, 22); */
-    /* overflow:hidden; */
-
-    justify-content: center;
-    -webkit-appearance: none;
-    -webkit-align-align-items: center;
-    height: 100vh;
-    display: -webkit-flex;
-    /* background-color: #c75146; */
-    overflow: hidden;
-}
-
-.middle-of-screen {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    margin-top: -50px;
-    margin-left: -50px;
-    width: 100px;
-    height: 100px;
+  justify-content: center;
+  -webkit-align-items: center;
+  height: 100vh;
+  display: -webkit-flex;
+  background-color: rgb(247, 211, 211);
+  overflow: hidden;
 }
 
 .jewellery-box {
@@ -257,9 +240,9 @@ input#open {
   position: absolute;
   color: white;
   font-family: 'Mochiy Pop P One', sans-serif;
-  font-size: 30vw;
+  font-size: 30px;
   transition: .3s;
-  width:400px;
+  width:350px;
   text-align: center;
   top:-165px;
   left:-130px;
@@ -270,132 +253,81 @@ input#open {
   opacity:1;
 }
 
-/* // */
-
-.dot{
-  width:35px;
-  height:35px;
-  position:absolute;
-  background: url(https://image.ibb.co/kyUHab/rose.png);
-  background-size: 100% 100%;
-}
-html, body, #container {width:100%; height:100%; }
-#logo{ left:50%; top:50%; position:absolute; border-radius:10px; }
-
-/* // */
-
 .word {
   margin: auto;
   color: white;
   font: 700 normal 2.5em 'tahoma';
   text-shadow: 5px 2px #222324, 2px 4px #222324, 3px 5px #222324;
 }
-
-@keyframes flip {
-  0%,80% {
-    transform: rotateY(360deg) 
-  }
-}
         </style>
     </head>
-	<body >
-        <div id="container">
-            <!-- <div class="word"></div> -->
-
-            <div class="middle-of-screen">
-                <div class="jewellery-box">
-                    <input id="open" type="checkbox">
-                    <label class="open" for="open"></label>
-                    <div class="bottom"></div>
-                    <div class="inner-top"></div>
-                    <div class="inner-bottom"></div>
-                    <div class="text word"></div>
-                    <div class="diamond-ring">
-                      <div class="diamond"></div>
-                      <div class="band"></div>
-                      <div class="inner"></div>
-                      <div class="details"></div>
-                    </div>
-                  </div>
-            </div>
+    <body>
+        <div>
+            <div class="jewellery-box">
+                <input id="open" type="checkbox">
+                <label class="open" for="open"></label>
+                <div class="bottom"></div>
+                <div class="inner-top"></div>
+                <div class="inner-bottom"></div>
+                <div class="text word">Gloria, Will You Marry Me?</div>
+                <div class="diamond-ring">
+                  <div class="diamond"></div>
+                  <div class="band"></div>
+                  <div class="inner"></div>
+                  <div class="details"></div>
+                </div>
+              </div>
         </div>
-       
-        <!-- jQuery -->
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js" type="text/javascript"></script>
-  <!-- jQuery easing plugin -->
-  <script src="https://thecodeplayer.com/uploads/js/jquery.easing.min.js" type="text/javascript"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/1.18.0/TweenMax.min.js"></script>
-        <script>
-            //-
-            TweenLite.set("#container",{perspective:600})
-            TweenLite.set("img",{xPercent:"-50%",yPercent:"-50%"})
+        
 
-            var total = 30;
-            var warp = document.getElementById("container"),	w = window.innerWidth , h = window.innerHeight;
-            
-            for (i=0; i<total; i++){ 
-            var Div = document.createElement('div');
-            TweenLite.set(Div,{attr:{class:'dot'},x:R(0,w),y:R(-200,-150),z:R(-200,200)});
-            warp.appendChild(Div);
-            animm(Div);
-            }
-            
-            function animm(elm){   
-            TweenMax.to(elm,R(6,15),{y:h+100,ease:Linear.easeNone,repeat:-1,delay:-15});
-            TweenMax.to(elm,R(4,8),{x:'+=100',rotationZ:R(0,180),repeat:-1,yoyo:true,ease:Sine.easeInOut});
-            TweenMax.to(elm,R(2,8),{rotationX:R(0,360),rotationY:R(0,360),repeat:-1,yoyo:true,ease:Sine.easeInOut,delay:-5});
-            };
+          <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js" type="text/javascript"></script>
+          <script>
+              var words = ['Gloria, Will You Marry Me?'],
+    part,
+    i = 0,
+    offset = 0,
+    len = words.length,
+    forwards = true,
+    skip_count = 0,
+    skip_delay = 15,
+    speed =300;
+var wordflick = function () {
+  setInterval(function () {
+    if (forwards) {
+      if (offset >= words[i].length) {
+        ++skip_count;
+        if (skip_count == skip_delay) {
+          forwards = false;
+          skip_count = 0;
+        }
+      }
+    }
+    else {
+      if (offset == 0) {
+        forwards = true;
+        i++;
+        offset = 0;
+        if (i >= len) {
+          i = 0;
+        }
+      }
+    }
+    part = words[i].substr(0, offset);
+    if (skip_count == 0) {
+      if (forwards) {
+        offset++;
+      }
+    //   else {
+    //     offset--;
+    //   }
+    }
+    $('.word').text(part);
+  },speed);
+};
 
-            function R(min,max) {return min+Math.random()*(max-min)};
-
-            //-
-            var words = ['Gloria, Will You Marry Me?'],
-                part,
-                i = 0,
-                offset = 0,
-                len = words.length,
-                forwards = true,
-                skip_count = 0,
-                skip_delay = 15,
-                speed = 200;
-            var wordflick = function () {
-            setInterval(function () {
-                if (forwards) {
-                if (offset >= words[i].length) {
-                    ++skip_count;
-                    if (skip_count == skip_delay) {
-                    forwards = false;
-                    skip_count = 0;
-                    }
-                }
-                }
-                else {
-                if (offset == 0) {
-                    forwards = true;
-                    i++;
-                    offset = 0;
-                    if (i >= len) {
-                    i = 0;
-                    }
-                }
-                }
-                part = words[i].substr(0, offset);
-                if (skip_count == 0) {
-                if (forwards) {
-                    offset++;
-                }
-                // else {
-                //     offset--;
-                // }
-                }
-                $('.word').text(part);
-            },speed);
-            };
-
-            $(document).ready(function () {
-            wordflick();
-            });
-        </script>
-    
+$(document).ready(function () {
+  wordflick();
+});
+          </script>
     </body>
 </html>
