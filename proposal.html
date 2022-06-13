@@ -20,9 +20,10 @@ body {
     /* overflow:hidden; */
 
     justify-content: center;
+    -webkit-appearance: none;
     align-items: center;
     height: 100vh;
-    display: flex;
+    display: -webkit-flex;
     /* background-color: #c75146; */
     overflow: hidden;
 }
@@ -38,7 +39,7 @@ body {
 }
 
 .jewellery-box {
-  position: flex;
+  position: -webkit-flex;
   filter: drop-shadow(0 0 30px rgba(0,0,0,0.4));
 }
 
@@ -221,7 +222,7 @@ input#open {
   transform-origin: top;
   left:-70px;
   top:40px;
-  transform: rotateX(85deg);
+  -webkit-transform: scale(.2);
 }
 
 .inner-bottom:before {
