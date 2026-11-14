@@ -1,5 +1,8 @@
 import statsJson from './stats.json';
+import { CAREER_START, yearsSince } from '../lib/dates';
 import type { Stats } from './stats.types';
+
+export { CAREER_START, yearsSince };
 
 /**
  * The only place claims about Carlos live (spec §5). Project numbers are never typed here:
@@ -77,18 +80,6 @@ export const facts: Record<FactId, string | ((s: Stats) => string)> = {
 export function renderFact(id: FactId, s: Stats = STATS): string {
   const fact = facts[id];
   return typeof fact === 'function' ? fact(s) : fact;
-}
-
-export const CAREER_START = new Date('2019-07-01');
-
-/** Whole years between two dates, floored (UTC, so the result never depends on the timezone). */
-export function yearsSince(start: Date, now: Date): number {
-  let years = now.getUTCFullYear() - start.getUTCFullYear();
-  const beforeAnniversary =
-    now.getUTCMonth() < start.getUTCMonth() ||
-    (now.getUTCMonth() === start.getUTCMonth() && now.getUTCDate() < start.getUTCDate());
-  if (beforeAnniversary) years -= 1;
-  return years;
 }
 
 /** The header's 10-second facts (spec §2). */
