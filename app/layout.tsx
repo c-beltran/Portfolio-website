@@ -1,4 +1,6 @@
+import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
+import { Analytics } from '@vercel/analytics/next';
 import { Caveat, IBM_Plex_Mono, Inter, Schibsted_Grotesk } from 'next/font/google';
 import { Header } from '@/components/header/Header';
 import { THEME_SCRIPT, themeCss } from '@/lib/theme';
@@ -27,6 +29,8 @@ const mono = IBM_Plex_Mono({
   preload: false,
 });
 
+export const metadata: Metadata = { metadataBase: new URL('https://cbeltran.com') };
+
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html
@@ -43,6 +47,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <Header />
           {children}
         </div>
+        <Analytics />
       </body>
     </html>
   );
