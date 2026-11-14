@@ -32,6 +32,13 @@ export const RETIRED_FACT_IDS = ['F05'] as const;
 const STATS = statsJson as Stats;
 const n = (value: number) => value.toLocaleString('en-US');
 
+/**
+ * "Merged by Carlos" is the only review claim GitHub can back (merges, not reviews). It's made
+ * only over a non-zero PR count, even if a stale or hand-edited stats.json says otherwise.
+ */
+const verifiedMerges = (r: { mergedPRs: number; allPRsMergedByCarlos: boolean }) =>
+  r.mergedPRs > 0 && r.allPRsMergedByCarlos;
+
 export const facts: Record<FactId, string | ((s: Stats) => string)> = {
   F01: 'At the same company since July 2019: Meredith, then Dotdash Meredith, now People Inc.',
   F02: 'Senior Software Engineer, Performance Engineering on the Ad Platform',
@@ -47,7 +54,7 @@ export const facts: Record<FactId, string | ((s: Stats) => string)> = {
   P01: 'Potaflow: multi-tenant SaaS that removes the paper trail from backflow testing compliance for water districts in Nassau County, NY',
   P02: ({ potaflow: p }) =>
     `Potaflow: Nuxt, tRPC, Prisma, Postgres, S3, Sentry; ${n(p.commits)} commits (${p.coAuthoredPercent}% co-authored with Claude) and ${n(p.mergedPRs)} merged PRs` +
-    (p.allPRsMergedByCarlos ? ', every one merged by Carlos' : '') +
+    (verifiedMerges(p) ? ', every one merged by Carlos' : '') +
     '; 1 human + agents',
   P03: 'Potaflow: custom AI skills encode NY DOH-1013 rules and physical testing procedures',
   P04: 'Power Walk: iPhone game where every real step (Apple Health) is a footstep through a blacked-out New York landmark; find the fuse and turn the lights back on',
@@ -61,9 +68,9 @@ export const facts: Record<FactId, string | ((s: Stats) => string)> = {
     'This website: designed on a Claude Design canvas ' +
     (t.directions.length === 0
       ? '[TODO: Q21 directions not exported yet]'
-      : `across ${n(t.directions.length)} directions`) +
+      : `across ${n(t.directions.length)} ${t.directions.length === 1 ? 'direction' : 'directions'}`) +
     ', built with AI agents' +
-    (t.allPRsMergedByCarlos ? ', every change reviewed by Carlos' : ''),
+    (verifiedMerges(t) ? ', every PR merged by Carlos' : ''),
   ABOUT: '[TODO: Carlos writes this in his own voice]',
 };
 

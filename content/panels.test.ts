@@ -23,6 +23,8 @@ function textOf(block: PanelBlock): string {
       return block.text;
     case 'link':
       return `${block.label} ${block.href ?? ''}`;
+    case 'links':
+      return '';
     case 'stats':
       return block.items.map((i) => `${i.label} ${i.value(statsJson as Stats)}`).join(' ');
     default:
@@ -54,6 +56,37 @@ describe('panels', () => {
       expect(text).not.toContain('@');
       expect(text).not.toMatch(/Hempstead|vendor|licensed/i);
     }
+  });
+});
+
+describe('claims (checkpoint 2)', () => {
+  const UNBACKED = /I write the spec|I wrote|I review|I reviewed|until I've read|tool of mine/i;
+
+  it('makes no authorship or review claim the stats cannot back', () => {
+    for (const b of allBlocks) {
+      if (b.kind === 'prose') expect(b.text.replace(/\[TODO:[^\]]*\]/g, '')).not.toMatch(UNBACKED);
+    }
+  });
+
+  it('every title is marked as draft copy', () => {
+    for (const b of allBlocks.filter((b) => b.kind === 'title')) {
+      expect(b).toMatchObject({ draft: true });
+    }
+  });
+
+  it('a link without a URL always carries a visible TODO', () => {
+    for (const b of allBlocks) {
+      if (b.kind === 'link' && b.href === null) expect(b.todo).toMatch(/^Q\d+/);
+    }
+  });
+
+  it('the contact panel renders the contact links block', () => {
+    expect(PANELS.contact.some((b) => b.kind === 'links')).toBe(true);
+  });
+
+  it('the about prose cites the ad-performance fact it paraphrases', () => {
+    const prose = PANELS.about.find((b) => b.kind === 'prose');
+    expect(prose && idsOf(prose)).toContain('F07');
   });
 });
 

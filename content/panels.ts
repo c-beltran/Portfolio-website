@@ -6,12 +6,16 @@ import type { Stats } from './stats.types';
 export const DRAFT_MARK = '[DRAFT: Carlos to rewrite]';
 
 export type PanelBlock =
-  | { kind: 'eyebrow' | 'title'; text: string }
+  | { kind: 'eyebrow'; text: string }
+  | { kind: 'title'; text: string; draft: true }
   | { kind: 'prose'; facts: FactId[]; text: string; draft: true }
   | { kind: 'fact'; fact: FactId }
   | { kind: 'list'; facts: FactId[] }
   | { kind: 'stats'; items: { label: string; value: (s: Stats) => string }[] }
-  | { kind: 'link'; href: string | null; label: string; todo?: string }
+  | { kind: 'link'; href: string; label: string }
+  | { kind: 'link'; href: null; label: string; todo: string }
+  /** Résumé (when shown), LinkedIn and GitHub, from content/links.ts. */
+  | { kind: 'links' }
   | { kind: 'todo'; text: string };
 
 const n = (value: number) => value.toLocaleString('en-US');
@@ -20,18 +24,18 @@ const n = (value: number) => value.toLocaleString('en-US');
 export const PANELS: Record<SectionSlug, PanelBlock[]> = {
   about: [
     { kind: 'eyebrow', text: 'THE PHOTO · ABOUT' },
-    { kind: 'title', text: "Hi, I'm Carlos." },
+    { kind: 'title', text: "Hi, I'm Carlos.", draft: true },
     { kind: 'fact', fact: 'ABOUT' },
     {
       kind: 'prose',
-      facts: ['F02'],
+      facts: ['F02', 'F07'],
       text: "Weekdays, I make an ad platform faster. Weekends, [TODO: Q3 backflow credential]. That's how Potaflow happened.",
       draft: true,
     },
   ],
   experience: [
     { kind: 'eyebrow', text: 'THE BADGE · EXPERIENCE' },
-    { kind: 'title', text: 'Same desk since July 2019' },
+    { kind: 'title', text: 'Same desk since July 2019', draft: true },
     {
       kind: 'prose',
       facts: ['F02', 'F01'],
@@ -42,23 +46,23 @@ export const PANELS: Record<SectionSlug, PanelBlock[]> = {
   ],
   'how-i-build': [
     { kind: 'eyebrow', text: 'THE LAPTOP · HOW I BUILD' },
-    { kind: 'title', text: 'I set the bar. Agents do the legwork.' },
+    { kind: 'title', text: 'I set the bar. Agents do the legwork.', draft: true },
     {
       kind: 'prose',
       facts: ['F11'],
-      text: "I write the spec. Agents plan, build and review in parallel. Nothing merges until I've read it.",
+      text: 'Agents plan, build and review in parallel. [TODO: Q24 confirm: "I write the spec" and "Nothing merges until I\'ve read it"]',
       draft: true,
     },
     { kind: 'list', facts: ['F11', 'F09', 'F10'] },
   ],
   potaflow: [
     { kind: 'eyebrow', text: 'THE GAUGE · PROJECT 01' },
-    { kind: 'title', text: 'Potaflow' },
+    { kind: 'title', text: 'Potaflow', draft: true },
     { kind: 'fact', fact: 'P01' },
     {
       kind: 'prose',
       facts: ['P03'],
-      text: 'That gauge is a real tool of mine. [TODO: Q3 backflow credential] I wrote the rules down for the agents: custom skills that encode NY DOH-1013 and how each device is physically tested. Then I review every change.',
+      text: '[TODO: Q3 backflow credential, and whether the gauge is his own tool] Custom skills give the agents the rules: NY DOH-1013 and how each device is physically tested. [TODO: Q24 confirm review claim]',
       draft: true,
     },
     {
@@ -76,13 +80,13 @@ export const PANELS: Record<SectionSlug, PanelBlock[]> = {
   ],
   'power-walk': [
     { kind: 'eyebrow', text: 'THE PHONE · PROJECT 02' },
-    { kind: 'title', text: 'Power Walk' },
+    { kind: 'title', text: 'Power Walk', draft: true },
     { kind: 'todo', text: '[TODO: Q7 confirm public name]' },
     { kind: 'fact', fact: 'P04' },
     {
       kind: 'prose',
       facts: ['P05'],
-      text: 'Spec first: I wrote what the game had to do, agents built against it, I reviewed everything.',
+      text: 'Spec first: agents built against written specs and plans. [TODO: Q24 confirm: who wrote the specs, and the review claim]',
       draft: true,
     },
     { kind: 'fact', fact: 'P05' },
@@ -90,7 +94,7 @@ export const PANELS: Record<SectionSlug, PanelBlock[]> = {
   ],
   'this-site': [
     { kind: 'eyebrow', text: 'THE NOTE · PROJECT 03' },
-    { kind: 'title', text: 'This website' },
+    { kind: 'title', text: 'This website', draft: true },
     { kind: 'fact', fact: 'P06' },
     {
       kind: 'prose',
@@ -109,6 +113,7 @@ export const PANELS: Record<SectionSlug, PanelBlock[]> = {
   ],
   contact: [
     { kind: 'eyebrow', text: 'THE CARD · CONTACT' },
-    { kind: 'title', text: 'Say hello' },
+    { kind: 'title', text: 'Say hello', draft: true },
+    { kind: 'links' },
   ],
 };

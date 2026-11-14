@@ -49,7 +49,6 @@ const renderAll = (s: Stats) => ids.map((id) => renderFact(id, s));
 describe('facts', () => {
   it('never contains the retired F05', () => {
     expect(ids).not.toContain('F05');
-    expect(JSON.stringify(ids)).not.toContain('F05');
   });
 
   it('P02 claims "every one merged by Carlos" only when verified', () => {
@@ -68,18 +67,37 @@ describe('facts', () => {
     );
   });
 
-  it('P06 shows a TODO with no directions, and the count when they exist', () => {
-    expect(renderFact('P06', makeStats())).toContain('[TODO: Q21');
-    const p06 = renderFact('P06', makeStats({ thisSite: { directions: dirs(5) } }));
-    expect(p06).toContain('across 5 directions');
-    expect(p06).not.toContain('0 directions');
+  it('P06 shows a TODO with no directions, never a zero count', () => {
+    const empty = renderFact('P06', makeStats());
+    expect(empty).toContain('[TODO: Q21');
+    expect(empty).not.toContain('across');
+    expect(empty).not.toContain('0 directions');
   });
 
-  it('P06 claims "every change reviewed by Carlos" only when every PR was merged by him', () => {
-    expect(renderFact('P06', makeStats())).toContain('every change reviewed by Carlos');
+  it('P06 counts directions with correct plurals', () => {
+    expect(renderFact('P06', makeStats({ thisSite: { directions: dirs(5) } }))).toContain(
+      'across 5 directions,',
+    );
+    expect(renderFact('P06', makeStats({ thisSite: { directions: dirs(1) } }))).toContain(
+      'across 1 direction,',
+    );
+  });
+
+  it('P06 claims only what GitHub records: "every PR merged by Carlos", never "reviewed"', () => {
+    expect(renderFact('P06', makeStats())).toContain('every PR merged by Carlos');
+    expect(renderFact('P06', makeStats())).not.toContain('reviewed');
     expect(
       renderFact('P06', makeStats({ thisSite: { allPRsMergedByCarlos: false } })),
-    ).not.toContain('reviewed by Carlos');
+    ).not.toContain('merged by Carlos');
+  });
+
+  it('never claims "merged by Carlos" over zero PRs, even if the flag says true', () => {
+    expect(
+      renderFact('P02', makeStats({ potaflow: { mergedPRs: 0, allPRsMergedByCarlos: true } })),
+    ).not.toContain('merged by Carlos');
+    expect(
+      renderFact('P06', makeStats({ thisSite: { mergedPRs: 0, allPRsMergedByCarlos: true } })),
+    ).not.toContain('merged by Carlos');
   });
 
   it('never says "written by AI" and never names a town', () => {

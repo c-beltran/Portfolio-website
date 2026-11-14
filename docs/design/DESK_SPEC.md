@@ -120,7 +120,7 @@ export const facts = {
   P03: 'Potaflow: custom AI skills encode NY DOH-1013 rules and physical testing procedures',
   P04: 'Power Walk: iPhone game where every real step (Apple Health) is a footstep through a blacked-out New York landmark; find the fuse and turn the lights back on',
   P05: 'Power Walk: React Native and Expo; built from {stats.powerWalk.specsAndPlans} specs and plans; every commit co-authored with Claude; Claude Design produced parts of the art',
-  P06: 'This website: designed on a Claude Design canvas across {stats.thisSite.directions} directions, built with AI agents, every change reviewed by Carlos',
+  P06: 'This website: designed on a Claude Design canvas across {stats.thisSite.directions} directions, built with AI agents, every PR merged by Carlos',
   ABOUT: '[TODO: Carlos writes this in his own voice]',
 } as const;
 ```
@@ -128,7 +128,7 @@ export const facts = {
 Rules for the stats in P02, P05 and P06:
 
 - "co-authored with Claude" is the only label, never "written by AI". The denominator is stated in a footnote on the site.
-- "Every one merged by Carlos" is shown only if the script verifies every merged PR's merger.
+- "Every one merged by Carlos" is shown only if the script verifies every merged PR's merger. "Merged by" is the only review claim made, because it's what GitHub records; nothing says "reviewed" unless a record of the review exists. **(Amended)**
 - "Every commit co-authored with Claude" is shown only if the script verifies 100% coverage. Otherwise the site shows the percentage.
 - No claim is made about an AI review gate unless a GitHub record of it exists for every PR.
 
