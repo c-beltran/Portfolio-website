@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "serve:out": "serve out -l 4173",
+    "serve:out": "node scripts/local-serve/prepare.mjs && serve out -l 4173",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "format:check": "prettier --check .",
