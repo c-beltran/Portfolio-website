@@ -1,5 +1,5 @@
 {
-  "asOf": "2026-11-13",
+  "asOf": "2026-11-14",
   "potaflow": {
     "commits": 1528,
     "agentAuthoredCommits": 21,
@@ -24,7 +24,7 @@
     "specsAndPlans": 88
   },
   "thisSite": {
-    "commits": 1,
+    "commits": 23,
     "mergedPRs": 0,
     "allPRsMergedByCarlos": false,
     "directions": []
