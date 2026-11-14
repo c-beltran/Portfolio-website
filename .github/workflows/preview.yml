@@ -39,7 +39,6 @@ jobs:
       - name: Lighthouse CI against the protected preview (bypass header)
         run: |
           HEADERS=$(jq -nc --arg s "$VERCEL_AUTOMATION_BYPASS_SECRET" '{"x-vercel-protection-bypass": $s}')
-          export CHROME_PATH=$(node -e 'console.log(require("@playwright/test").chromium.executablePath())')
           pnpm exec lhci autorun --config=lighthouserc.preview.json \
             --collect.url="$PREVIEW_URL/" \
             --collect.url="$PREVIEW_URL/potaflow" \

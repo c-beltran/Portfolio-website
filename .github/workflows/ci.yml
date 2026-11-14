@@ -70,7 +70,6 @@ jobs:
 
       - name: Lighthouse CI (local static server; budgets fail the build)
         run: |
-          export CHROME_PATH=$(node -e 'console.log(require("@playwright/test").chromium.executablePath())')
           pnpm exec lhci autorun --config=lighthouserc.json
 
       - name: Production build hides the résumé
