@@ -1,0 +1,49 @@
+name: Preview audit
+
+on: deployment_status
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    # Vercel names preview environments "Preview" (or "Preview – <name>"), so match the prefix.
+    if: github.event.deployment_status.state == 'success' && startsWith(github.event.deployment.environment, 'Preview')
+    runs-on: ubuntu-latest
+    # The bypass secret lives in this GitHub Environment, not in plain repo secrets.
+    # Vercel's Git Fork Protection must stay on, so fork PRs never deploy without Carlos's approval.
+    environment: preview-audit
+    timeout-minutes: 20
+    env:
+      PREVIEW_URL: ${{ github.event.deployment_status.target_url }}
+      VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.deployment.sha }}
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+
+      - name: Record the deployment event
+        run: echo "environment=${{ github.event.deployment.environment }} url=$PREVIEW_URL sha=${{ github.event.deployment.sha }}"
+
+      # Lighthouse embeds request headers in its reports, so these reports stay on the runner
+      # (lighthouserc.preview.json uploads to the filesystem) and are never published as artifacts.
+      # Only the bypass header is sent: the set-cookie variant answers with a redirect, which
+      # Lighthouse would measure on every run.
+      - name: Lighthouse CI against the protected preview (bypass header)
+        run: |
+          HEADERS=$(jq -nc --arg s "$VERCEL_AUTOMATION_BYPASS_SECRET" '{"x-vercel-protection-bypass": $s}')
+          pnpm exec lhci autorun --config=lighthouserc.preview.json \
+            --collect.url="$PREVIEW_URL/" \
+            --collect.url="$PREVIEW_URL/potaflow" \
+            --collect.url="$PREVIEW_URL/classic" \
+            --collect.settings.extraHeaders="$HEADERS"
+
+      - name: Preview checks (routes, OG content type, analytics beacon, protection)
+        run: pnpm e2e

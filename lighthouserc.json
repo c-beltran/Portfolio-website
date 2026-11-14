@@ -1,0 +1,58 @@
+{
+  "ci": {
+    "collect": {
+      "startServerCommand": "pnpm serve:out",
+      "startServerReadyPattern": "Accepting connections",
+      "url": [
+        "http://localhost:4173/",
+        "http://localhost:4173/potaflow",
+        "http://localhost:4173/classic"
+      ],
+      "numberOfRuns": 3
+    },
+    "assert": {
+      "assertions": {
+        "categories:performance": [
+          "error",
+          {
+            "minScore": 0.9
+          }
+        ],
+        "categories:accessibility": [
+          "error",
+          {
+            "minScore": 1
+          }
+        ],
+        "categories:best-practices": [
+          "error",
+          {
+            "minScore": 0.95
+          }
+        ],
+        "categories:seo": [
+          "error",
+          {
+            "minScore": 1
+          }
+        ],
+        "largest-contentful-paint": [
+          "error",
+          {
+            "maxNumericValue": 2000
+          }
+        ],
+        "cumulative-layout-shift": [
+          "error",
+          {
+            "maxNumericValue": 0.0499
+          }
+        ]
+      },
+      "aggregationMethod": "median-run"
+    },
+    "upload": {
+      "target": "temporary-public-storage"
+    }
+  }
+}

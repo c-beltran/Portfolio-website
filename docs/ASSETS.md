@@ -21,9 +21,9 @@ photos/       polaroid photo, sticky-note handwriting photo
 
 Every model, texture and image used in the build is listed here, with its source and license.
 
-| Asset | Source | License | Raw file | Output |
-|---|---|---|---|---|
-| Backflow test kit (gauge + hoses) | Scanned by Carlos (Polycam) | Carlos's own | `[TODO]` | `[TODO]` |
-| Desk, laptop, phone, lamp | `[TODO: CC0 source, e.g. Poly Haven]` | `[TODO]` | `[TODO]` | `[TODO]` |
-| Polaroid photo | Carlos (Q13) | Carlos's own | `[TODO]` | `[TODO]` |
-| Sticky-note handwriting | Carlos (Q13) | Carlos's own | `[TODO]` | `[TODO]` |
+| Asset                             | Source                                | License      | Raw file | Output   |
+| --------------------------------- | ------------------------------------- | ------------ | -------- | -------- |
+| Backflow test kit (gauge + hoses) | Scanned by Carlos (Polycam)           | Carlos's own | `[TODO]` | `[TODO]` |
+| Desk, laptop, phone, lamp         | `[TODO: CC0 source, e.g. Poly Haven]` | `[TODO]`     | `[TODO]` | `[TODO]` |
+| Polaroid photo                    | Carlos (Q13)                          | Carlos's own | `[TODO]` | `[TODO]` |
+| Sticky-note handwriting           | Carlos (Q13)                          | Carlos's own | `[TODO]` | `[TODO]` |

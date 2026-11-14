@@ -1,0 +1,29 @@
+import Link from 'next/link';
+import { DRAFT_MARK } from '@/content/panels';
+import { tenSecondFacts } from '@/content/facts';
+import { headerSummary, LINKS, RESUME_TODO, showResume, showResumeTodo } from '@/content/links';
+import { LampToggle } from './LampToggle';
+
+export function Header() {
+  return (
+    <header className="site-header">
+      <div className="site-header__intro">
+        <h1 className="site-header__name">Carlos Beltran</h1>
+        <p className="site-header__summary">
+          {headerSummary()} <span className="draft-mark">{DRAFT_MARK}</span>
+        </p>
+        <p className="site-header__facts">{tenSecondFacts().join(' · ')}</p>
+      </div>
+      <div className="site-header__actions">
+        {showResume() && (
+          <a className="button button--primary" href={LINKS.resume}>
+            Download résumé
+          </a>
+        )}
+        {showResumeTodo() && <span className="draft-mark">{RESUME_TODO}</span>}
+        <Link href="/classic">Prefer a plain page? Classic version</Link>
+        <LampToggle />
+      </div>
+    </header>
+  );
+}

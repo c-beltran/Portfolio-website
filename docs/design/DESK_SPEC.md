@@ -2,9 +2,10 @@
 
 You are building Carlos Beltran's personal portfolio site from scratch. Read this whole file before writing code. Stop at the end of every milestone for review.
 
-*Amended 2026-11-13* after the M0 review: section routes, the laptop screen, contact, hosting, the numbers rule, the tier rule and the performance job. Amended passages are marked **(amended)**.
+_Amended 2026-11-13_ after the M0 review: section routes, the laptop screen, contact, hosting, the numbers rule, the tier rule and the performance job. Amended passages are marked **(amended)**.
 
 Reference material in `docs/design/`:
+
 - `desk-mock.dc.html`: the approved interactive mock (Direction E, "The Desk"). It uses a proprietary design-canvas runtime, so treat it as a reference for layout, copy and behavior. Don't port its runtime. Where it disagrees with this spec, this spec wins.
 - `art-direction.png`: lighting, camera, materials, object states and fallback tiers. This is the visual target.
 - `directions/`: one PNG per direction designed on the Claude Design canvas (A–E). E is the chosen one.
@@ -16,6 +17,7 @@ Reference material in `docs/design/`:
 Carlos Beltran is a Senior Software Engineer, Performance Engineering on the Ad Platform at People Inc. (formerly Dotdash Meredith, formerly Meredith), from July 2019 to the present. He's a backend and performance specialist, primarily Go, and an AI-native engineer who builds with Claude Code, Codex, Cursor and Claude Design using multi-agent workflows.
 
 A visitor must leave with these, in priority order:
+
 1. His experience: senior, deep, long-tenured.
 2. How he uses AI to build, shown with real evidence, not buzzwords.
 3. That the site itself is intuitive and interactive, not a static résumé.
@@ -29,21 +31,22 @@ Feel: professional, interactive, easy to read, a little fun. It should feel like
 
 The homepage is Carlos's desk, seen from above at a three-quarter angle. Each object opens one section, and **every section has its own route (amended)**:
 
-| Object | Section | Route | Click behavior |
-|---|---|---|---|
-| Polaroid photo | About | `/about` | Tilts up toward the camera |
-| ID badge on lanyard | Experience | `/experience` | Flips to show the company names. The face reads "People Inc. · since July 2019" in plain text |
-| Laptop | How I build (AI approach) | `/how-i-build` | Camera leans in. **(amended)** The screen is an editor window with a Claude Code side panel that replays a short excerpt of a real Claude Code session (prompt → plan → edit → tests pass → Carlos's review). Under reduced motion it shows the finished state. No interactive terminal |
-| Backflow test-kit gauge with red/yellow/blue hoses | Potaflow project | `/potaflow` | Needle swings up and settles; hoses sway |
-| Phone | Power Walk project | `/power-walk` | Screen lights up yellow, light spills on the felt |
-| Sticky note (handwritten) | This website | `/this-site` | Peels up |
-| Business card | Contact | `/contact` | Flips |
-| Desk lamp | Light/dark mode toggle | (none) | The room dims; the lamp lights the desk |
-| Coffee mug | Decoration | (none) | Steam drifts (off with reduced motion) |
+| Object                                             | Section                   | Route          | Click behavior                                                                                                                                                                                                                                                                          |
+| -------------------------------------------------- | ------------------------- | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Polaroid photo                                     | About                     | `/about`       | Tilts up toward the camera                                                                                                                                                                                                                                                              |
+| ID badge on lanyard                                | Experience                | `/experience`  | Flips to show the company names. The face reads "People Inc. · since July 2019" in plain text                                                                                                                                                                                           |
+| Laptop                                             | How I build (AI approach) | `/how-i-build` | Camera leans in. **(amended)** The screen is an editor window with a Claude Code side panel that replays a short excerpt of a real Claude Code session (prompt → plan → edit → tests pass → Carlos's review). Under reduced motion it shows the finished state. No interactive terminal |
+| Backflow test-kit gauge with red/yellow/blue hoses | Potaflow project          | `/potaflow`    | Needle swings up and settles; hoses sway                                                                                                                                                                                                                                                |
+| Phone                                              | Power Walk project        | `/power-walk`  | Screen lights up yellow, light spills on the felt                                                                                                                                                                                                                                       |
+| Sticky note (handwritten)                          | This website              | `/this-site`   | Peels up                                                                                                                                                                                                                                                                                |
+| Business card                                      | Contact                   | `/contact`     | Flips                                                                                                                                                                                                                                                                                   |
+| Desk lamp                                          | Light/dark mode toggle    | (none)         | The room dims; the lamp lights the desk                                                                                                                                                                                                                                                 |
+| Coffee mug                                         | Decoration                | (none)         | Steam drifts (off with reduced motion)                                                                                                                                                                                                                                                  |
 
 Clicking an object moves the camera to it (about 0.9 s, ease-out, no spinning) and opens that section in an **HTML panel** beside the scene (a bottom sheet on phones).
 
 **Routes (amended).**
+
 - Opening an object pushes its route onto the history.
 - Back and Forward move between sections. Esc, a Back control or clicking the desk returns to `/`.
 - A direct load of a section route opens the desk with that object already selected and its panel open, in every tier, with **no camera animation on first load**.
@@ -51,6 +54,7 @@ Clicking an object moves the camera to it (about 0.9 s, ease-out, no spinning) a
 - `/classic` links to the same routes.
 
 **The header (amended)** always shows:
+
 - his name and title
 - a one-line summary that doesn't name the employer (People Inc. appears in Experience, on the badge and on `/classic`)
 - the 10-second facts: Go · backend & performance · N+ years · AI-native · New York. The years are computed from July 2019.
@@ -116,14 +120,15 @@ export const facts = {
   P03: 'Potaflow: custom AI skills encode NY DOH-1013 rules and physical testing procedures',
   P04: 'Power Walk: iPhone game where every real step (Apple Health) is a footstep through a blacked-out New York landmark; find the fuse and turn the lights back on',
   P05: 'Power Walk: React Native and Expo; built from {stats.powerWalk.specsAndPlans} specs and plans; every commit co-authored with Claude; Claude Design produced parts of the art',
-  P06: 'This website: designed on a Claude Design canvas across {stats.thisSite.directions} directions, built with AI agents, every change reviewed by Carlos',
+  P06: 'This website: designed on a Claude Design canvas across {stats.thisSite.directions} directions, built with AI agents, every PR merged by Carlos',
   ABOUT: '[TODO: Carlos writes this in his own voice]',
 } as const;
 ```
 
 Rules for the stats in P02, P05 and P06:
+
 - "co-authored with Claude" is the only label, never "written by AI". The denominator is stated in a footnote on the site.
-- "Every one merged by Carlos" is shown only if the script verifies every merged PR's merger.
+- "Every one merged by Carlos" is shown only if the script verifies every merged PR's merger. "Merged by" is the only review claim made, because it's what GitHub records; nothing says "reviewed" unless a record of the review exists. **(Amended)**
 - "Every commit co-authored with Claude" is shown only if the script verifies 100% coverage. Otherwise the site shows the percentage.
 - No claim is made about an AI review gate unless a GitHub record of it exists for every PR.
 

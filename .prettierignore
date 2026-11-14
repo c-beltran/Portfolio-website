@@ -1,0 +1,11 @@
+.next/
+out/
+node_modules/
+docs/private/
+docs/design/*.html
+pnpm-lock.yaml
+test-results/
+playwright-report/
+.lighthouseci/
+.superpowers/
+content/stats.json
