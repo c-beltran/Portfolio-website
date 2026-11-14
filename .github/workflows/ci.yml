@@ -1,0 +1,70 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [revamp/desk, master]
+  push:
+    branches: [revamp/desk, 'm*/**']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gates:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Private notes are never tracked
+        run: |
+          if [ -n "$(git ls-files docs/private)" ]; then
+            echo "::error::private notes are tracked under docs/private/"
+            git ls-files docs/private
+            exit 1
+          fi
+
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      - name: Static checks and unit tests
+        run: |
+          pnpm typecheck
+          pnpm lint
+          pnpm format:check
+          pnpm test
+          pnpm stats:check
+
+      - name: Build (preview env)
+        run: pnpm build
+
+      - run: pnpm exec playwright install --with-deps chromium
+
+      - name: End-to-end and accessibility tests
+        run: pnpm e2e --grep-invert @screens
+
+      - name: Screenshots (desktop/phone × day/lamp)
+        run: pnpm e2e --grep @screens
+      - uses: actions/upload-artifact@v4
+        with:
+          name: screenshots
+          path: test-results/screens
+          if-no-files-found: error
+
+      - name: Lighthouse CI (local static server; budgets fail the build)
+        run: pnpm exec lhci autorun --config=lighthouserc.json
+
+      - name: Production build hides the résumé
+        env:
+          NEXT_PUBLIC_VERCEL_ENV: production
+        run: |
+          pnpm build
+          pnpm e2e tests/e2e/header.spec.ts
