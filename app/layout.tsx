@@ -46,7 +46,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
         <style dangerouslySetInnerHTML={{ __html: themeCss() }} />
       </head>
-      <body>
+      {/* Extensions (ColorZilla, Grammarly…) add attributes to <body> before React hydrates. */}
+      <body suppressHydrationWarning>
         <div className="page">
           <Header />
           {children}
