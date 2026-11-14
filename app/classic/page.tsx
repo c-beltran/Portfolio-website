@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import type { Metadata } from 'next';
 import { renderFact, statsFootnote } from '@/content/facts';
 import type { FactId } from '@/content/factIds';
@@ -45,7 +46,7 @@ function DeskLinks({ desk }: { desk: ClassicSection['desk'] }) {
       {desk.map((d, i) => (
         <span key={d.slug}>
           {i > 0 && ' · '}
-          <a href={`/${d.slug}`}>{d.label}</a>
+          <Link href={`/${d.slug}`}>{d.label}</Link>
         </span>
       ))}
     </p>

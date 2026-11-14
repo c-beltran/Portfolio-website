@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { DRAFT_MARK } from '@/content/panels';
 import { tenSecondFacts } from '@/content/facts';
 import { headerSummary, LINKS, showResume } from '@/content/links';
@@ -19,7 +20,7 @@ export function Header() {
             Download résumé
           </a>
         )}
-        <a href="/classic">Prefer a plain page? Classic version</a>
+        <Link href="/classic">Prefer a plain page? Classic version</Link>
         <LampToggle />
       </div>
     </header>
