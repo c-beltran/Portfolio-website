@@ -2,7 +2,7 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 import { renderFact, statsFootnote } from '@/content/facts';
 import type { FactId } from '@/content/factIds';
-import { LINKS, showResume } from '@/content/links';
+import { LINKS, RESUME_TODO, showResume, showResumeTodo } from '@/content/links';
 import type { SectionSlug } from '@/content/objects';
 
 export const metadata: Metadata = {
@@ -78,6 +78,7 @@ export default function ClassicPage() {
               <a href={LINKS.resume}>Download résumé</a>
             </li>
           )}
+          {showResumeTodo() && <li>{RESUME_TODO}</li>}
           <li>
             <a href={LINKS.linkedin}>LinkedIn</a>
           </li>

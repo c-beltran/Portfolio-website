@@ -34,7 +34,7 @@ export function findHandTypedStats(text: string): Finding[] {
     .map((m) => ({ line: lineAt(m.index), match: m[0].replace(/\s+/g, ' ').trim() }));
 }
 
-const SCANNED_DIRS = ['content', 'app', 'components'];
+const SCANNED_DIRS = ['content', 'app', 'components', 'lib'];
 const SCANNED_EXT = /\.(ts|tsx|json|md|mdx)$/;
 const EXCLUDED = (path: string) =>
   path === 'content/stats.json' || /\.(test|spec)\.tsx?$/.test(path);

@@ -1,5 +1,5 @@
-import { renderFact } from '@/content/facts';
-import { LINKS, showResume } from '@/content/links';
+import { renderFact, statsFootnote } from '@/content/facts';
+import { LINKS, RESUME_TODO, showResume, showResumeTodo } from '@/content/links';
 import type { SectionSlug } from '@/content/objects';
 import { DRAFT_MARK, PANELS, type PanelBlock } from '@/content/panels';
 import statsJson from '@/content/stats.json';
@@ -70,6 +70,7 @@ function Block({ block }: { block: PanelBlock }) {
               <a href={LINKS.resume}>Download résumé</a>
             </li>
           )}
+          {showResumeTodo() && <li>{RESUME_TODO}</li>}
           <li>
             <a href={LINKS.linkedin}>LinkedIn</a>
           </li>
@@ -83,6 +84,13 @@ function Block({ block }: { block: PanelBlock }) {
   }
 }
 
+const STAT_FACTS = new Set(['P02', 'P05', 'P06']);
+
+/** Panels showing project stats also show their definition and date (spec §5). */
+function hasProjectStats(blocks: PanelBlock[]): boolean {
+  return blocks.some((b) => b.kind === 'stats' || (b.kind === 'fact' && STAT_FACTS.has(b.fact)));
+}
+
 type Props = { slug: SectionSlug | null; onClose: () => void };
 
 /** The section panel (spec §2). Stays outside any canvas; announced politely. */
@@ -90,7 +98,7 @@ export function Panel({ slug, onClose }: Props) {
   if (slug === null) {
     return (
       <section className="panel" aria-live="polite" aria-label="Section">
-        <p className="panel__hint">Pick something on the desk.</p>
+        <p className="panel__hint">Pick a section above.</p>
       </section>
     );
   }
@@ -99,6 +107,11 @@ export function Panel({ slug, onClose }: Props) {
       {PANELS[slug].map((block, i) => (
         <Block key={i} block={block} />
       ))}
+      {hasProjectStats(PANELS[slug]) && (
+        <p className="panel__footnote">
+          <small>{statsFootnote()}</small>
+        </p>
+      )}
       <button type="button" className="panel__back" onClick={onClose}>
         Back to desk
       </button>

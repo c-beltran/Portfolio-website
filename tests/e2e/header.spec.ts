@@ -35,7 +35,12 @@ test.describe('header', () => {
     page,
   }) => {
     await page.goto('/');
+    // No PDF exists yet, so no build links to it; previews show a TODO instead (links.spec).
     const resume = page.getByRole('banner').getByRole('link', { name: 'Download résumé' });
-    await expect(resume).toHaveCount(production ? 0 : 1);
+    await expect(resume).toHaveCount(0);
+    await expect(page.getByRole('banner')).toContainText(
+      production ? 'Carlos Beltran' : '[TODO: Q15 résumé PDF]',
+    );
+    if (production) await expect(page.getByRole('banner')).not.toContainText('[TODO: Q15');
   });
 });

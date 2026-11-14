@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { DRAFT_MARK } from '@/content/panels';
 import { tenSecondFacts } from '@/content/facts';
-import { headerSummary, LINKS, showResume } from '@/content/links';
+import { headerSummary, LINKS, RESUME_TODO, showResume, showResumeTodo } from '@/content/links';
 import { LampToggle } from './LampToggle';
 
 export function Header() {
@@ -20,6 +20,7 @@ export function Header() {
             Download résumé
           </a>
         )}
+        {showResumeTodo() && <span className="draft-mark">{RESUME_TODO}</span>}
         <Link href="/classic">Prefer a plain page? Classic version</Link>
         <LampToggle />
       </div>

@@ -9,7 +9,7 @@ type Props = {
 export function Drawer({ selected, onOpen }: Props) {
   return (
     <nav aria-label="Sections" className="drawer">
-      <p className="drawer__label">Or open a drawer:</p>
+      <p className="drawer__label">Sections:</p>
       <ul className="drawer__list">
         {DESK_OBJECTS.map((o) => (
           <li key={o.slug}>
