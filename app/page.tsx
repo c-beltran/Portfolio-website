@@ -6,5 +6,5 @@ import { titleFor } from '@/lib/deskRoutes';
 export const metadata: Metadata = { title: titleFor(null), description: renderFact('F02') };
 
 export default function Home() {
-  return <Desk initial={null} />;
+  return <Desk />;
 }

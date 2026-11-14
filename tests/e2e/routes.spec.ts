@@ -28,9 +28,15 @@ test.describe('section routes', () => {
       await drawerButton(page, label).click();
     }
     expect(path(page)).toBe('/contact');
-    for (const expected of ['/potaflow', '/experience', '/']) {
+    for (const [expected, title] of [
+      ['/potaflow', 'Potaflow'],
+      ['/experience', 'Same desk since July 2019'],
+      ['/', null],
+    ] as const) {
       await page.goBack();
       expect(path(page)).toBe(expected);
+      if (title) await expect(panelTitle(page)).toContainText(title);
+      else await expect(panelTitle(page)).toHaveCount(0);
     }
     await expect(page).toHaveTitle(titleFor(null));
     await expect(panelTitle(page)).toHaveCount(0);
@@ -107,5 +113,94 @@ test.describe('section routes', () => {
     await drawerButton(page, 'Contact').focus();
     await page.keyboard.press('Enter');
     await expect(panelTitle(page)).toBeFocused();
+  });
+
+  test('leaving the desk and pressing Back restores the panel for that URL', async ({ page }) => {
+    await page.goto('/');
+    await drawerButton(page, 'Potaflow').click();
+    await page
+      .getByRole('banner')
+      .getByRole('link', { name: /Classic version/ })
+      .click();
+    await expect(page).toHaveURL(/\/classic$/);
+    await page.goBack();
+    expect(path(page)).toBe('/potaflow');
+    await expect(panelTitle(page)).toContainText('Potaflow');
+    await expect(page).toHaveTitle(titleFor('potaflow'));
+    await expect(drawerButton(page, 'Potaflow')).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  test('closing after a direct load, then leaving and pressing Back, shows the overview', async ({
+    page,
+  }) => {
+    await page.goto('/potaflow');
+    await page.getByRole('button', { name: 'Back to desk' }).click();
+    await page
+      .getByRole('banner')
+      .getByRole('link', { name: /Classic version/ })
+      .click();
+    await expect(page).toHaveURL(/\/classic$/);
+    await page.goBack();
+    expect(path(page)).toBe('/');
+    await expect(panelTitle(page)).toHaveCount(0);
+    await expect(page).toHaveTitle(titleFor(null));
+  });
+
+  test("closing after a direct load puts focus on that section's drawer button", async ({
+    page,
+  }) => {
+    await page.goto('/potaflow');
+    await page.keyboard.press('Escape');
+    await expect(drawerButton(page, 'Potaflow')).toBeFocused();
+  });
+
+  test("Back that closes the panel moves focus to the closed section's button", async ({
+    page,
+  }) => {
+    await page.goto('/');
+    await drawerButton(page, 'About').click();
+    await expect(panelTitle(page)).toBeFocused();
+    await page.goBack();
+    await expect(drawerButton(page, 'About')).toBeFocused();
+  });
+
+  test('Esc after Back focuses the section that was open, not the last one clicked', async ({
+    page,
+  }) => {
+    await page.goto('/');
+    await drawerButton(page, 'Experience').click();
+    await drawerButton(page, 'Contact').click();
+    await page.goBack();
+    await expect(panelTitle(page)).toContainText('Same desk');
+    await page.keyboard.press('Escape');
+    await expect(drawerButton(page, 'Experience')).toBeFocused();
+  });
+
+  test('two clicks in the same task still add one history entry', async ({ page }) => {
+    await page.goto('/');
+    const start = await historyLength(page);
+    await page.evaluate(() => {
+      const b = [...document.querySelectorAll('nav button')].find(
+        (el) => el.textContent === 'Potaflow',
+      ) as HTMLButtonElement;
+      b.click();
+      b.click();
+    });
+    expect(await historyLength(page)).toBe(start + 1);
+  });
+
+  test('Tab moves from the drawer into the open panel', async ({ page }) => {
+    await page.goto('/');
+    await drawerButton(page, 'Contact').click();
+    await expect(panelTitle(page)).toBeFocused();
+    await drawerButton(page, 'Contact').focus();
+    await page.keyboard.press('Tab');
+    const inPanel = await page.evaluate(() => !!document.activeElement?.closest('section.panel'));
+    expect(inPanel).toBe(true);
+  });
+
+  test('the 404 page has a title', async ({ page }) => {
+    await page.goto('/nope');
+    await expect(page).toHaveTitle(/Carlos Beltran/);
   });
 });

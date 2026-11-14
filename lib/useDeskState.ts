@@ -1,61 +1,69 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { usePathname } from 'next/navigation';
+import { useCallback, useEffect, useRef } from 'react';
 import type { SectionSlug } from '@/content/objects';
 import { slugFromPath, titleFor } from './deskRoutes';
 
 export { slugFromPath, titleFor };
 
+const drawerButton = (slug: SectionSlug) =>
+  document.querySelector<HTMLElement>(`nav[aria-label="Sections"] [data-slug="${slug}"]`);
+
+const focusIsLost = () => {
+  const el = document.activeElement;
+  return !el || el === document.body || !!el.closest('section.panel');
+};
+
+/** On close, focus returns to the section's trigger unless the visitor has moved off the desk. */
+const focusBelongsToDesk = () =>
+  focusIsLost() || !!document.activeElement?.closest('nav[aria-label="Sections"]');
+
 /**
- * The desk's selection, kept in sync with the URL by raw history.pushState / popstate
- * (verified against Next 16 + Vercel Analytics in the M0 spike). Routes, not hashes.
+ * The desk's selection IS the URL. Next 16 keeps usePathname in sync with raw
+ * history.pushState and popstate (verified in the M0 spike), including when Next restores a
+ * saved router tree on Back from another route, so the selection can never disagree with the URL.
  */
-export function useDeskState(initial: SectionSlug | null) {
-  const [selected, setSelected] = useState<SectionSlug | null>(initial);
-  const selectedRef = useRef(selected);
-  const trigger = useRef<HTMLElement | null>(null);
+export function useDeskState() {
+  const selected = slugFromPath(usePathname() ?? '/');
+  const previous = useRef<SectionSlug | null>(selected);
   const focusPanel = useRef(false);
 
   useEffect(() => {
-    selectedRef.current = selected;
-    if (focusPanel.current) {
-      focusPanel.current = false;
+    document.title = titleFor(selected);
+    const was = previous.current;
+    previous.current = selected;
+    const userOpened = focusPanel.current;
+    focusPanel.current = false;
+    if (selected && (userOpened || (was !== selected && focusIsLost()))) {
+      // Opened by the visitor, or Back/Forward swapped panels under the focus: focus the new panel.
       document.getElementById('panel-title')?.focus();
+    } else if (!selected && was && focusBelongsToDesk()) {
+      // Closed (Esc, Back to desk, browser Back): focus returns to the section that was open.
+      drawerButton(was)?.focus();
     }
   }, [selected]);
 
-  const open = useCallback((slug: SectionSlug, from?: HTMLElement) => {
-    if (selectedRef.current === slug) return;
-    trigger.current = from ?? null;
+  const open = useCallback((slug: SectionSlug) => {
+    if (slugFromPath(window.location.pathname) === slug) return;
     focusPanel.current = true;
     window.history.pushState(null, '', `/${slug}`);
-    document.title = titleFor(slug);
-    setSelected(slug);
   }, []);
 
   const close = useCallback(() => {
-    if (selectedRef.current === null) return;
+    if (slugFromPath(window.location.pathname) === null) return;
     window.history.pushState(null, '', '/');
-    document.title = titleFor(null);
-    setSelected(null);
-    trigger.current?.focus();
   }, []);
 
   useEffect(() => {
-    const onPop = () => {
-      const slug = slugFromPath(window.location.pathname);
-      document.title = titleFor(slug);
-      setSelected(slug);
-    };
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') close();
+      if (e.key !== 'Escape' || e.defaultPrevented || e.isComposing) return;
+      const t = e.target as HTMLElement | null;
+      if (t?.closest('input, textarea, select, [contenteditable="true"]')) return;
+      close();
     };
-    window.addEventListener('popstate', onPop);
     document.addEventListener('keydown', onKey);
-    return () => {
-      window.removeEventListener('popstate', onPop);
-      document.removeEventListener('keydown', onKey);
-    };
+    return () => document.removeEventListener('keydown', onKey);
   }, [close]);
 
   return { selected, open, close };

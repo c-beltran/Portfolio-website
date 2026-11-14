@@ -22,5 +22,5 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
 export default async function SectionPage({ params }: Params) {
   const obj = objectBySlug((await params).section);
   if (!obj) notFound();
-  return <Desk initial={obj.slug} />;
+  return <Desk />;
 }

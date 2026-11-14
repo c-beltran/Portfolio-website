@@ -24,10 +24,12 @@ test.describe('header', () => {
     await expect(page.getByRole('banner')).toContainText('[DRAFT: Carlos to rewrite]');
   });
 
-  test('the page contains no email address', async ({ page }) => {
-    await page.goto('/');
-    expect(await page.content()).not.toMatch(/[\w.+-]+@[\w-]+\.[\w.]+/);
-  });
+  for (const url of ['/', '/classic', '/contact', '/about', '/potaflow', '/nope']) {
+    test(`${url} contains no email address`, async ({ page }) => {
+      await page.goto(url);
+      expect(await page.content()).not.toMatch(/[\w.+-]+@[\w-]+\.[\w.]+/);
+    });
+  }
 
   test(`the résumé link is ${production ? 'hidden in production' : 'shown outside production'}`, async ({
     page,

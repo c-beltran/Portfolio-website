@@ -2,7 +2,7 @@ import { DESK_OBJECTS, type SectionSlug } from '@/content/objects';
 
 type Props = {
   selected: SectionSlug | null;
-  onOpen: (slug: SectionSlug, trigger: HTMLElement) => void;
+  onOpen: (slug: SectionSlug) => void;
 };
 
 /** Every desk object mirrored as a real button (spec §3.4). */
@@ -16,8 +16,9 @@ export function Drawer({ selected, onOpen }: Props) {
             <button
               type="button"
               className="drawer__button"
+              data-slug={o.slug}
               aria-pressed={selected === o.slug}
-              onClick={(e) => onOpen(o.slug, e.currentTarget)}
+              onClick={() => onOpen(o.slug)}
             >
               {o.label}
             </button>

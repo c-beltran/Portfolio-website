@@ -18,7 +18,7 @@ export default defineConfig({
   use: { trace: 'retain-on-failure' },
   webServer: PREVIEW_URL
     ? undefined
-    : { command: 'pnpm serve:out', port: PORT, reuseExistingServer: !process.env.CI },
+    : { command: 'pnpm serve:out', port: PORT, reuseExistingServer: false },
   projects: PREVIEW_URL
     ? [
         {

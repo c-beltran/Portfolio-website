@@ -34,4 +34,12 @@ test.describe('seo', () => {
     expect(robots).toContain('Allow: /');
     expect(robots).toContain('Sitemap: https://cbeltran.com/sitemap.xml');
   });
+
+  for (const url of ['/opengraph-image', '/potaflow/opengraph-image']) {
+    test(`${url} is served as image/png`, async ({ request }) => {
+      const res = await request.get(url);
+      expect(res.status()).toBe(200);
+      expect(res.headers()['content-type']).toMatch(/^image\/png/);
+    });
+  }
 });

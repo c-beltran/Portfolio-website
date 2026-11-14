@@ -20,3 +20,14 @@ describe('titleFor', () => {
     expect(titleFor('power-walk')).toBe('Power Walk · Carlos Beltran');
   });
 });
+
+describe('vercel.json', () => {
+  it('serves extensionless OG images as image/png', async () => {
+    const { readFileSync } = await import('node:fs');
+    const config = JSON.parse(readFileSync('vercel.json', 'utf8')) as {
+      headers: { source: string; headers: { key: string; value: string }[] }[];
+    };
+    const rule = config.headers.find((h) => h.source.includes('opengraph-image'));
+    expect(rule?.headers).toContainEqual({ key: 'Content-Type', value: 'image/png' });
+  });
+});
