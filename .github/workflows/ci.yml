@@ -19,13 +19,22 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Private notes are never tracked
+      - name: Private notes are never tracked (index and PR history)
         run: |
           if [ -n "$(git ls-files docs/private)" ]; then
             echo "::error::private notes are tracked under docs/private/"
             git ls-files docs/private
             exit 1
+          fi
+          if [ -n "${{ github.base_ref }}" ]; then
+            touched=$(git log --name-only --format= "origin/${{ github.base_ref }}..HEAD" -- docs/private)
+            if [ -n "$touched" ]; then
+              echo "::error::a commit in this PR touches docs/private/: $touched"
+              exit 1
+            fi
           fi
 
       - uses: pnpm/action-setup@v4
@@ -49,7 +58,7 @@ jobs:
       - run: pnpm exec playwright install --with-deps chromium
 
       - name: End-to-end and accessibility tests
-        run: pnpm e2e --grep-invert @screens
+        run: pnpm e2e --grep-invert @screens --fail-on-flaky-tests
 
       - name: Screenshots (desktop/phone × day/lamp)
         run: pnpm e2e --grep @screens
@@ -60,7 +69,9 @@ jobs:
           if-no-files-found: error
 
       - name: Lighthouse CI (local static server; budgets fail the build)
-        run: pnpm exec lhci autorun --config=lighthouserc.json
+        run: |
+          export CHROME_PATH=$(node -e 'console.log(require("@playwright/test").chromium.executablePath())')
+          pnpm exec lhci autorun --config=lighthouserc.json
 
       - name: Production build hides the résumé
         env:

@@ -14,12 +14,16 @@ for (const theme of ['day', 'lamp'] as const) {
       test(`${route} has no WCAG 2.1 A/AA violations`, async ({ page }) => {
         await page.goto(route);
         expect(await page.evaluate(() => document.documentElement.dataset.theme)).toBe(theme);
-        const { violations } = await new AxeBuilder({ page })
+        const { violations, incomplete } = await new AxeBuilder({ page })
           .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
           .analyze();
         expect(
           violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target).join(', ')}`),
         ).toEqual([]);
+        // axe can't compute contrast over images or gradients and reports it as "incomplete":
+        // treat that as a failure, so contrast on the desk still can't pass silently.
+        const unverified = incomplete.filter((r) => r.id === 'color-contrast');
+        expect(unverified.flatMap((r) => r.nodes.map((n) => n.target.join(' ')))).toEqual([]);
       });
     }
   });
