@@ -1,29 +1,43 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 
-const STAT_WORD = String.raw`(?:commits?|PRs?|pull\s+requests?|specs?|plans?|directions?)`;
-/** A number (not part of an identifier like Q21 or P05) directly before a stat word. */
+const STAT = String.raw`(?:commits?|PRs?|pull\s+requests?|specs?|plans?|directions?)`;
+const NUMBER = String.raw`\d[\d,]*(?:\.\d+)?k?\+?%?`;
+const NUMBER_WORD = String.raw`(?:one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty)`;
+
+/**
+ * A number (not glued to an identifier like Q21/P05, not a year) before a stat word, with up to
+ * two words between: "5 design directions", "61% of commits", "1.5k commits", "five directions".
+ */
 const NUMBER_BEFORE = new RegExp(
-  String.raw`(?<![\w.])\d[\d,]*\+?\s*(?:merged\s+)?${STAT_WORD}\b`,
+  String.raw`(?<![\w.])(?!(?:19|20)\d\d\b)(?:${NUMBER}|\b${NUMBER_WORD})\s+(?:of\s+)?(?:[A-Za-z-]+\s+){0,2}${STAT}\b`,
   'gi',
 );
-/** A stat word directly before a number: "PR #247", "commits: 1450". */
-const NUMBER_AFTER = new RegExp(String.raw`\b${STAT_WORD}\s*[:#]?\s*\d[\d,]*`, 'gi');
+/** A stat-named key or identifier assigned a number: "mergedPRs: 218", "commits = 1532", "PR #247". */
+const NUMBER_AFTER = new RegExp(
+  String.raw`\b[A-Za-z]*(?:commits?|prs?|pullrequests?|specs?|plans?|directions?)[A-Za-z]*\s*[:=#]\s*\d`,
+  'gi',
+);
+
+/** Blank out markup and quoting (keeping offsets and newlines) so styled stats still match. */
+function normalize(text: string): string {
+  return text.replace(/<[^>]*>/g, (tag) => tag.replace(/[^\n]/g, ' ')).replace(/[{}"'`]/g, ' ');
+}
 
 export type Finding = { line: number; match: string };
 
 export function findHandTypedStats(text: string): Finding[] {
-  return text.split('\n').flatMap((lineText, i) =>
-    [...lineText.matchAll(NUMBER_BEFORE), ...lineText.matchAll(NUMBER_AFTER)].map((m) => ({
-      line: i + 1,
-      match: m[0],
-    })),
-  );
+  const clean = normalize(text);
+  const lineAt = (index: number) => clean.slice(0, index).split('\n').length;
+  return [...clean.matchAll(NUMBER_BEFORE), ...clean.matchAll(NUMBER_AFTER)]
+    .sort((a, b) => a.index - b.index)
+    .map((m) => ({ line: lineAt(m.index), match: m[0].replace(/\s+/g, ' ').trim() }));
 }
 
 const SCANNED_DIRS = ['content', 'app', 'components'];
 const SCANNED_EXT = /\.(ts|tsx|json|md|mdx)$/;
-const EXCLUDED = (path: string) => path === 'content/stats.json' || path.endsWith('.test.ts');
+const EXCLUDED = (path: string) =>
+  path === 'content/stats.json' || /\.(test|spec)\.tsx?$/.test(path);
 
 function walk(dir: string): string[] {
   let entries: string[];
@@ -38,14 +52,17 @@ function walk(dir: string): string[] {
   });
 }
 
-/** Returns `path:line match` strings for every finding under the rendered-content folders. */
-export function checkRepo(root: string): string[] {
-  return SCANNED_DIRS.flatMap((d) => walk(join(root, d)))
+/** Scans the rendered-content folders. `scanned` is the file count, so callers can fail on 0. */
+export function checkRepo(root: string): { scanned: number; findings: string[] } {
+  const files = SCANNED_DIRS.flatMap((d) => walk(join(root, d)))
     .map((full) => relative(root, full))
-    .filter((path) => SCANNED_EXT.test(path) && !EXCLUDED(path))
-    .flatMap((path) =>
+    .filter((path) => SCANNED_EXT.test(path) && !EXCLUDED(path));
+  return {
+    scanned: files.length,
+    findings: files.flatMap((path) =>
       findHandTypedStats(readFileSync(join(root, path), 'utf8')).map(
         (f) => `${path}:${f.line} ${f.match}`,
       ),
-    );
+    ),
+  };
 }

@@ -12,13 +12,17 @@ function localDate(d = new Date()): string {
 const root = process.cwd();
 
 if (process.argv.includes('--check')) {
-  const findings = checkRepo(root);
+  const { scanned, findings } = checkRepo(root);
+  if (scanned === 0) {
+    console.error('stats:check scanned 0 files; run it from the repo root.');
+    process.exit(1);
+  }
   if (findings.length > 0) {
     console.error('Hand-typed project stats found (read them from content/stats.json):');
     for (const f of findings) console.error(`  ${f}`);
     process.exit(1);
   }
-  console.log('stats:check: no hand-typed project stats in content/, app/, components/');
+  console.log(`stats:check: ${scanned} files scanned, no hand-typed project stats`);
 } else {
   const potaflowDir = resolve(root, process.env.POTAFLOW_REPO ?? '../potaflow-core');
   const powerWalkDir = resolve(root, process.env.POWERWALK_REPO ?? '../outapower');

@@ -1,5 +1,5 @@
 export type RepoStats = {
-  /** All refs: `git rev-list --all --count`. */
+  /** Commits on GitHub: `git rev-list --remotes --count` after `git fetch --prune`. */
   commits: number;
   /** Author email noreply@anthropic.com, or author name containing "claude[bot]". */
   agentAuthoredCommits: number;
@@ -9,7 +9,7 @@ export type RepoStats = {
   coAuthoredCommits: number;
   /** floor(100 × coAuthoredCommits / commits). */
   coAuthoredPercent: number;
-  coAuthoredDenominator: 'all commits on all branches';
+  coAuthoredDenominator: 'all commits pushed to GitHub, on every branch';
   mergedPRs: number;
   /** mergedPRs > 0 and every merged PR's mergedBy.login is 'c-beltran'. */
   allPRsMergedByCarlos: boolean;
@@ -24,5 +24,10 @@ export type Stats = {
   asOf: string;
   potaflow: RepoStats;
   powerWalk: RepoStats & { specsAndPlans: number };
-  thisSite: { commits: number; mergedPRs: number; directions: Direction[] };
+  thisSite: {
+    commits: number;
+    mergedPRs: number;
+    allPRsMergedByCarlos: boolean;
+    directions: Direction[];
+  };
 };

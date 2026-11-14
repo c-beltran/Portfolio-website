@@ -5,6 +5,8 @@ import {
   parseDirections,
   percentFloor,
   summarizeMergedPRs,
+  validateDirectionFiles,
+  assertNotTruncated,
 } from './derive';
 
 describe('countCoAuthored', () => {
@@ -81,5 +83,32 @@ describe('percentFloor', () => {
     expect(percentFloor(936, 1523)).toBe(61);
     expect(percentFloor(837, 837)).toBe(100);
     expect(percentFloor(1, 0)).toBe(0);
+  });
+});
+
+describe('validateDirectionFiles', () => {
+  it('accepts an empty folder and a well-formed set', () => {
+    expect(() => validateDirectionFiles([])).not.toThrow();
+    expect(() =>
+      validateDirectionFiles(['A-rejected.png', 'B-rejected.png', 'E-chosen.png', '.DS_Store']),
+    ).not.toThrow();
+  });
+
+  it.each([
+    [['A-rejected.png', 'E-Chosen.png'], /E-Chosen\.png/],
+    [['A-rejected.png', 'e-chosen.png'], /e-chosen\.png/],
+    [['A-rejected.png', 'E-chosen.PNG'], /E-chosen\.PNG/],
+    [['A-chosen.png', 'A-rejected.png'], /letter A/],
+    [['A-chosen.png', 'B-chosen.png'], /exactly one chosen/],
+    [['A-rejected.png', 'B-rejected.png'], /exactly one chosen/],
+  ])('rejects %j', (files, message) => {
+    expect(() => validateDirectionFiles(files)).toThrow(message);
+  });
+});
+
+describe('assertNotTruncated', () => {
+  it('throws when a list reaches its fetch limit, since it may be cut off', () => {
+    expect(() => assertNotTruncated(4999, 5000, 'PRs')).not.toThrow();
+    expect(() => assertNotTruncated(5000, 5000, 'PRs')).toThrow(/limit/);
   });
 });

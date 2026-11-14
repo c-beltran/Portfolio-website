@@ -1,31 +1,32 @@
 {
   "asOf": "2026-11-13",
   "potaflow": {
-    "commits": 1532,
+    "commits": 1528,
     "agentAuthoredCommits": 21,
-    "humanAuthoredCommits": 1511,
-    "coAuthoredCommits": 943,
+    "humanAuthoredCommits": 1507,
+    "coAuthoredCommits": 941,
     "coAuthoredPercent": 61,
-    "coAuthoredDenominator": "all commits on all branches",
+    "coAuthoredDenominator": "all commits pushed to GitHub, on every branch",
     "mergedPRs": 218,
     "allPRsMergedByCarlos": true,
     "firstCommit": "2025-12-09"
   },
   "powerWalk": {
-    "commits": 844,
+    "commits": 831,
     "agentAuthoredCommits": 0,
-    "humanAuthoredCommits": 844,
-    "coAuthoredCommits": 844,
+    "humanAuthoredCommits": 831,
+    "coAuthoredCommits": 831,
     "coAuthoredPercent": 100,
-    "coAuthoredDenominator": "all commits on all branches",
+    "coAuthoredDenominator": "all commits pushed to GitHub, on every branch",
     "mergedPRs": 0,
     "allPRsMergedByCarlos": false,
     "firstCommit": "2026-09-13",
     "specsAndPlans": 88
   },
   "thisSite": {
-    "commits": 4,
+    "commits": 1,
     "mergedPRs": 0,
+    "allPRsMergedByCarlos": false,
     "directions": []
   }
 }

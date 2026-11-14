@@ -3,11 +3,13 @@ import { readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Direction, RepoStats } from '../../content/stats.types';
 import {
+  assertNotTruncated,
   countAgentAuthored,
   countCoAuthored,
   parseDirections,
   percentFloor,
   summarizeMergedPRs,
+  validateDirectionFiles,
 } from './derive';
 
 export const CARLOS_LOGIN = 'c-beltran';
@@ -28,6 +30,18 @@ export function ghRepoOf(dir: string): string {
 
 type PR = { mergedBy: { login: string } | null };
 
+const PR_LIMIT = 5000;
+/** GitHub's search API returns at most 1000 results, whatever --limit says. */
+const SEARCH_LIMIT = 1000;
+
+/**
+ * Counts come from what's on GitHub, not from this clone: fetch first, then read only
+ * remote-tracking refs. Local stashes and unpushed branches never change a published number.
+ */
+function fetchOrigin(dir: string): void {
+  git(dir, 'fetch', '--prune', '--quiet', 'origin');
+}
+
 function mergedPRs(dir: string, search?: string): PR[] {
   const args = [
     'pr',
@@ -42,22 +56,25 @@ function mergedPRs(dir: string, search?: string): PR[] {
     'mergedBy',
   ];
   if (search) args.push('--search', search);
-  return JSON.parse(run('gh', args)) as PR[];
+  const prs = JSON.parse(run('gh', args)) as PR[];
+  assertNotTruncated(prs.length, search ? SEARCH_LIMIT : PR_LIMIT, `merged PRs in ${dir}`);
+  return prs;
 }
 
 export function collectRepo(dir: string): RepoStats {
-  const commits = Number(git(dir, 'rev-list', '--all', '--count').trim());
-  const authors = git(dir, 'log', '--all', '--format=%an%x09%ae').split('\n').filter(Boolean);
-  const coAuthoredCommits = countCoAuthored(git(dir, 'log', '--all', '--format=%H%x00%B%x1e'));
+  fetchOrigin(dir);
+  const commits = Number(git(dir, 'rev-list', '--remotes', '--count').trim());
+  const authors = git(dir, 'log', '--remotes', '--format=%an%x09%ae').split('\n').filter(Boolean);
+  const coAuthoredCommits = countCoAuthored(git(dir, 'log', '--remotes', '--format=%H%x00%B%x1e'));
   const agentAuthoredCommits = countAgentAuthored(authors);
-  const firstCommit = git(dir, 'log', '--all', '--reverse', '--format=%cs').split('\n')[0]!;
+  const firstCommit = git(dir, 'log', '--remotes', '--reverse', '--format=%cs').split('\n')[0]!;
   return {
     commits,
     agentAuthoredCommits,
     humanAuthoredCommits: commits - agentAuthoredCommits,
     coAuthoredCommits,
     coAuthoredPercent: percentFloor(coAuthoredCommits, commits),
-    coAuthoredDenominator: 'all commits on all branches',
+    coAuthoredDenominator: 'all commits pushed to GitHub, on every branch',
     ...summarizeMergedPRs(mergedPRs(dir), CARLOS_LOGIN),
     firstCommit,
   };
@@ -86,6 +103,7 @@ export const REVAMP_START = '2026-11-13';
 export function collectThisSite(dir: string): {
   commits: number;
   mergedPRs: number;
+  allPRsMergedByCarlos: boolean;
   directions: Direction[];
 } {
   let files: string[] = [];
@@ -94,9 +112,13 @@ export function collectThisSite(dir: string): {
   } catch {
     files = [];
   }
+  validateDirectionFiles(files);
+  fetchOrigin(dir);
   return {
-    commits: Number(git(dir, 'rev-list', '--all', '--count', '--not', OLD_SITE_LAST_COMMIT).trim()),
-    mergedPRs: mergedPRs(dir, `merged:>=${REVAMP_START}`).length,
+    commits: Number(
+      git(dir, 'rev-list', '--remotes', '--count', '--not', OLD_SITE_LAST_COMMIT).trim(),
+    ),
+    ...summarizeMergedPRs(mergedPRs(dir, `merged:>=${REVAMP_START}`), CARLOS_LOGIN),
     directions: parseDirections(files),
   };
 }
