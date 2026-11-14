@@ -46,4 +46,4 @@ jobs:
             --collect.settings.extraHeaders="$HEADERS"
 
       - name: Preview checks (routes, OG content type, analytics beacon, protection)
-        run: pnpm e2e --pass-with-no-tests
+        run: pnpm e2e
