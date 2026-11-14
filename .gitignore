@@ -1,0 +1,9 @@
+# Private working notes: a separate private repo (c-beltran/portfolio-notes)
+# cloned here. Never tracked by this public repo; CI fails if anything under it is tracked.
+docs/private/
+
+# Brainstorming companion scratch files
+.superpowers/
+
+# OS
+.DS_Store
