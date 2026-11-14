@@ -63,6 +63,8 @@ export function useDeskState() {
       close();
     };
     document.addEventListener('keydown', onKey);
+    // Hydration marker: tests wait for it before pressing keys on a freshly loaded page.
+    document.documentElement.dataset.deskReady = 'true';
     return () => document.removeEventListener('keydown', onKey);
   }, [close]);
 
