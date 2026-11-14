@@ -136,3 +136,10 @@ describe('statsFootnote', () => {
     expect(note).toContain('2026-11-13');
   });
 });
+
+describe('FACT_IDS', () => {
+  it('lists exactly the keys of facts, so tests can import IDs without stats.json', async () => {
+    const { FACT_IDS } = await import('./factIds');
+    expect([...FACT_IDS].sort()).toEqual(Object.keys(facts).sort());
+  });
+});

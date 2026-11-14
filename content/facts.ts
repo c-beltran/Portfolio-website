@@ -1,5 +1,6 @@
 import statsJson from './stats.json';
 import { CAREER_START, yearsSince } from '../lib/dates';
+import type { FactId } from './factIds';
 import type { Stats } from './stats.types';
 
 export { CAREER_START, yearsSince };
@@ -9,25 +10,7 @@ export { CAREER_START, yearsSince };
  * facts that carry numbers are functions of `Stats`, read from content/stats.json, which only
  * scripts/stats writes.
  */
-export type FactId =
-  | 'F01'
-  | 'F02'
-  | 'F03'
-  | 'F04'
-  | 'F06'
-  | 'F07'
-  | 'F08'
-  | 'F09'
-  | 'F10'
-  | 'F11'
-  | 'F12'
-  | 'P01'
-  | 'P02'
-  | 'P03'
-  | 'P04'
-  | 'P05'
-  | 'P06'
-  | 'ABOUT';
+export type { FactId };
 
 /** Retired IDs are never reused or rendered. */
 export const RETIRED_FACT_IDS = ['F05'] as const;
