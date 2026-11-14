@@ -67,7 +67,7 @@ test.describe('section routes', () => {
     await gotoDesk(page, '/');
     await drawerButton(page, 'Power Walk').click();
     await page.keyboard.press('Escape');
-    expect(path(page)).toBe('/');
+    await expect.poll(() => path(page)).toBe('/');
     await expect(panelTitle(page)).toHaveCount(0);
     await expect(drawerButton(page, 'Power Walk')).toBeFocused();
   });
@@ -75,7 +75,7 @@ test.describe('section routes', () => {
   test('"Back to desk" closes the panel', async ({ page }) => {
     await gotoDesk(page, '/about');
     await page.getByRole('button', { name: 'Back to desk' }).click();
-    expect(path(page)).toBe('/');
+    await expect.poll(() => path(page)).toBe('/');
     await expect(panelTitle(page)).toHaveCount(0);
   });
 
@@ -208,5 +208,37 @@ test.describe('section routes', () => {
   test('the 404 page has a title', async ({ page }) => {
     await page.goto('/nope');
     await expect(page).toHaveTitle(/Carlos Beltran/);
+  });
+
+  test('open then Esc in the same task ends on the overview, not back on the section', async ({
+    page,
+  }) => {
+    await gotoDesk(page, '/');
+    await page.evaluate(() => {
+      const b = [...document.querySelectorAll('nav button')].find(
+        (el) => el.textContent === 'Power Walk',
+      ) as HTMLButtonElement;
+      b.click();
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    });
+    await expect(panelTitle(page)).toHaveCount(0);
+    await expect.poll(() => path(page)).toBe('/');
+    await page.waitForTimeout(300);
+    expect(path(page)).toBe('/');
+  });
+
+  test('two different opens in the same task end on the second section', async ({ page }) => {
+    await gotoDesk(page, '/');
+    await page.evaluate(() => {
+      const find = (label: string) =>
+        [...document.querySelectorAll('nav button')].find(
+          (el) => el.textContent === label,
+        ) as HTMLButtonElement;
+      find('Experience').click();
+      find('Contact').click();
+    });
+    await expect(panelTitle(page)).toContainText('Say hello');
+    await page.waitForTimeout(300);
+    expect(path(page)).toBe('/contact');
   });
 });

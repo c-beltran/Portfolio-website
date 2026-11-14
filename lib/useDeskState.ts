@@ -28,8 +28,12 @@ export function useDeskState() {
   const selected = slugFromPath(usePathname() ?? '/');
   const previous = useRef<SectionSlug | null>(selected);
   const focusPanel = useRef(false);
+  /** The selection Next has committed; the URL can run ahead of it while a navigation is pending. */
+  const committed = useRef<SectionSlug | null>(selected);
+  const queued = useRef<(() => void) | null>(null);
 
   useEffect(() => {
+    committed.current = selected;
     document.title = titleFor(selected);
     const was = previous.current;
     previous.current = selected;
@@ -42,24 +46,50 @@ export function useDeskState() {
       // Closed (Esc, Back to desk, browser Back): focus returns to the section that was open.
       drawerButton(was)?.focus();
     }
+    const next = queued.current;
+    queued.current = null;
+    // Effects run child-first, so Next's own history effect (in a parent) still has to run for
+    // this commit; the queued navigation goes after it, on the next tick.
+    if (next) setTimeout(next, 0);
   }, [selected]);
 
-  const open = useCallback((slug: SectionSlug) => {
-    if (slugFromPath(window.location.pathname) === slug) return;
-    focusPanel.current = true;
-    window.history.pushState(null, '', `/${slug}`);
+  /**
+   * Next commits a raw pushState in a transition and then rewrites the URL to the state it
+   * committed, so a second navigation issued before that commit would be undone (open, then Esc
+   * within the same moment, ended back on the section). Until Next catches up, the latest
+   * navigation waits and runs right after the commit.
+   */
+  const navigate = useCallback((run: () => void) => {
+    if (slugFromPath(window.location.pathname) !== committed.current) queued.current = run;
+    else run();
   }, []);
 
-  const close = useCallback(() => {
-    if (slugFromPath(window.location.pathname) === null) return;
-    window.history.pushState(null, '', '/');
-  }, []);
+  const open = useCallback(
+    (slug: SectionSlug) =>
+      navigate(() => {
+        if (slugFromPath(window.location.pathname) === slug) return;
+        focusPanel.current = true;
+        window.history.pushState(null, '', `/${slug}`);
+      }),
+    [navigate],
+  );
+
+  const close = useCallback(
+    () =>
+      navigate(() => {
+        if (slugFromPath(window.location.pathname) === null) return;
+        window.history.pushState(null, '', '/');
+      }),
+    [navigate],
+  );
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape' || e.defaultPrevented || e.isComposing) return;
-      const t = e.target as HTMLElement | null;
-      if (t?.closest('input, textarea, select, [contenteditable="true"]')) return;
+      const t = e.target;
+      if (t instanceof Element && t.closest('input, textarea, select, [contenteditable="true"]')) {
+        return;
+      }
       close();
     };
     document.addEventListener('keydown', onKey);
