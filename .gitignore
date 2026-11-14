@@ -7,3 +7,13 @@ docs/private/
 
 # OS
 .DS_Store
+
+# Build and test output
+node_modules/
+.next/
+out/
+test-results/
+playwright-report/
+.lighthouseci/
+next-env.d.ts
+*.tsbuildinfo
