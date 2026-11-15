@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { facts, RETIRED_FACT_IDS, type FactId } from './facts';
-import { DESK_OBJECTS, objectBySlug, SECTION_SLUGS } from './objects';
+import { deskDescription, DESK_OBJECTS, objectBySlug, SECTION_SLUGS } from './objects';
 import { PANELS, type PanelBlock } from './panels';
 import statsJson from './stats.json';
 import type { Stats } from './stats.types';
@@ -102,5 +102,24 @@ describe('objects', () => {
 
   it('every object points its metadata at a live fact', () => {
     for (const o of DESK_OBJECTS) expect(liveIds.has(o.metaFactId)).toBe(true);
+  });
+});
+
+describe('desk object faces', () => {
+  const lines = DESK_OBJECTS.flatMap((o) => o.face);
+
+  it('shows no digits except the badge year', () => {
+    // TODO markers carry question numbers (Q13), which aren't stats.
+    const text = (l: string) => l.replace(/\[TODO: Q\d+[^\]]*\]/g, '');
+    expect(lines.filter((l) => /\d/.test(text(l)) && l !== 'since July 2019')).toEqual([]);
+  });
+
+  it.each(['@', 'Hempstead', 'reviewed'])('never says %s', (word) => {
+    expect(lines.filter((l) => l.includes(word))).toEqual([]);
+  });
+
+  it('describes every object for assistive tech', () => {
+    const d = deskDescription();
+    DESK_OBJECTS.forEach((o) => expect(d).toContain(o.ariaLabel));
   });
 });

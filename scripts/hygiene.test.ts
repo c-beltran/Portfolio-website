@@ -16,10 +16,13 @@ describe('docs/design hygiene', () => {
     expect(existsSync(join(DESIGN, 'desk-mock.dc.html'))).toBe(true);
   });
 
-  it.each(['Hempstead', 'vendor', 'licensed backflow'])('no public design file mentions %s', (word) => {
-    const hits = files(DESIGN)
-      .filter((f) => /\.(md|html|txt|json)$/.test(f))
-      .filter((f) => readFileSync(f, 'utf8').toLowerCase().includes(word.toLowerCase()));
-    expect(hits).toEqual([]);
-  });
+  it.each(['Hempstead', 'vendor', 'licensed backflow'])(
+    'no public design file mentions %s',
+    (word) => {
+      const hits = files(DESIGN)
+        .filter((f) => /\.(md|html|txt|json)$/.test(f))
+        .filter((f) => readFileSync(f, 'utf8').toLowerCase().includes(word.toLowerCase()));
+      expect(hits).toEqual([]);
+    },
+  );
 });
