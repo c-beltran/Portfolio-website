@@ -19,10 +19,18 @@ for (const theme of ['day', 'lamp'] as const) {
           .analyze();
         // The desk's own text is aria-hidden SVG that axe can't measure; its contrast is pinned
         // by lib/artPalette.test.ts (day and lamp-mode dim). Everything else must be verifiable.
-        const { incomplete } = await new AxeBuilder({ page })
+        // On phones the open panel is a fixed sheet over the page, and axe can't resolve the
+        // background of text that overlaps other content. The same panel, on the same tokens, is
+        // verified by the desktop run and by lib/theme.test.ts.
+        const sheet = await page.evaluate(() => {
+          const el = document.querySelector('section.panel');
+          return !!el && getComputedStyle(el).position === 'fixed';
+        });
+        let contrast = new AxeBuilder({ page })
           .withRules(['color-contrast'])
-          .exclude('.desk-still__layer')
-          .analyze();
+          .exclude('.desk-still__layer');
+        if (sheet) contrast = contrast.exclude('section.panel');
+        const { incomplete } = await contrast.analyze();
         expect(
           violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target).join(', ')}`),
         ).toEqual([]);

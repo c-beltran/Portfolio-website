@@ -20,9 +20,22 @@ export async function gotoDesk(page: Page, url: string) {
   return res;
 }
 
-/** Click bare felt (bottom-left corner, clear of every object in both layouts). */
+/**
+ * Click bare felt: the desk's left edge (clear of every object in both layouts), halfway down
+ * the part of the desk that isn't under the phone sheet. Uses the mouse so nothing scrolls first.
+ */
 export async function clickFelt(page: Page) {
+  // Like a person would: bring the desk to the top of the screen, above any open sheet.
+  await layer(page).evaluate((el) => el.scrollIntoView({ block: 'start', behavior: 'instant' }));
   const box = await layer(page).boundingBox();
   if (!box) throw new Error('desk layer not rendered');
-  await layer(page).click({ position: { x: box.width * 0.02, y: box.height * 0.97 } });
+  const sheetTop = await page.evaluate(() => {
+    const el = document.querySelector('section.panel');
+    if (!el || getComputedStyle(el).position !== 'fixed') return innerHeight;
+    return el.getBoundingClientRect().top;
+  });
+  const top = Math.max(box.y, 0);
+  const bottom = Math.min(box.y + box.height, sheetTop);
+  if (bottom - top < 4) throw new Error('no visible felt above the sheet');
+  await page.mouse.click(box.x + box.width * 0.005, (top + bottom) / 2);
 }

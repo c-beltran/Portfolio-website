@@ -1,4 +1,4 @@
-import type { CSSProperties, MouseEvent } from 'react';
+import { useEffect, type CSSProperties, type MouseEvent } from 'react';
 import { hotspotVars } from '@/content/deskLayout';
 import { deskDescription, DESK_OBJECTS, type SectionSlug } from '@/content/objects';
 import { useTheme } from '@/lib/useTheme';
@@ -7,6 +7,7 @@ import { Hotspot } from './Hotspot';
 
 type Props = {
   selected: SectionSlug | null;
+  firstPaint: boolean;
   onOpen: (slug: SectionSlug) => void;
   onClose: () => void;
 };
@@ -16,8 +17,18 @@ type Props = {
  * and the layer the live scene will swap in over. Every state is CSS on aria-pressed and the
  * theme, so a statically rendered section route paints already selected.
  */
-export function DeskStill({ selected, onOpen, onClose }: Props) {
+export function DeskStill({ selected, firstPaint, onOpen, onClose }: Props) {
   const { theme, toggle } = useTheme();
+
+  // Phones: keep the opened object in view above the sheet (hotspots carry a scroll-margin the
+  // sheet's height). Never on a direct load, which paints in place.
+  useEffect(() => {
+    if (!selected || firstPaint || !matchMedia('(max-width: 719px)').matches) return;
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    document
+      .querySelector(`.hotspot[data-slug="${selected}"]`)
+      ?.scrollIntoView({ block: 'nearest', behavior: reduce ? 'auto' : 'smooth' });
+  }, [selected, firstPaint]);
   const Mug = ART.mug;
   const Lamp = ART.lamp;
 

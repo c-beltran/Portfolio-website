@@ -448,3 +448,89 @@ button {
     transform: translate(var(--p-tx), var(--p-ty)) rotate(var(--p-rot)) var(--lift);
   }
 }
+
+/* ---- Layout: the desk and drawer beside the panel (mock), a bottom sheet on phones. ---- */
+
+.desk {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 28px;
+  align-items: flex-start;
+}
+
+.desk__stage {
+  flex: 999 1 640px;
+  min-width: 0;
+}
+
+.desk > .panel {
+  flex: 1 1 360px;
+  min-width: 0;
+}
+
+.panel__bar {
+  display: flex;
+  justify-content: flex-end;
+  margin: -6px -6px 8px 0;
+}
+
+.panel__hint {
+  margin: 0;
+}
+
+@media (max-width: 719px) {
+  .desk__stage {
+    flex-basis: 100%;
+  }
+
+  .panel--empty {
+    display: none;
+  }
+
+  .desk > .panel:not(.panel--empty) {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 20;
+    max-height: 75dvh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    border-bottom: 0;
+    border-radius: 18px 18px 0 0;
+    padding-bottom: calc(clamp(22px, 3vw, 32px) + env(safe-area-inset-bottom));
+    box-shadow: 0 -12px 32px rgba(0, 0, 0, 0.25);
+  }
+
+  .panel__bar {
+    position: sticky;
+    top: calc(-1 * clamp(22px, 3vw, 32px));
+    z-index: 1;
+    margin: calc(-1 * clamp(22px, 3vw, 32px)) calc(-1 * clamp(22px, 3vw, 32px)) 8px;
+    padding: 10px clamp(22px, 3vw, 32px);
+    background: var(--surface);
+  }
+
+  /* Room to scroll the drawer into view above an open sheet. */
+  .page:has(.desk > .panel:not(.panel--empty)) {
+    padding-bottom: 75dvh;
+  }
+
+  /* scrollIntoView keeps the opened object clear of the sheet. */
+  .hotspot {
+    scroll-margin-top: 12px;
+    scroll-margin-bottom: calc(75dvh + 16px); /* + the selected lift's growth */
+  }
+}
+
+@media (max-width: 719px) and (prefers-reduced-motion: no-preference) {
+  .desk > .panel:not(.panel--empty) {
+    transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  @starting-style {
+    .desk:not([data-first-paint]) > .panel:not(.panel--empty) {
+      transform: translateY(100%);
+    }
+  }
+}
