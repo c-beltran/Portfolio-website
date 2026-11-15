@@ -428,7 +428,8 @@ button {
   }
 }
 
-@media (max-width: 719px) {
+/* Portrait phones: the rearranged portrait desk. Landscape keeps the wide desk (shorter). */
+@media (max-width: 719px) and (orientation: portrait) {
   .desk-still__layer {
     aspect-ratio: 3 / 4;
     --pool-x: 55%;
@@ -449,7 +450,7 @@ button {
   }
 }
 
-/* ---- Layout: the desk and drawer beside the panel (mock), a bottom sheet on phones. ---- */
+/* ---- Layout: the desk and drawer beside the panel (from 1024px), a bottom sheet below. ---- */
 
 .desk {
   display: flex;
@@ -459,12 +460,12 @@ button {
 }
 
 .desk__stage {
-  flex: 999 1 640px;
+  flex: 999 1 560px;
   min-width: 0;
 }
 
 .desk > .panel {
-  flex: 1 1 360px;
+  flex: 1 1 320px;
   min-width: 0;
 }
 
@@ -478,28 +479,36 @@ button {
   margin: 0;
 }
 
-@media (max-width: 719px) {
+/*
+ * Below 1024px two columns can't fit with 44px targets, so the panel is a bottom sheet. It is
+ * always rendered (a live region from the start); with nothing open it waits below the screen,
+ * and opening is a plain transform transition. A direct load paints it open: nothing to animate.
+ */
+@media (max-width: 1023px) {
   .desk__stage {
     flex-basis: 100%;
   }
 
-  .panel--empty {
-    display: none;
-  }
-
-  .desk > .panel:not(.panel--empty) {
+  .desk > .panel {
+    --sheet: 75dvh;
     position: fixed;
     left: 0;
     right: 0;
     bottom: 0;
     z-index: 20;
-    max-height: 75dvh;
+    max-height: var(--sheet);
     overflow-y: auto;
     overscroll-behavior: contain;
     border-bottom: 0;
     border-radius: 18px 18px 0 0;
     padding-bottom: calc(clamp(22px, 3vw, 32px) + env(safe-area-inset-bottom));
     box-shadow: 0 -12px 32px rgba(0, 0, 0, 0.25);
+  }
+
+  .desk > .panel--empty {
+    transform: translateY(100%);
+    box-shadow: none;
+    pointer-events: none;
   }
 
   .panel__bar {
@@ -516,21 +525,38 @@ button {
     padding-bottom: 75dvh;
   }
 
-  /* scrollIntoView keeps the opened object clear of the sheet. */
+  /* scrollIntoView keeps the opened object clear of the sheet (+ the selected lift's growth). */
   .hotspot {
     scroll-margin-top: 12px;
-    scroll-margin-bottom: calc(75dvh + 16px); /* + the selected lift's growth */
+    scroll-margin-bottom: calc(75dvh + 16px);
   }
 }
 
-@media (max-width: 719px) and (prefers-reduced-motion: no-preference) {
-  .desk > .panel:not(.panel--empty) {
-    transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+/*
+ * Landscape: a shorter sheet, and a desk no wider than lets its tallest object (the laptop, about
+ * half the desk's height, plus the selected lift) fit in the 60dvh above the sheet.
+ */
+@media (max-width: 1023px) and (orientation: landscape) {
+  .desk > .panel {
+    --sheet: 40dvh;
   }
 
-  @starting-style {
-    .desk:not([data-first-paint]) > .panel:not(.panel--empty) {
-      transform: translateY(100%);
-    }
+  .desk-still {
+    max-width: calc((60dvh - 28px) * 3.05 + 2 * clamp(8px, 1.2vw, 16px)); /* felt + mat */
+    margin-inline: auto;
+  }
+
+  .page:has(.desk > .panel:not(.panel--empty)) {
+    padding-bottom: 40dvh;
+  }
+
+  .hotspot {
+    scroll-margin-bottom: calc(40dvh + 16px);
+  }
+}
+
+@media (max-width: 1023px) and (prefers-reduced-motion: no-preference) {
+  .desk > .panel {
+    transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
   }
 }

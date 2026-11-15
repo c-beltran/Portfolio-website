@@ -15,10 +15,11 @@ export const DESK_ASPECT: Record<LayoutName, number> = { wide: 16 / 10.5, phone:
 
 /**
  * The desk's inner width in px at the narrowest viewport each layout renders at.
- * wide: 720 − 2×28.8 page gutter (4vw) − 2×8.64 mat (1.2vw) ≈ 645, minus a 15px scrollbar ≈ 630.
- * phone: 320 − 2×16 page gutter − 2×8 mat = 272.
+ * wide (landscape, and everything from 720px): a 568×320 landscape phone, where globals.css caps the
+ *   desk at (60dvh − 28px) × 3.05 so the tallest object fits above the sheet: (192 − 28) × 3.05 ≈ 500.
+ * phone (portrait under 720px): 320 − 2×16 page gutter − 2×8 mat = 272.
  */
-export const MIN_RENDER_WIDTH: Record<LayoutName, number> = { wide: 630, phone: 272 };
+export const MIN_RENDER_WIDTH: Record<LayoutName, number> = { wide: 500, phone: 272 };
 
 /** Each item's art, width / height in px. Box heights derive from it, so art never stretches. */
 export const ART_ASPECT: Record<DeskItemId, number> = {

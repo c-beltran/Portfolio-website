@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { DESK_ASPECT } from '../../content/deskLayout';
 import { DESK_OBJECTS } from '../../content/objects';
 import { titleFor } from '../../lib/deskRoutes';
 import {
@@ -48,7 +49,7 @@ test.describe('still desk hotspots', () => {
   test('rapid object clicks, then Back, walk back in order', async ({ page }) => {
     await gotoDesk(page, '/');
     for (const id of ['badge', 'laptop', 'gauge']) await hotspot(page, id).click();
-    expect(path(page)).toBe('/potaflow');
+    await expect.poll(() => path(page)).toBe('/potaflow');
     for (const expected of ['/how-i-build', '/experience', '/']) {
       await page.goBack();
       await expect.poll(() => path(page)).toBe(expected);
@@ -70,6 +71,45 @@ test.describe('still desk hotspots', () => {
     expect(await historyLength(page)).toBe(start);
     await headerLamp(page).click();
     await expect(hotspot(page, 'lamp')).toHaveAttribute('aria-pressed', String(after !== 'lamp'));
+  });
+
+  test('clicking the desk lamp never focuses the hidden desk; Esc still refocuses the drawer', async ({
+    page,
+  }) => {
+    await gotoDesk(page, '/potaflow');
+    await hotspot(page, 'lamp').click();
+    expect(await page.evaluate(() => !!document.activeElement?.closest('.desk-still__layer'))).toBe(
+      false,
+    );
+    await page.keyboard.press('Escape');
+    await expect.poll(() => path(page)).toBe('/');
+    await expect(drawerButton(page, 'Potaflow')).toBeFocused();
+  });
+
+  test('a same-tick burst of clicks keeps only the latest navigation pending (M1 queue)', async ({
+    page,
+  }) => {
+    await gotoDesk(page, '/');
+    await page.evaluate(() => {
+      for (const id of ['badge', 'laptop', 'gauge', 'gauge'])
+        document.querySelector<HTMLElement>(`.hotspot[data-item="${id}"]`)!.click();
+    });
+    await expect.poll(() => path(page)).toBe('/potaflow');
+    await page.goBack();
+    await expect.poll(() => path(page)).toBe('/experience');
+    await page.goBack();
+    await expect.poll(() => path(page)).toBe('/');
+  });
+
+  test('the desk box keeps the layout data aspect ratio', async ({ page }) => {
+    await gotoDesk(page, '/');
+    const ratio = await page
+      .locator('.desk-still__layer')
+      .evaluate((el) => el.getBoundingClientRect().width / el.getBoundingClientRect().height);
+    const portrait = await page.evaluate(
+      () => matchMedia('(max-width: 719px) and (orientation: portrait)').matches,
+    );
+    expect(ratio).toBeCloseTo(DESK_ASPECT[portrait ? 'phone' : 'wide'], 2);
   });
 
   test('hotspots stay out of the Tab order: header → drawer', async ({ page }) => {

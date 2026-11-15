@@ -1,7 +1,7 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import type { SectionSlug } from '@/content/objects';
 import { slugFromPath, titleFor } from './deskRoutes';
 
@@ -31,15 +31,12 @@ export function useDeskState() {
   /** The selection Next has committed; the URL can run ahead of it while a navigation is pending. */
   const committed = useRef<SectionSlug | null>(selected);
   const queued = useRef<(() => void) | null>(null);
-  /** True until the selection first changes after load: a direct load never animates (spec §2). */
-  const [firstPaint, setFirstPaint] = useState(true);
 
   useEffect(() => {
     committed.current = selected;
     document.title = titleFor(selected);
     const was = previous.current;
     previous.current = selected;
-    if (was !== selected) setFirstPaint(false);
     const userOpened = focusPanel.current;
     focusPanel.current = false;
     if (selected && (userOpened || (was !== selected && focusIsLost()))) {
@@ -104,5 +101,5 @@ export function useDeskState() {
     };
   }, [close]);
 
-  return { selected, open, close, firstPaint };
+  return { selected, open, close };
 }

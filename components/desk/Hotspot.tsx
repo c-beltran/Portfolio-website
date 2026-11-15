@@ -25,6 +25,8 @@ export function Hotspot({ item, slug, pressed, onClick, children }: Props) {
       aria-pressed={pressed}
       style={hotspotVars(item) as CSSProperties}
       onClick={onClick}
+      // A click must not move focus into the aria-hidden desk (focus stays where it was).
+      onMouseDown={(e) => e.preventDefault()}
     >
       {children}
     </button>

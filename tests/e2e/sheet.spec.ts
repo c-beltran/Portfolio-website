@@ -50,13 +50,52 @@ test.describe('phone bottom sheet', () => {
   });
 
   test('a direct load paints the sheet already open, with no slide-in', async ({ page }) => {
-    await page.goto('/potaflow');
-    const state = await panel(page).evaluate((el) => ({
-      running: el.getAnimations().length,
-      transform: getComputedStyle(el).transform,
-    }));
-    expect(state).toEqual({ running: 0, transform: 'none' });
-    await expect(desk(page)).toBeVisible();
+    await page.addInitScript(() => {
+      (window as unknown as { transitions: string[] }).transitions = [];
+      document.addEventListener(
+        'transitionrun',
+        (e) => {
+          const t = e.target as Element;
+          if (t.matches?.('section.panel'))
+            (window as unknown as { transitions: string[] }).transitions.push(e.propertyName);
+        },
+        true,
+      );
+    });
+    await gotoDesk(page, '/potaflow');
+    await page.waitForTimeout(400);
+    expect(
+      await page.evaluate(() => (window as unknown as { transitions: string[] }).transitions),
+    ).toEqual([]);
+    expect(await panel(page).evaluate((el) => getComputedStyle(el).transform)).toBe('none');
+    const lift = await hotspot(page, 'gauge').evaluate((el) =>
+      getComputedStyle(el).getPropertyValue('--lift'),
+    );
+    expect(lift).toContain('scale(1.07)');
+  });
+
+  test('the first section opened slides the sheet up', async ({ page }) => {
+    await gotoDesk(page, '/');
+    await panel(page).evaluate((el) => {
+      (window as unknown as { slid: string[] }).slid = [];
+      (el as HTMLElement).addEventListener('transitionrun', (e) =>
+        (window as unknown as { slid: string[] }).slid.push(e.propertyName),
+      );
+    });
+    await hotspot(page, 'gauge').click();
+    await expect
+      .poll(() => page.evaluate(() => (window as unknown as { slid: string[] }).slid))
+      .toContain('transform');
+  });
+
+  test('the empty sheet stays in the accessibility tree as a live region', async ({ page }) => {
+    await gotoDesk(page, '/');
+    const state = await panel(page).evaluate((el) => {
+      const s = getComputedStyle(el);
+      return { display: s.display, visibility: s.visibility, live: el.getAttribute('aria-live') };
+    });
+    expect(state).toEqual({ display: 'block', visibility: 'visible', live: 'polite' });
+    await expect(panel(page)).not.toBeInViewport();
   });
 
   test('no horizontal scroll at phone widths, and every object is at least 44px', async ({
@@ -85,6 +124,31 @@ test.describe('phone bottom sheet', () => {
   });
 });
 
+test.describe('landscape phones and small tablets', () => {
+  test.skip(({ isMobile }) => !isMobile, 'touch devices');
+
+  for (const [w, h] of [
+    [568, 320],
+    [667, 375],
+    [844, 390],
+    [800, 600],
+  ] as const) {
+    test(`at ${w}×${h} an opened object stays visible above the sheet`, async ({ page }) => {
+      await page.setViewportSize({ width: w, height: h });
+      await gotoDesk(page, '/');
+      for (const b of await page.locator('button.hotspot').all()) {
+        const box = (await b.boundingBox())!;
+        expect(Math.min(box.width, box.height)).toBeGreaterThanOrEqual(44);
+      }
+      for (const item of ['gauge', 'laptop', 'card']) {
+        await hotspot(page, item).click();
+        expect(await panel(page).evaluate((el) => getComputedStyle(el).position)).toBe('fixed');
+        await expect.poll(() => visibleAboveSheet(page, item), { message: item }).toBe(true);
+      }
+    });
+  }
+});
+
 test.describe('wide layout', () => {
   test.skip(({ isMobile }) => isMobile, 'desktop layout only');
 
@@ -94,6 +158,22 @@ test.describe('wide layout', () => {
     const p = (await panel(page).boundingBox())!;
     expect(p.x).toBeGreaterThan(d.x + d.width - 1);
     expect(p.y).toBeLessThan(d.y + d.height);
+  });
+
+  test('two columns from 1024px', async ({ page }) => {
+    await page.setViewportSize({ width: 1024, height: 768 });
+    await gotoDesk(page, '/potaflow');
+    const d = (await desk(page).boundingBox())!;
+    const p = (await panel(page).boundingBox())!;
+    expect(p.x).toBeGreaterThan(d.x + d.width - 1);
+  });
+
+  test('below 1024px the panel is a sheet, not pushed under the desk', async ({ page }) => {
+    await page.setViewportSize({ width: 900, height: 700 });
+    await gotoDesk(page, '/');
+    await hotspot(page, 'gauge').click();
+    expect(await panel(page).evaluate((el) => getComputedStyle(el).position)).toBe('fixed');
+    await expect.poll(() => visibleAboveSheet(page, 'gauge')).toBe(true);
   });
 
   test('the empty panel invites a pick', async ({ page }) => {
