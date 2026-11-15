@@ -2,13 +2,13 @@
 
 You are building Carlos Beltran's personal portfolio site from scratch. Read this whole file before writing code. Stop at the end of every milestone for review.
 
-_Amended 2026-11-13_ after the M0 review: section routes, the laptop screen, contact, hosting, the numbers rule, the tier rule and the performance job. Amended passages are marked **(amended)**.
+_Amended 2026-11-13_ after the M0 review: section routes, the laptop screen, contact, hosting, the numbers rule, the tier rule and the performance job. _Amended 2026-11-15:_ the Claude Design output is a mock, not final art. Amended passages are marked **(amended)**.
 
 Reference material in `docs/design/`:
 
 - `desk-mock.dc.html`: the approved interactive mock (Direction E, "The Desk"). It uses a proprietary design-canvas runtime, so treat it as a reference for layout, copy and behavior. Don't port its runtime. Where it disagrees with this spec, this spec wins.
-- `art-direction.png`: lighting, camera, materials, object states and fallback tiers. This is the visual target.
-- `directions/`: one PNG per direction designed on the Claude Design canvas (A–E). E is the chosen one.
+- **(amended)** The mock is a wireframe-level reference for the concept, object set, layout and behavior. **It is not the final art.** Its flat illustration style, colors and copy are not targets. The final look (lighting, camera, materials, object states) is designed in this build: it is set by the 3D scene in M3 and the baked renders in M4, and Carlos reviews it at each milestone. There is no separate `art-direction.png`.
+- `directions/`: one PNG per direction designed on the Claude Design canvas (A–E). E is the chosen one. Used only for the "This site" panel thumbnails (Q21); they don't gate any milestone.
 
 ---
 
@@ -181,7 +181,7 @@ Use the copy from `desk-mock.dc.html` as the starting point for each panel, exce
 
 - **M0, Plan:** done.
 - **M1, Foundation:** project setup, `facts.ts`, `stats.json` and the stats script, the Classic page (Tier 0), section routes, site layout, lamp-mode theme tokens, CI with all gates.
-- **M2, Still desk (Tier 1):** port the mock's behavior with a placeholder still (a primitive-geometry render is fine), hotspots, drawer, panel, phone bottom sheet. Visuals start only once `art-direction.png` and `directions/` are in `docs/design/`.
+- **M2, Still desk (Tier 1):** port the mock's behavior with a placeholder still (a primitive-geometry render is fine), hotspots, drawer, panel, phone bottom sheet. **(amended)** No design export gates this milestone: the placeholder still is ours, and the real look arrives in M3 and M4.
 - **M3, Live 3D with primitives (Tier 2):** scene, camera moves, all object interactions and the lamp toggle using placeholder primitives; capability detection and fallback; no-jump swap from Tier 1; the Tier 2 performance job.
 - **M4, Real assets:** baked lighting, scanned and licensed models, the final Tier 1 renders exported from the scene, `ASSETS.md`.
 - **M5, Polish and hardening:** motion fine-tuning, the performance budget passing in CI, a real-device check on iPhone and Android, the launch `[TODO]` list. Exit check includes: the final Tier 1 still is a render from the scene, not the M2 CSS placeholder.
