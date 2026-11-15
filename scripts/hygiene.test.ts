@@ -16,13 +16,18 @@ describe('docs/design hygiene', () => {
     expect(existsSync(join(DESIGN, 'desk-mock.dc.html'))).toBe(true);
   });
 
-  it.each(['Hempstead', 'vendor', 'licensed backflow'])(
-    'no public design file mentions %s',
-    (word) => {
-      const hits = files(DESIGN)
-        .filter((f) => /\.(md|html|txt|json)$/.test(f))
-        .filter((f) => readFileSync(f, 'utf8').toLowerCase().includes(word.toLowerCase()));
-      expect(hits).toEqual([]);
-    },
-  );
+  it.each([
+    /hempstead/i,
+    /vendor/i,
+    /licensed (backflow|tester|to test)|-licensed/i,
+    /AI review gate( checks|:)/i,
+    /reviewed by me/i,
+    /\b832\b/,
+    /Templates used/i,
+  ])('no public design file matches %s', (pattern) => {
+    const hits = files(DESIGN)
+      .filter((f) => /\.(md|html|txt|json)$/.test(f))
+      .filter((f) => pattern.test(readFileSync(f, 'utf8')));
+    expect(hits).toEqual([]);
+  });
 });

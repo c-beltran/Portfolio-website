@@ -115,7 +115,7 @@ describe('desk object faces', () => {
   });
 
   it.each(['@', 'Hempstead', 'reviewed'])('never says %s', (word) => {
-    expect(lines.filter((l) => l.includes(word))).toEqual([]);
+    expect(lines.filter((l) => l.toLowerCase().includes(word.toLowerCase()))).toEqual([]);
   });
 
   it('describes every object for assistive tech', () => {

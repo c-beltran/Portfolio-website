@@ -31,7 +31,7 @@ button:focus-visible,a:focus-visible{outline:3px solid #FFD84D;outline-offset:4p
 <header style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 24px 48px; padding: 40px 0 28px">
 <div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 14px">
 <h1 style="margin: 0; font-family: 'Schibsted Grotesk', Inter, sans-serif; font-weight: 900; font-size: clamp(44px, 7vw, 84px); line-height: 0.95; letter-spacing: -0.03em">Carlos Beltran</h1>
-<p style="margin: 0; font-size: clamp(19px, 2vw, 22px); line-height: 1.45; max-width: 44ch; text-wrap: pretty">Senior Software Engineer at People Inc. Seven years on the same ad platform, at the same desk. Lately I share it with a crew of AI agents.</p>
+<p style="margin: 0; font-size: clamp(19px, 2vw, 22px); line-height: 1.45; max-width: 44ch; text-wrap: pretty">[header summary: see content/links.ts]</p>
 <p style="margin: 0; font-size: 15px; font-weight: 600; color: #3E454B">Go · backend &amp; performance · 7+ years · AI-native · New York</p>
 </div>
 <div style="flex: 1 1 260px; display: flex; flex-direction: column; align-items: flex-start; gap: 12px">
@@ -66,7 +66,7 @@ button:focus-visible,a:focus-visible{outline:3px solid #FFD84D;outline-offset:4p
 <span style="font-size: 0.95cqw; color: #3E454B">PR #247 · 3 reviewers</span>
 <span style="display: flex; flex-direction: column; gap: 0.45cqw; margin-top: 0.4cqw">
 <span style="display: flex; align-items: center; gap: 0.7cqw; font-size: 1.05cqw; color: #15191C"><span style="width: 1.3cqw; height: 1.3cqw; border-radius: 50%; background: #1F7A45"></span>Planner: spec matches the ticket</span>
-<span style="display: flex; align-items: center; gap: 0.7cqw; font-size: 1.05cqw; color: #15191C"><span style="width: 1.3cqw; height: 1.3cqw; border-radius: 50%; background: #1F7A45"></span>AI review gate: DOH-1013 rules pass</span>
+<span style="display: flex; align-items: center; gap: 0.7cqw; font-size: 1.05cqw; color: #15191C"><span style="width: 1.3cqw; height: 1.3cqw; border-radius: 50%; background: #1F7A45"></span>[TODO: Q24 check]</span>
 <span style="display: flex; align-items: center; gap: 0.7cqw; font-size: 1.05cqw; color: #15191C"><span style="width: 1.3cqw; height: 1.3cqw; border-radius: 50%; background: #1F7A45"></span>Carlos: approved</span>
 </span>
 </span>
@@ -122,7 +122,7 @@ button:focus-visible,a:focus-visible{outline:3px solid #FFD84D;outline-offset:4p
 </button>
 
 <button type="button" class="obj" aria-label="Sticky note: how this website was built" aria-pressed="{{s.note.on}}" onClick="{{s.note.pick}}" style="position: absolute; left: 27%; top: 69%; width: 14%; {{s.note.style}}">
-<span aria-hidden="true" style="display: flex; align-items: center; aspect-ratio: 1 / 1; background: #FFE27A; padding: 1.4cqw; box-sizing: border-box; font-family: Caveat, cursive; font-weight: 700; font-size: 2cqw; line-height: 1.05; color: #2B2410; text-align: left">this site: built with AI agents, every change reviewed by me</span>
+<span aria-hidden="true" style="display: flex; align-items: center; aspect-ratio: 1 / 1; background: #FFE27A; padding: 1.4cqw; box-sizing: border-box; font-family: Caveat, cursive; font-weight: 700; font-size: 2cqw; line-height: 1.05; color: #2B2410; text-align: left">this site: built with AI agents</span>
 <span style="position: absolute; right: -8%; bottom: -8%; transform: rotate(5deg); background: #FFF8E6; color: #15191C; font-weight: 700; font-size: max(11px, 1.05cqw); letter-spacing: 0.06em; padding: 0.3cqw 0.9cqw; box-shadow: 0 1px 2px rgba(0,0,0,0.25)">THIS SITE</span>
 </button>
 
@@ -161,7 +161,7 @@ button:focus-visible,a:focus-visible{outline:3px solid #FFD84D;outline-offset:4p
 <p style="margin: 0; font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 600; letter-spacing: 0.08em; color: #3E454B">THE GAUGE · PROJECT 01</p>
 <h2 id="panel-title" style="margin: 0; font-family: 'Schibsted Grotesk', sans-serif; font-weight: 900; font-size: clamp(32px, 4vw, 44px); line-height: 1; letter-spacing: -0.02em">Potaflow</h2>
 <p style="margin: 0; font-size: 18px; line-height: 1.55">Multi-tenant SaaS that takes the paper trail out of backflow testing compliance for water districts in Nassau County, NY.</p>
-<p style="margin: 0; font-size: 16px; line-height: 1.6; color: #2A3036">That gauge is a real tool of mine. [TODO: Q3 backflow credential] I wrote the rules down for the agents: custom skills that encode NY DOH-1013 and how each device is physically tested. An AI review gate checks every change before it can become a PR. Then I review it.</p>
+<p style="margin: 0; font-size: 16px; line-height: 1.6; color: #2A3036">That gauge is a real tool of mine. [TODO: Q3 backflow credential] I wrote the rules down for the agents: custom skills that encode NY DOH-1013 and how each device is physically tested. [TODO: Q24]</p>
 <dl style="margin: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; border-top: 2px solid #15191C; padding-top: 16px">
 <div><dt style="font-size: 14px; color: #3E454B">Commits</dt><dd style="margin: 0; font-family: 'Schibsted Grotesk', sans-serif; font-weight: 900; font-size: 34px; line-height: 1.1">1,450</dd></div>
 <div><dt style="font-size: 14px; color: #3E454B">Merged PRs</dt><dd style="margin: 0; font-family: 'Schibsted Grotesk', sans-serif; font-weight: 900; font-size: 34px; line-height: 1.1">247+</dd></div>
@@ -209,7 +209,7 @@ button:focus-visible,a:focus-visible{outline:3px solid #FFD84D;outline-offset:4p
 <p style="margin: 0; font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 600; letter-spacing: 0.08em; color: #3E454B">THE PHONE · PROJECT 02</p>
 <h2 style="margin: 0; font-family: 'Schibsted Grotesk', sans-serif; font-weight: 900; font-size: clamp(32px, 4vw, 44px); line-height: 1; letter-spacing: -0.02em">Power Walk</h2>
 <p style="margin: 0; font-size: 18px; line-height: 1.55">Every real step from Apple Health is a footstep through a blacked-out New York landmark. Find the fuse and turn the lights back on. (You just did, on the desk.)</p>
-<p style="margin: 0; font-size: 16px; color: #2A3036">832 commits in about two months, React Native and Expo. Spec first: I wrote what the game had to do, agents built against it, I reviewed everything. Claude Design drew parts of the art.</p>
+<p style="margin: 0; font-size: 16px; color: #2A3036">[N] commits, React Native and Expo. [TODO: Q24] Claude Design drew parts of the art.</p>
 <div style="aspect-ratio: 9 / 12; max-width: 260px; border: 2px dashed #8A9096; border-radius: 16px; background: #F3F4F2; display: flex; align-items: center; justify-content: center; text-align: center; padding: 12px; font-size: 15px; color: #3E454B">[Power Walk screenshot]</div>
 </div>
 </sc-if>
@@ -226,8 +226,8 @@ button:focus-visible,a:focus-visible{outline:3px solid #FFD84D;outline-offset:4p
 <div style="display: flex; flex-direction: column; gap: 16px">
 <p style="margin: 0; font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 600; letter-spacing: 0.08em; color: #3E454B">THE NOTE · PROJECT 03</p>
 <h2 style="margin: 0; font-family: 'Schibsted Grotesk', sans-serif; font-weight: 900; font-size: clamp(30px, 4vw, 40px); line-height: 1.05; letter-spacing: -0.02em">This website</h2>
-<p style="margin: 0; font-size: 17px; line-height: 1.6">Designed on a Claude Design canvas next to five rejected directions, built with agents, and reviewed by me, change by change. The words are mine.</p>
-<p style="margin: 0; font-family: 'IBM Plex Mono', monospace; font-size: 14px; line-height: 1.7; color: #2A3036">Directions explored: 5<br>Commits: [N]<br>Templates used: 0</p>
+<p style="margin: 0; font-size: 17px; line-height: 1.6">Designed on a Claude Design canvas next to five rejected directions, built with agents. [TODO: Q24] The words are mine.</p>
+<p style="margin: 0; font-family: 'IBM Plex Mono', monospace; font-size: 14px; line-height: 1.7; color: #2A3036">Directions explored: 5<br>Commits: [N]</p>
 </div>
 </sc-if>
 
@@ -290,7 +290,7 @@ class Component extends DCLogic {
       s, drawer, keys,
       needle: sel === 'gauge' ? 'transform: rotate(58deg);' : 'transform: rotate(-52deg);',
       phoneScreen: lit ? 'background-color: #FFD84D; color: #15191C;' : 'background-color: #1C2430; color: #8C98A8;',
-      phoneText: lit ? 'LIT' : '832'
+      phoneText: lit ? 'LIT' : ''
     };
   }
 }

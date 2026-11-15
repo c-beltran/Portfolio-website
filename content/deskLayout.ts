@@ -13,8 +13,12 @@ export type Box = { x: number; y: number; w: number; h: number; rot: number };
 /** Desk width / height. Wide is the mock's 16:10.5; phone is a portrait crop. */
 export const DESK_ASPECT: Record<LayoutName, number> = { wide: 16 / 10.5, phone: 3 / 4 };
 
-/** The desk's inner width in px at the narrowest viewport each layout renders at (720px, 320px). */
-export const MIN_RENDER_WIDTH: Record<LayoutName, number> = { wide: 640, phone: 288 };
+/**
+ * The desk's inner width in px at the narrowest viewport each layout renders at.
+ * wide: 720 − 2×28.8 page gutter (4vw) − 2×8.64 mat (1.2vw) ≈ 645, minus a 15px scrollbar ≈ 630.
+ * phone: 320 − 2×16 page gutter − 2×8 mat = 272.
+ */
+export const MIN_RENDER_WIDTH: Record<LayoutName, number> = { wide: 630, phone: 272 };
 
 /** Each item's art, width / height in px. Box heights derive from it, so art never stretches. */
 export const ART_ASPECT: Record<DeskItemId, number> = {
@@ -44,14 +48,14 @@ const PLACES: Record<LayoutName, Record<DeskItemId, Place>> = {
     card: { x: 50, y: 74, w: 19, rot: 3 },
     mug: { x: 70, y: 78, w: 10, rot: 0 },
   },
-  // Portrait rearrangement, three rows, every target at least 44px at a 320px viewport.
+  // Portrait rearrangement, three rows, every target at least 44px at a 320px viewport (272px desk).
   phone: {
     badge: { x: 3, y: 3, w: 18, rot: -8 },
     laptop: { x: 26, y: 4, w: 46, rot: -1.5 },
-    lamp: { x: 78, y: 3, w: 16, rot: 0 },
+    lamp: { x: 78, y: 3, w: 17, rot: 0 },
     gauge: { x: 4, y: 38, w: 24, rot: 4 },
     photo: { x: 35, y: 41, w: 19, rot: 6 },
-    phone: { x: 62, y: 37, w: 16, rot: 12 },
+    phone: { x: 61, y: 37, w: 17, rot: 12 },
     mug: { x: 83, y: 44, w: 13, rot: 0 },
     note: { x: 6, y: 72, w: 18, rot: -5 },
     card: { x: 34, y: 74, w: 30, rot: 3 },

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  ART_ASPECT,
   DESK_ASPECT,
   hotspotVars,
   INTERACTIVE,
@@ -60,9 +61,13 @@ describe.each(LAYOUTS)('%s layout', (name) => {
 });
 
 describe('both layouts', () => {
-  it.each(ALL_ITEMS)('keep the pixel aspect of %s within 2%%', (id) => {
-    const aspect = (n: LayoutName) => (LAYOUT[n][id].w * DESK_ASPECT[n]) / LAYOUT[n][id].h;
-    expect(Math.abs(aspect('wide') / aspect('phone') - 1)).toBeLessThanOrEqual(0.02);
+  it.each(ALL_ITEMS)('size %s to its art aspect (no stretching)', (id) => {
+    for (const n of LAYOUTS) {
+      const W = 1000;
+      const b = LAYOUT[n][id];
+      const pxAspect = ((b.w / 100) * W) / ((b.h / 100) * (W / DESK_ASPECT[n]));
+      expect(Math.abs(pxAspect / ART_ASPECT[id] - 1), `${n}/${id}`).toBeLessThanOrEqual(0.01);
+    }
   });
 
   it('excludes the decorative mug from interaction', () => {
@@ -76,12 +81,26 @@ describe('hotspotVars', () => {
   it('places with transform variables only, never left or top', () => {
     const vars = hotspotVars('gauge');
     expect(Object.keys(vars).some((k) => /left|top/.test(k))).toBe(false);
-    const g = LAYOUT.wide.gauge;
-    expect(vars['--tx']).toBe(`${((g.x / g.w) * 100).toFixed(3)}%`);
-    expect(vars['--w']).toBe(`${g.w}%`);
-    expect(vars['--rot']).toBe(`${g.rot}deg`);
-    const p = LAYOUT.phone.gauge;
-    expect(vars['--p-ty']).toBe(`${((p.y / p.h) * 100).toFixed(3)}%`);
+    expect(vars['--tx']).toBe('342.857%'); // 72 / 21 × 100
+    expect(vars['--w']).toBe('21%');
+    expect(vars['--rot']).toBe('4deg');
+    expect(Object.keys(vars).sort()).toEqual(
+      ['w', 'h', 'tx', 'ty', 'rot'].flatMap((k) => [`--${k}`, `--p-${k}`]).sort(),
+    );
+  });
+
+  it.each(ALL_ITEMS)('round-trips %s to its box in both layouts', (id) => {
+    const v = hotspotVars(id);
+    for (const [n, pre] of [
+      ['wide', '--'],
+      ['phone', '--p-'],
+    ] as const) {
+      const b = LAYOUT[n][id];
+      const num = (k: string) => parseFloat(v[`${pre}${k}` as `--${string}`]!);
+      expect((num('tx') * num('w')) / 100).toBeCloseTo(b.x, 2);
+      expect((num('ty') * num('h')) / 100).toBeCloseTo(b.y, 2);
+      expect(num('rot')).toBe(b.rot);
+    }
   });
 
   it('starts the wide gauge where the mock put it', () => {
