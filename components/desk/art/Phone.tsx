@@ -1,5 +1,4 @@
 import { objectBySlug } from '@/content/objects';
-import { Sticker } from './Sticker';
 import { ArtSvg, heightOf, label } from './svg';
 
 const H = heightOf('phone');
@@ -8,7 +7,7 @@ const H = heightOf('phone');
 export function Phone() {
   const o = objectBySlug('power-walk')!;
   return (
-    <ArtSvg id="phone">
+    <ArtSvg id="phone" sticker={{ x: -40, y: H - 10, rot: -8, text: label(o.label) }}>
       <ellipse
         className="phone-spill"
         cx={50}
@@ -29,7 +28,6 @@ export function Phone() {
       >
         <path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z" />
       </g>
-      <Sticker x={-40} y={H - 10} rot={-8} text={label(o.label)} />
     </ArtSvg>
   );
 }

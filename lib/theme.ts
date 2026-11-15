@@ -19,7 +19,8 @@ export type TokenName =
   | 'lampGlow'
   // Lamp mode's light: the room multiplies by dusk, except a pool of light under the lamp.
   | 'dusk'
-  | 'pool';
+  | 'pool'
+  | 'scrawl';
 
 export const THEME_STORAGE_KEY = 'desk-theme';
 
@@ -44,6 +45,7 @@ export const TOKENS: Record<ThemeName, Record<TokenName, string>> = {
     lampGlow: '#8A8072',
     dusk: '#FFFFFF',
     pool: '#FFFFFF',
+    scrawl: '#FFE9A8',
   },
   lamp: {
     bg: '#14110D',
@@ -62,8 +64,9 @@ export const TOKENS: Record<ThemeName, Record<TokenName, string>> = {
     sticker: '#E9DFC9',
     stickerInk: '#15191C',
     lampGlow: '#FFE9A8',
-    dusk: '#4E535C',
+    dusk: '#90939A',
     pool: '#FFE0A8',
+    scrawl: '#FFE9A8',
   },
 };
 

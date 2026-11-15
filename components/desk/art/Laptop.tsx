@@ -1,5 +1,4 @@
 import { objectBySlug } from '@/content/objects';
-import { Sticker } from './Sticker';
 import { ArtSvg, heightOf, label } from './svg';
 
 const H = heightOf('laptop');
@@ -10,7 +9,7 @@ const PANEL_LINES = [22, 16, 20, 12, 18];
 export function Laptop() {
   const o = objectBySlug('how-i-build')!;
   return (
-    <ArtSvg id="laptop">
+    <ArtSvg id="laptop" sticker={{ x: 58, y: H - 6, rot: -3, text: label(o.label) }}>
       <rect x={4} y={0} width={92} height={56} rx={4} fill="#1E2328" />
       <rect x={8} y={4} width={84} height={48} rx={2} fill="#F7F8FA" />
       <rect x={8} y={4} width={84} height={5} rx={2} fill="#E3E6E9" />
@@ -44,7 +43,6 @@ export function Laptop() {
         />
       ))}
       <rect x={33} y={74} width={34} height={9} rx={2} fill="#B3B9BF" />
-      <Sticker x={58} y={H - 6} rot={-3} text={label(o.label)} />
     </ArtSvg>
   );
 }

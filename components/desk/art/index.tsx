@@ -31,9 +31,6 @@ export function ArtDefs() {
   return (
     <svg width="0" height="0" aria-hidden="true" focusable="false" style={{ position: 'absolute' }}>
       <defs>
-        <filter id="sticker-shadow" x="-10%" y="-20%" width="120%" height="160%">
-          <feDropShadow dx="0" dy="1" stdDeviation="0.8" floodOpacity="0.3" />
-        </filter>
         <filter id="mug-shadow" x="-20%" y="-20%" width="140%" height="150%">
           <feDropShadow dx="0" dy="5" stdDeviation="4" floodOpacity="0.35" />
         </filter>
