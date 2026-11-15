@@ -9,11 +9,21 @@ export type TokenName =
   | 'link'
   | 'linkHover'
   | 'focus'
-  | 'accent';
+  | 'accent'
+  // The desk (M2). Decorative, except stickerInk on sticker, which is text.
+  | 'wood'
+  | 'felt'
+  | 'feltLine'
+  | 'sticker'
+  | 'stickerInk'
+  | 'lampGlow'
+  // Lamp mode's light: the room multiplies by dusk, except a pool of light under the lamp.
+  | 'dusk'
+  | 'pool';
 
 export const THEME_STORAGE_KEY = 'desk-theme';
 
-/** Day is from the approved mock; lamp is provisional until art-direction.png (M2 may retune). */
+/** Day is from the mock; lamp is ours (Q17: the mock is not the art target). */
 export const TOKENS: Record<ThemeName, Record<TokenName, string>> = {
   day: {
     bg: '#EEF0EC',
@@ -26,6 +36,14 @@ export const TOKENS: Record<ThemeName, Record<TokenName, string>> = {
     linkHover: '#9A2E18',
     focus: '#9A2E18',
     accent: '#FFD84D',
+    wood: '#B98A57',
+    felt: '#2E5A4E',
+    feltLine: '#3A6B5D',
+    sticker: '#FFF8E6',
+    stickerInk: '#15191C',
+    lampGlow: '#8A8072',
+    dusk: '#FFFFFF',
+    pool: '#FFFFFF',
   },
   lamp: {
     bg: '#14110D',
@@ -38,6 +56,14 @@ export const TOKENS: Record<ThemeName, Record<TokenName, string>> = {
     linkHover: '#FFC46B',
     focus: '#FFD84D',
     accent: '#FFB454',
+    wood: '#4A3524',
+    felt: '#17302A',
+    feltLine: '#1F3D35',
+    sticker: '#E9DFC9',
+    stickerInk: '#15191C',
+    lampGlow: '#FFE9A8',
+    dusk: '#4E535C',
+    pool: '#FFE0A8',
   },
 };
 
@@ -53,6 +79,7 @@ export const TEXT_PAIRS: [fg: TokenName, bg: TokenName][] = [
   ['link', 'surface'],
   ['linkHover', 'bg'],
   ['linkHover', 'surface'],
+  ['stickerInk', 'sticker'],
 ];
 
 function luminance(hex: string): number {

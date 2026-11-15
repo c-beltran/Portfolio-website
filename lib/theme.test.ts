@@ -9,6 +9,19 @@ describe('tokens', () => {
     }
   });
 
+  it.each(['day', 'lamp'] as ThemeName[])('desk sticker labels in %s meet 4.5:1', (theme) => {
+    expect(contrastRatio(TOKENS[theme].stickerInk, TOKENS[theme].sticker)).toBeGreaterThanOrEqual(
+      4.5,
+    );
+    expect(TEXT_PAIRS).toContainEqual(['stickerInk', 'sticker']);
+  });
+
+  it.each(['day', 'lamp'] as ThemeName[])('every %s token is a 7-character hex colour', (theme) => {
+    for (const k of ['wood', 'felt', 'feltLine', 'sticker', 'stickerInk', 'lampGlow'] as const) {
+      expect(TOKENS[theme][k], k).toMatch(/^#[0-9A-F]{6}$/i);
+    }
+  });
+
   it('computes WCAG contrast', () => {
     expect(contrastRatio('#000000', '#FFFFFF')).toBeCloseTo(21, 2);
     expect(contrastRatio('#FFFFFF', '#FFFFFF')).toBeCloseTo(1, 2);
