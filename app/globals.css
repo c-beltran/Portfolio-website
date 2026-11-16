@@ -311,8 +311,8 @@ button {
   overflow: visible;
 }
 
-.hotspot--deco,
-.hotspot .sticker {
+/* The mug is decoration. Labels are part of their object: a tap on one opens it. */
+.hotspot--deco {
   pointer-events: none;
 }
 
@@ -525,10 +525,14 @@ button {
     padding-bottom: 75dvh;
   }
 
-  /* scrollIntoView keeps the opened object clear of the sheet (+ the selected lift's growth). */
+  /* Focus and opened objects scroll clear of the sheet (WCAG 2.4.11). */
+  html:has(.desk > .panel:not(.panel--empty)) {
+    scroll-padding-bottom: calc(75dvh + 16px); /* + the selected lift */
+  }
+
+  /* The scroll padding above keeps an opened object clear of the sheet too. */
   .hotspot {
     scroll-margin-top: 12px;
-    scroll-margin-bottom: calc(75dvh + 16px);
   }
 }
 
@@ -542,7 +546,11 @@ button {
   }
 
   .desk-still {
-    max-width: calc((60dvh - 28px) * 3.05 + 2 * clamp(8px, 1.2vw, 16px)); /* felt + mat */
+    /* Never below 500px of felt (44px targets), even when toolbars shrink the viewport. */
+    max-width: max(
+      500px + 2 * clamp(8px, 1.2vw, 16px),
+      calc((60dvh - 28px) * 3.05 + 2 * clamp(8px, 1.2vw, 16px))
+    );
     margin-inline: auto;
   }
 
@@ -550,13 +558,14 @@ button {
     padding-bottom: 40dvh;
   }
 
-  .hotspot {
-    scroll-margin-bottom: calc(40dvh + 16px);
+  html:has(.desk > .panel:not(.panel--empty)) {
+    scroll-padding-bottom: calc(40dvh + 16px);
   }
 }
 
+/* Only opening slides; closing, resizing and rotating are instant (the hint never slides). */
 @media (max-width: 1023px) and (prefers-reduced-motion: no-preference) {
-  .desk > .panel {
+  .desk > .panel:not(.panel--empty) {
     transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
   }
 }

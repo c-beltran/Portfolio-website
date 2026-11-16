@@ -28,6 +28,43 @@ test.describe('phone bottom sheet', () => {
     await expect.poll(() => visibleAboveSheet(page, 'gauge')).toBe(true);
   });
 
+  test('keyboard focus is never hidden under the open sheet', async ({ page }) => {
+    await gotoDesk(page, '/');
+    await page
+      .getByRole('navigation', { name: 'Sections' })
+      .getByRole('button', { name: 'Potaflow' })
+      .focus();
+    await page.keyboard.press('Enter');
+    await expect(panelTitle(page)).toBeFocused();
+    for (let i = 0; i < 3; i++) {
+      await page.keyboard.press('Shift+Tab');
+      const { inSheet, bottom, sheetTop } = await page.evaluate(() => {
+        const a = document.activeElement!;
+        const sheet = document.querySelector('section.panel')!.getBoundingClientRect();
+        return {
+          inSheet: !!a.closest('section.panel'),
+          bottom: a.getBoundingClientRect().bottom,
+          sheetTop: sheet.top,
+        };
+      });
+      if (!inSheet) expect(bottom, `shift+tab ×${i + 1}`).toBeLessThanOrEqual(sheetTop + 1);
+    }
+  });
+
+  test('closing the sheet is instant: the empty hint never slides', async ({ page }) => {
+    await gotoDesk(page, '/potaflow');
+    await panel(page).evaluate((el) => {
+      (window as unknown as { slid: string[] }).slid = [];
+      (el as HTMLElement).addEventListener('transitionrun', (e) =>
+        (window as unknown as { slid: string[] }).slid.push(e.propertyName),
+      );
+    });
+    await page.getByRole('button', { name: 'Back to desk' }).click();
+    await expect.poll(() => path(page)).toBe('/');
+    await page.waitForTimeout(400);
+    expect(await page.evaluate(() => (window as unknown as { slid: string[] }).slid)).toEqual([]);
+  });
+
   test('scrolls to its last line, with Back to desk always reachable', async ({ page }) => {
     await gotoDesk(page, '/potaflow');
     const back = page.getByRole('button', { name: 'Back to desk' });
@@ -126,6 +163,18 @@ test.describe('phone bottom sheet', () => {
 
 test.describe('landscape phones and small tablets', () => {
   test.skip(({ isMobile }) => !isMobile, 'touch devices');
+
+  test('the smallest landscape phone with toolbars keeps 44px targets', async ({ page }) => {
+    await page.setViewportSize({ width: 568, height: 270 });
+    await gotoDesk(page, '/');
+    for (const b of await page.locator('button.hotspot').all()) {
+      const box = (await b.boundingBox())!;
+      expect(
+        Math.min(box.width, box.height),
+        (await b.getAttribute('data-item')) ?? '',
+      ).toBeGreaterThanOrEqual(44);
+    }
+  });
 
   for (const [w, h] of [
     [568, 320],

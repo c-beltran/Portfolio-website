@@ -24,6 +24,7 @@ describe('docs/design hygiene', () => {
     /reviewed by me/i,
     /\b832\b/,
     /Templates used/i,
+    /1,450|247\+|\d+ reviewers|mid-review|merges until I|Directions explored: \d|real tool of mine/i,
   ])('no public design file matches %s', (pattern) => {
     const hits = files(DESIGN)
       .filter((f) => /\.(md|html|txt|json)$/.test(f))

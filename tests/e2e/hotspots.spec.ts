@@ -112,6 +112,24 @@ test.describe('still desk hotspots', () => {
     expect(ratio).toBeCloseTo(DESK_ASPECT[portrait ? 'phone' : 'wide'], 2);
   });
 
+  test('tapping any label hits its own object', async ({ page }) => {
+    await gotoDesk(page, '/');
+    const misses = await page.evaluate(() =>
+      [...document.querySelectorAll<HTMLElement>('button.hotspot .sticker')].flatMap((label) => {
+        const own = label.closest<HTMLElement>('button.hotspot')!.dataset.item;
+        label.scrollIntoView({ block: 'center', behavior: 'instant' });
+        const r = label.getBoundingClientRect();
+        return [0.2, 0.5, 0.8].flatMap((fx) => {
+          const hit = document
+            .elementFromPoint(r.left + r.width * fx, r.top + r.height / 2)
+            ?.closest<HTMLElement>('button.hotspot')?.dataset.item;
+          return hit === own ? [] : [`${own} label at ${fx}: hit ${hit ?? 'felt'}`];
+        });
+      }),
+    );
+    expect(misses).toEqual([]);
+  });
+
   test('hotspots stay out of the Tab order: header → drawer', async ({ page }) => {
     await gotoDesk(page, '/');
     await headerLamp(page).focus();
