@@ -1,0 +1,299 @@
+<!doctype html>
+<!-- Reference mock (Direction E). Not the art target; DESK_SPEC.md wins. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Direction E: The Desk</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;700;800;900&amp;family=Inter:wght@400;500;600;700&amp;family=Caveat:wght@600;700&amp;family=IBM+Plex+Mono:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#EEF0EC}
+a{color:#15191C}a:hover{color:#9A2E18}
+button:focus-visible,a:focus-visible{outline:3px solid #FFD84D;outline-offset:4px;border-radius:6px}
+.panel button:focus-visible,.panel a:focus-visible,.drawer button:focus-visible{outline-color:#9A2E18}
+.obj{background:none;border:0;padding:0;margin:0;cursor:pointer;font:inherit;color:inherit;display:block}
+@media (prefers-reduced-motion: no-preference){
+.obj{transition:transform .35s cubic-bezier(.2,.8,.2,1),filter .35s ease}
+.needle{transition:transform .9s cubic-bezier(.3,1.6,.5,1)}
+.screen{transition:background-color .5s ease}
+.steam{animation:steam 3s ease-in-out infinite}
+@keyframes steam{0%,100%{opacity:.25;transform:translateY(0)}50%{opacity:.6;transform:translateY(-4%)}}
+}
+</style>
+</helmet>
+<div style="background: #EEF0EC; color: #15191C; font-family: Inter, system-ui, sans-serif; font-size: 18px; line-height: 1.6">
+<div style="max-width: 1240px; margin: 0 auto; padding: 0 clamp(16px, 4vw, 48px) 96px">
+
+<header style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 24px 48px; padding: 40px 0 28px">
+<div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 14px">
+<h1 style="margin: 0; font-family: 'Schibsted Grotesk', Inter, sans-serif; font-weight: 900; font-size: clamp(44px, 7vw, 84px); line-height: 0.95; letter-spacing: -0.03em">Carlos Beltran</h1>
+<p style="margin: 0; font-size: clamp(19px, 2vw, 22px); line-height: 1.45; max-width: 44ch; text-wrap: pretty">[header summary: see content/links.ts]</p>
+<p style="margin: 0; font-size: 15px; font-weight: 600; color: #3E454B">Go · backend &amp; performance · 7+ years · AI-native · New York</p>
+</div>
+<div style="flex: 1 1 260px; display: flex; flex-direction: column; align-items: flex-start; gap: 12px">
+<a href="#" style="display: inline-flex; align-items: center; min-height: 48px; padding: 0 22px; background: #15191C; color: #FFFFFF; border-radius: 999px; font-weight: 700; font-size: 16px; text-decoration: none">Download résumé</a>
+<a href="#" style="font-weight: 600; font-size: 16px">Prefer a plain page? Classic version</a>
+</div>
+</header>
+
+<div style="display: flex; flex-wrap: wrap; gap: 28px; align-items: flex-start">
+
+<div style="flex: 999 1 640px; min-width: 0; display: flex; flex-direction: column; gap: 14px">
+<div style="background: #B98A57; padding: clamp(8px, 1.2vw, 16px); border-radius: 22px; box-shadow: inset 0 -6px 0 rgba(0, 0, 0, 0.18)">
+<div role="group" aria-label="Carlos's desk. Each object opens a section." style="position: relative; aspect-ratio: 16 / 10.5; overflow: hidden; border-radius: 14px; container-type: inline-size; background-color: #2E5A4E; background-image: repeating-linear-gradient(90deg, rgba(255,255,255,0.025) 0 2px, transparent 2px 6px), repeating-linear-gradient(0deg, rgba(0,0,0,0.04) 0 1px, transparent 1px 5px)">
+
+<div aria-hidden="true" style="position: absolute; left: 3%; top: 3%; font-family: Caveat, cursive; font-weight: 700; font-size: max(14px, 2.2cqw); color: #FFE9A8; transform: rotate(-3deg); line-height: 1">go ahead, touch things</div>
+
+<button type="button" class="obj" aria-label="ID badge: Experience" aria-pressed="{{s.badge.on}}" onClick="{{s.badge.pick}}" style="position: absolute; left: 4%; top: 13%; width: 15%; {{s.badge.style}}">
+<span aria-hidden="true" style="position: absolute; left: 43%; bottom: 96%; width: 14%; height: 140%; background: #FFD84D"></span>
+<span aria-hidden="true" style="display: flex; flex-direction: column; background: #FFFFFF; border-radius: 0.9cqw; overflow: hidden">
+<span style="display: flex; justify-content: center; padding: 1cqw 0 0.6cqw"><span style="width: 28%; height: 0.8cqw; border-radius: 99px; background: #15191C"></span></span>
+<span style="margin: 0 9%; aspect-ratio: 1 / 1; background: #D5D9DD; border-radius: 0.5cqw"></span>
+<span style="padding: 0.8cqw 9% 0.9cqw; font-family: 'Schibsted Grotesk', sans-serif; font-weight: 800; font-size: 1.25cqw; line-height: 1.15; color: #15191C">C. BELTRAN<span style="display: block; font-family: Inter, sans-serif; font-weight: 500; font-size: 0.9cqw; color: #3E454B">Sr. Software Engineer</span></span>
+<span style="background: #15191C; color: #FFFFFF; padding: 0.7cqw 9%; font-family: 'Schibsted Grotesk', sans-serif; font-weight: 800; font-size: 1.15cqw; line-height: 1.2">PEOPLE INC.<span style="display: block; font-family: Inter, sans-serif; font-weight: 500; font-size: 0.8cqw; color: #D5D9DD">since July 2019</span></span>
+</span>
+<span style="position: absolute; left: -6%; bottom: -9%; transform: rotate(6deg); background: #FFF8E6; color: #15191C; font-weight: 700; font-size: max(11px, 1.05cqw); letter-spacing: 0.06em; padding: 0.3cqw 0.9cqw; box-shadow: 0 1px 2px rgba(0,0,0,0.25)">EXPERIENCE</span>
+</button>
+
+<button type="button" class="obj" aria-label="Laptop: How I build" aria-pressed="{{s.laptop.on}}" onClick="{{s.laptop.pick}}" style="position: absolute; left: 25%; top: 9%; width: 40%; {{s.laptop.style}}">
+<span aria-hidden="true" style="display: block; background: #1E2328; border-radius: 1.2cqw 1.2cqw 0.4cqw 0.4cqw; padding: 1.1cqw">
+<span style="display: flex; flex-direction: column; gap: 0.7cqw; aspect-ratio: 16 / 9.4; background: #F7F8FA; border-radius: 0.5cqw; padding: 1.4cqw 1.8cqw; box-sizing: border-box; text-align: left">
+<span style="display: flex; justify-content: space-between; align-items: center; font-family: 'Schibsted Grotesk', sans-serif; font-weight: 800; font-size: 1.5cqw; color: #15191C">Add district dashboard<span style="font-family: Inter, sans-serif; font-weight: 700; font-size: 0.95cqw; color: #FFFFFF; background: #6A3FB5; padding: 0.2cqw 0.8cqw; border-radius: 99px">Merged</span></span>
+<span style="font-size: 0.95cqw; color: #3E454B">PR #[N]</span>
+<span style="display: flex; flex-direction: column; gap: 0.45cqw; margin-top: 0.4cqw">
+<span style="display: flex; align-items: center; gap: 0.7cqw; font-size: 1.05cqw; color: #15191C"><span style="width: 1.3cqw; height: 1.3cqw; border-radius: 50%; background: #1F7A45"></span>Planner: spec matches the ticket</span>
+<span style="display: flex; align-items: center; gap: 0.7cqw; font-size: 1.05cqw; color: #15191C"><span style="width: 1.3cqw; height: 1.3cqw; border-radius: 50%; background: #1F7A45"></span>[TODO: Q24 check]</span>
+<span style="display: flex; align-items: center; gap: 0.7cqw; font-size: 1.05cqw; color: #15191C"><span style="width: 1.3cqw; height: 1.3cqw; border-radius: 50%; background: #1F7A45"></span>Carlos: approved</span>
+</span>
+</span>
+</span>
+<span aria-hidden="true" style="display: block; background: #C5CACF; border-radius: 0.4cqw 0.4cqw 1.6cqw 1.6cqw; padding: 1.2cqw 2.2cqw 1.4cqw">
+<span style="display: grid; grid-template-columns: repeat(14, minmax(0, 1fr)); gap: 0.35cqw">
+<sc-for list="{{keys}}" as="k" hint-placeholder-count="42"><span style="height: 1.5cqw; background: #2A3036; border-radius: 0.25cqw"></span></sc-for>
+</span>
+<span style="display: block; width: 34%; height: 4.5cqw; margin: 1.1cqw auto 0; background: #B3B9BF; border-radius: 0.6cqw"></span>
+</span>
+<span style="position: absolute; right: 6%; bottom: -5%; transform: rotate(-3deg); background: #FFF8E6; color: #15191C; font-weight: 700; font-size: max(11px, 1.05cqw); letter-spacing: 0.06em; padding: 0.3cqw 0.9cqw; box-shadow: 0 1px 2px rgba(0,0,0,0.25)">HOW I BUILD</span>
+</button>
+
+<button type="button" class="obj" aria-label="Backflow test kit gauge: Potaflow project" aria-pressed="{{s.gauge.on}}" onClick="{{s.gauge.pick}}" style="position: absolute; left: 72%; top: 5%; width: 21%; {{s.gauge.style}}">
+<svg aria-hidden="true" viewBox="0 0 100 130" style="display: block; width: 100%; overflow: visible">
+<path d="M42 84 C 30 110, 10 112, 2 132" fill="none" stroke="#C8412B" stroke-width="5" stroke-linecap="round"></path>
+<path d="M50 88 C 52 110, 40 120, 44 136" fill="none" stroke="#E5B53A" stroke-width="5" stroke-linecap="round"></path>
+<path d="M58 84 C 72 106, 92 108, 100 128" fill="none" stroke="#2F6FBF" stroke-width="5" stroke-linecap="round"></path>
+<rect x="38" y="76" width="24" height="14" rx="3" fill="#9AA1A8"></rect>
+<circle cx="50" cy="44" r="40" fill="#D9DDE1"></circle>
+<circle cx="50" cy="44" r="34" fill="#FFFFFF"></circle>
+<path d="M 26 64 A 31 31 0 0 1 22 30" fill="none" stroke="#E5B53A" stroke-width="3"></path>
+<path d="M 74 64 A 31 31 0 0 0 78 30" fill="none" stroke="#C8412B" stroke-width="3"></path>
+<g stroke="#15191C" stroke-width="1.4" stroke-linecap="round">
+<line x1="50" y1="14" x2="50" y2="19"></line><line x1="29" y1="23" x2="32" y2="27"></line><line x1="71" y1="23" x2="68" y2="27"></line>
+<line x1="20" y1="44" x2="25" y2="44"></line><line x1="80" y1="44" x2="75" y2="44"></line>
+</g>
+<text x="50" y="62" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="6" font-weight="600" fill="#15191C">PSID</text>
+<g class="needle" style="transform-box: view-box; transform-origin: 50px 44px; {{needle}}">
+<line x1="50" y1="44" x2="50" y2="17" stroke="#C8412B" stroke-width="2.4" stroke-linecap="round"></line>
+</g>
+<circle cx="50" cy="44" r="3.4" fill="#15191C"></circle>
+</svg>
+<span style="position: absolute; left: 6%; top: 60%; transform: rotate(-5deg); background: #FFF8E6; color: #15191C; font-weight: 700; font-size: max(11px, 1.05cqw); letter-spacing: 0.06em; padding: 0.3cqw 0.9cqw; box-shadow: 0 1px 2px rgba(0,0,0,0.25)">POTAFLOW</span>
+</button>
+
+<button type="button" class="obj" aria-label="Phone: Power Walk project" aria-pressed="{{s.phone.on}}" onClick="{{s.phone.pick}}" style="position: absolute; left: 82%; top: 56%; width: 10%; {{s.phone.style}}">
+<span aria-hidden="true" style="display: block; aspect-ratio: 9 / 19; background: #121518; border-radius: 1.8cqw; padding: 0.55cqw; box-sizing: border-box">
+<span class="screen" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.6cqw; height: 100%; border-radius: 1.3cqw; {{phoneScreen}}">
+<svg viewBox="0 0 24 24" style="width: 45%" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"></path><path d="M10 21h4"></path><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"></path></svg>
+<span style="font-family: 'Schibsted Grotesk', sans-serif; font-weight: 900; font-size: 1.4cqw">{{phoneText}}</span>
+</span>
+</span>
+<span style="position: absolute; left: -22%; bottom: -6%; transform: rotate(-8deg); white-space: nowrap; background: #FFF8E6; color: #15191C; font-weight: 700; font-size: max(11px, 1.05cqw); letter-spacing: 0.06em; padding: 0.3cqw 0.9cqw; box-shadow: 0 1px 2px rgba(0,0,0,0.25)">POWER WALK</span>
+</button>
+
+<button type="button" class="obj" aria-label="Polaroid photo: About me" aria-pressed="{{s.photo.on}}" onClick="{{s.photo.pick}}" style="position: absolute; left: 5%; top: 60%; width: 14%; {{s.photo.style}}">
+<span aria-hidden="true" style="display: block; background: #FFFFFF; padding: 0.9cqw 0.9cqw 0; box-shadow: 0 1px 0 rgba(0,0,0,0.08)">
+<span style="display: flex; align-items: center; justify-content: center; aspect-ratio: 1 / 1; background: #D5D9DD; color: #3E454B; font-size: max(11px, 1cqw); font-weight: 600">[your photo]</span>
+<span style="display: block; padding: 0.5cqw 0 0.8cqw; font-family: Caveat, cursive; font-weight: 700; font-size: 1.8cqw; color: #15191C; text-align: center"></span>
+</span>
+<span style="position: absolute; right: -10%; top: -6%; transform: rotate(4deg); background: #FFF8E6; color: #15191C; font-weight: 700; font-size: max(11px, 1.05cqw); letter-spacing: 0.06em; padding: 0.3cqw 0.9cqw; box-shadow: 0 1px 2px rgba(0,0,0,0.25)">ABOUT</span>
+</button>
+
+<button type="button" class="obj" aria-label="Sticky note: how this website was built" aria-pressed="{{s.note.on}}" onClick="{{s.note.pick}}" style="position: absolute; left: 27%; top: 69%; width: 14%; {{s.note.style}}">
+<span aria-hidden="true" style="display: flex; align-items: center; aspect-ratio: 1 / 1; background: #FFE27A; padding: 1.4cqw; box-sizing: border-box; font-family: Caveat, cursive; font-weight: 700; font-size: 2cqw; line-height: 1.05; color: #2B2410; text-align: left">this site: built with AI agents</span>
+<span style="position: absolute; right: -8%; bottom: -8%; transform: rotate(5deg); background: #FFF8E6; color: #15191C; font-weight: 700; font-size: max(11px, 1.05cqw); letter-spacing: 0.06em; padding: 0.3cqw 0.9cqw; box-shadow: 0 1px 2px rgba(0,0,0,0.25)">THIS SITE</span>
+</button>
+
+<button type="button" class="obj" aria-label="Business card: Contact" aria-pressed="{{s.card.on}}" onClick="{{s.card.pick}}" style="position: absolute; left: 50%; top: 74%; width: 19%; {{s.card.style}}">
+<span aria-hidden="true" style="display: flex; flex-direction: column; justify-content: space-between; aspect-ratio: 1.75 / 1; background: #FFFFFF; border-radius: 0.5cqw; padding: 1.2cqw 1.5cqw; box-sizing: border-box; text-align: left">
+<span style="font-family: 'Schibsted Grotesk', sans-serif; font-weight: 900; font-size: 1.7cqw; line-height: 1.1; color: #15191C">Carlos Beltran<span style="display: block; font-family: Inter, sans-serif; font-weight: 500; font-size: 0.95cqw; color: #3E454B">Senior Software Engineer</span></span>
+<span style="font-family: 'IBM Plex Mono', monospace; font-size: 0.9cqw; color: #15191C">résumé · linkedin · github</span>
+</span>
+<span style="position: absolute; left: -6%; top: -14%; transform: rotate(-4deg); background: #FFF8E6; color: #15191C; font-weight: 700; font-size: max(11px, 1.05cqw); letter-spacing: 0.06em; padding: 0.3cqw 0.9cqw; box-shadow: 0 1px 2px rgba(0,0,0,0.25)">CONTACT</span>
+</button>
+
+<div aria-hidden="true" style="position: absolute; left: 70%; top: 78%; width: 10%; aspect-ratio: 1 / 1">
+<span style="position: absolute; right: -28%; top: 34%; width: 36%; height: 32%; border: 1.1cqw solid #E7E2D8; border-left: 0; border-radius: 0 40% 40% 0; box-sizing: border-box"></span>
+<span style="position: absolute; inset: 0; border-radius: 50%; background: #E7E2D8; box-shadow: 0 6px 8px rgba(0,0,0,0.35)"></span>
+<span style="position: absolute; inset: 11%; border-radius: 50%; background: #4A2E1E"></span>
+<span class="steam" style="position: absolute; inset: 26%; border-radius: 50%; background: rgba(255,255,255,0.22)"></span>
+</div>
+
+</div>
+</div>
+
+<div class="drawer" style="display: flex; flex-direction: column; gap: 10px">
+<span style="font-size: 15px; font-weight: 600; color: #3E454B">Or open a drawer:</span>
+<div role="group" aria-label="Sections" style="display: flex; flex-wrap: wrap; gap: 8px">
+<sc-for list="{{drawer}}" as="d" hint-placeholder-count="7">
+<button type="button" aria-pressed="{{d.on}}" onClick="{{d.pick}}" style="min-height: 44px; padding: 0 16px; border-radius: 999px; border-width: 2px; border-style: solid; font-family: Inter, sans-serif; font-weight: 600; font-size: 15px; cursor: pointer; {{d.style}}">{{d.label}}</button>
+</sc-for>
+</div>
+</div>
+</div>
+
+<section class="panel" aria-live="polite" aria-labelledby="panel-title" style="flex: 1 1 360px; min-width: 0; background: #FFFFFF; border: 2px solid #15191C; border-radius: 18px; padding: clamp(22px, 3vw, 32px); display: flex; flex-direction: column; gap: 18px">
+
+<sc-if value="{{s.gauge.on}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; flex-direction: column; gap: 18px">
+<p style="margin: 0; font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 600; letter-spacing: 0.08em; color: #3E454B">THE GAUGE · PROJECT 01</p>
+<h2 id="panel-title" style="margin: 0; font-family: 'Schibsted Grotesk', sans-serif; font-weight: 900; font-size: clamp(32px, 4vw, 44px); line-height: 1; letter-spacing: -0.02em">Potaflow</h2>
+<p style="margin: 0; font-size: 18px; line-height: 1.55">Multi-tenant SaaS that takes the paper trail out of backflow testing compliance for water districts in Nassau County, NY.</p>
+<p style="margin: 0; font-size: 16px; line-height: 1.6; color: #2A3036">[TODO: Q3 backflow credential] I wrote the rules down for the agents: custom skills that encode NY DOH-1013 and how each device is physically tested. [TODO: Q24]</p>
+<dl style="margin: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; border-top: 2px solid #15191C; padding-top: 16px">
+<div><dt style="font-size: 14px; color: #3E454B">Commits</dt><dd style="margin: 0; font-family: 'Schibsted Grotesk', sans-serif; font-weight: 900; font-size: 34px; line-height: 1.1">[N]</dd></div>
+<div><dt style="font-size: 14px; color: #3E454B">Merged PRs</dt><dd style="margin: 0; font-family: 'Schibsted Grotesk', sans-serif; font-weight: 900; font-size: 34px; line-height: 1.1">[N]</dd></div>
+<div><dt style="font-size: 14px; color: #3E454B">Time</dt><dd style="margin: 0; font-family: 'Schibsted Grotesk', sans-serif; font-weight: 900; font-size: 34px; line-height: 1.1">[TODO]</dd></div>
+<div><dt style="font-size: 14px; color: #3E454B">Developers</dt><dd style="margin: 0; font-family: 'Schibsted Grotesk', sans-serif; font-weight: 900; font-size: 34px; line-height: 1.1">[N]</dd></div>
+</dl>
+<p style="margin: 0; font-size: 15px; color: #3E454B">Nuxt · tRPC · Prisma · Postgres · S3 · Sentry</p>
+<div style="aspect-ratio: 16 / 9; border: 2px dashed #8A9096; border-radius: 12px; background: #F3F4F2; display: flex; align-items: center; justify-content: center; text-align: center; padding: 12px; font-size: 15px; color: #3E454B">[Potaflow screenshot]</div>
+<a href="#" style="font-weight: 700; font-size: 16px">Visit potaflow.com</a>
+</div>
+</sc-if>
+
+<sc-if value="{{s.badge.on}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 16px">
+<p style="margin: 0; font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 600; letter-spacing: 0.08em; color: #3E454B">THE BADGE · EXPERIENCE</p>
+<h2 style="margin: 0; font-family: 'Schibsted Grotesk', sans-serif; font-weight: 900; font-size: clamp(30px, 4vw, 40px); line-height: 1.05; letter-spacing: -0.02em">Same desk since July 2019</h2>
+<p style="margin: 0; font-size: 16px; color: #2A3036">Senior Software Engineer, Performance Engineering on the Ad Platform. One company, three names: Meredith, then Dotdash Meredith, now People Inc.</p>
+<ul style="margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 8px; font-size: 16px; line-height: 1.5">
+<li>Integrated new retailers into Go-based importers and optimized how they run</li>
+<li>Migrated the creative builder from PostgreSQL to a graph database</li>
+<li>Carried platform migrations through the merger</li>
+<li>Ad performance, latency and infrastructure cost</li>
+<li>Mentoring engineers and leading projects</li>
+</ul>
+</div>
+</sc-if>
+
+<sc-if value="{{s.laptop.on}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 16px">
+<p style="margin: 0; font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 600; letter-spacing: 0.08em; color: #3E454B">THE LAPTOP · HOW I BUILD</p>
+<h2 style="margin: 0; font-family: 'Schibsted Grotesk', sans-serif; font-weight: 900; font-size: clamp(30px, 4vw, 40px); line-height: 1.05; letter-spacing: -0.02em">I set the bar. Agents do the legwork.</h2>
+<p style="margin: 0; font-size: 16px; color: #2A3036">Agents plan, build and review in parallel. [TODO: Q24]</p>
+<ul style="margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 8px; font-size: 16px; line-height: 1.5">
+<li>Daily: Claude Code, Codex, Cursor and Claude Design</li>
+<li>Wrote Claude skills that are now widely shared across my team</li>
+<li>Ship internal tools for product managers fast</li>
+<li>Driving AI adoption on my team</li>
+</ul>
+<button type="button" onClick="{{s.gauge.pick}}" style="align-self: flex-start; min-height: 44px; padding: 0 18px; border-radius: 999px; border: 2px solid #15191C; background: #FFFFFF; color: #15191C; font-family: Inter, sans-serif; font-weight: 700; font-size: 15px; cursor: pointer">See the proof in Potaflow</button>
+</div>
+</sc-if>
+
+<sc-if value="{{s.phone.on}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 16px">
+<p style="margin: 0; font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 600; letter-spacing: 0.08em; color: #3E454B">THE PHONE · PROJECT 02</p>
+<h2 style="margin: 0; font-family: 'Schibsted Grotesk', sans-serif; font-weight: 900; font-size: clamp(32px, 4vw, 44px); line-height: 1; letter-spacing: -0.02em">Power Walk</h2>
+<p style="margin: 0; font-size: 18px; line-height: 1.55">Every real step from Apple Health is a footstep through a blacked-out New York landmark. Find the fuse and turn the lights back on. (You just did, on the desk.)</p>
+<p style="margin: 0; font-size: 16px; color: #2A3036">[N] commits, React Native and Expo. [TODO: Q24] Claude Design drew parts of the art.</p>
+<div style="aspect-ratio: 9 / 12; max-width: 260px; border: 2px dashed #8A9096; border-radius: 16px; background: #F3F4F2; display: flex; align-items: center; justify-content: center; text-align: center; padding: 12px; font-size: 15px; color: #3E454B">[Power Walk screenshot]</div>
+</div>
+</sc-if>
+
+<sc-if value="{{s.photo.on}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 16px">
+<p style="margin: 0; font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 600; letter-spacing: 0.08em; color: #3E454B">THE PHOTO · ABOUT</p>
+<h2 style="margin: 0; font-family: 'Schibsted Grotesk', sans-serif; font-weight: 900; font-size: clamp(30px, 4vw, 40px); line-height: 1.05; letter-spacing: -0.02em">Hi, I'm Carlos.</h2>
+<p style="margin: 0; font-size: 17px; line-height: 1.6">[Rewrite in your own words.] Weekdays, I make an ad platform faster. Weekends, [TODO: Q3 backflow credential]. That's how Potaflow happened.</p>
+</div>
+</sc-if>
+
+<sc-if value="{{s.note.on}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 16px">
+<p style="margin: 0; font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 600; letter-spacing: 0.08em; color: #3E454B">THE NOTE · PROJECT 03</p>
+<h2 style="margin: 0; font-family: 'Schibsted Grotesk', sans-serif; font-weight: 900; font-size: clamp(30px, 4vw, 40px); line-height: 1.05; letter-spacing: -0.02em">This website</h2>
+<p style="margin: 0; font-size: 17px; line-height: 1.6">Designed on a Claude Design canvas next to five rejected directions, built with agents. [TODO: Q24] The words are mine.</p>
+<p style="margin: 0; font-family: 'IBM Plex Mono', monospace; font-size: 14px; line-height: 1.7; color: #2A3036">Directions explored: [N]<br>Commits: [N]</p>
+</div>
+</sc-if>
+
+<sc-if value="{{s.card.on}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 16px">
+<p style="margin: 0; font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 600; letter-spacing: 0.08em; color: #3E454B">THE CARD · CONTACT</p>
+<h2 style="margin: 0; font-family: 'Schibsted Grotesk', sans-serif; font-weight: 900; font-size: clamp(30px, 4vw, 40px); line-height: 1.05; letter-spacing: -0.02em">Say hello</h2>
+<div style="display: flex; flex-direction: column; align-items: flex-start; gap: 12px; font-size: 17px; font-weight: 600">
+<a href="#" style="display: inline-flex; align-items: center; min-height: 48px; padding: 0 22px; background: #15191C; color: #FFFFFF; border-radius: 999px; text-decoration: none">Download résumé</a>
+<a href="#">[email]</a>
+<a href="#">LinkedIn</a>
+<a href="#">GitHub</a>
+</div>
+</div>
+</sc-if>
+
+</section>
+</div>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":1700}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const OBJ = [
+      { id: 'photo', label: 'About', rot: 6 },
+      { id: 'badge', label: 'Experience', rot: -8 },
+      { id: 'laptop', label: 'How I build', rot: -1.5 },
+      { id: 'gauge', label: 'Potaflow', rot: 4 },
+      { id: 'phone', label: 'Power Walk', rot: 12 },
+      { id: 'note', label: 'This site', rot: -5 },
+      { id: 'card', label: 'Contact', rot: 3 }
+    ];
+    const st = this.state || {};
+    const sel = st.sel || 'gauge';
+    const s = {};
+    OBJ.forEach((o) => {
+      const on = o.id === sel;
+      s[o.id] = {
+        on,
+        pick: () => this.setState({ sel: o.id }),
+        style: on
+          ? 'transform: rotate(' + o.rot + 'deg) translateY(-2%) scale(1.07); filter: drop-shadow(0 18px 16px rgba(0,0,0,0.45)); z-index: 3;'
+          : 'transform: rotate(' + o.rot + 'deg); filter: drop-shadow(0 5px 5px rgba(0,0,0,0.35)); z-index: 1;'
+      };
+    });
+    const drawer = OBJ.map((o) => ({
+      label: o.label,
+      on: o.id === sel,
+      pick: () => this.setState({ sel: o.id }),
+      style: o.id === sel
+        ? 'background: #15191C; color: #FFFFFF; border-color: #15191C;'
+        : 'background: #FFFFFF; color: #15191C; border-color: #8A9096;'
+    }));
+    const lit = sel === 'phone';
+    const keys = [];
+    for (let i = 0; i < 42; i++) keys.push(i);
+    return {
+      s, drawer, keys,
+      needle: sel === 'gauge' ? 'transform: rotate(58deg);' : 'transform: rotate(-52deg);',
+      phoneScreen: lit ? 'background-color: #FFD84D; color: #15191C;' : 'background-color: #1C2430; color: #8C98A8;',
+      phoneText: lit ? 'LIT' : ''
+    };
+  }
+}
+</script>
+</body>
+</html>

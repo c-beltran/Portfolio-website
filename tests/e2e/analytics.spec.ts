@@ -23,3 +23,11 @@ test('opening a section, going Back and visiting /classic each send a page view'
   await page.goto('/classic');
   await expect.poll(async () => (await pageviews(page)).at(-1)).toBe('/classic');
 });
+
+test('clicking a desk object sends a page view for its route', async ({ page }) => {
+  await page.goto('/');
+  await page.waitForFunction(() => document.documentElement.dataset.deskReady === 'true');
+  await expect.poll(() => pageviews(page)).toContain('/');
+  await page.locator('.hotspot[data-item="phone"]').click();
+  await expect.poll(async () => (await pageviews(page)).at(-1)).toBe('/power-walk');
+});

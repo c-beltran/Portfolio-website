@@ -97,13 +97,18 @@ type Props = { slug: SectionSlug | null; onClose: () => void };
 export function Panel({ slug, onClose }: Props) {
   if (slug === null) {
     return (
-      <section className="panel" aria-live="polite" aria-label="Section">
-        <p className="panel__hint">Pick a section above.</p>
+      <section className="panel panel--empty" aria-live="polite" aria-label="Section">
+        <p className="panel__hint">Pick something up on the desk, or open a drawer.</p>
       </section>
     );
   }
   return (
     <section className="panel" aria-live="polite" aria-labelledby="panel-title">
+      <div className="panel__bar">
+        <button type="button" className="panel__back" onClick={onClose}>
+          Back to desk
+        </button>
+      </div>
       {PANELS[slug].map((block, i) => (
         <Block key={i} block={block} />
       ))}
@@ -112,9 +117,6 @@ export function Panel({ slug, onClose }: Props) {
           <small>{statsFootnote()}</small>
         </p>
       )}
-      <button type="button" className="panel__back" onClick={onClose}>
-        Back to desk
-      </button>
     </section>
   );
 }

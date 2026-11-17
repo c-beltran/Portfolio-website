@@ -14,9 +14,23 @@ for (const theme of ['day', 'lamp'] as const) {
       test(`${route} has no WCAG 2.1 A/AA violations`, async ({ page }) => {
         await page.goto(route);
         expect(await page.evaluate(() => document.documentElement.dataset.theme)).toBe(theme);
-        const { violations, incomplete } = await new AxeBuilder({ page })
+        const { violations } = await new AxeBuilder({ page })
           .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
           .analyze();
+        // The desk's own text is aria-hidden SVG that axe can't measure; its contrast is pinned
+        // by lib/artPalette.test.ts (day and lamp-mode dim). Everything else must be verifiable.
+        // On phones the open panel is a fixed sheet over the page, and axe can't resolve the
+        // background of text that overlaps other content. The same panel, on the same tokens, is
+        // verified by the desktop run and by lib/theme.test.ts.
+        const sheet = await page.evaluate(() => {
+          const el = document.querySelector('section.panel');
+          return !!el && getComputedStyle(el).position === 'fixed';
+        });
+        let contrast = new AxeBuilder({ page })
+          .withRules(['color-contrast'])
+          .exclude('.desk-still__layer');
+        if (sheet) contrast = contrast.exclude('section.panel');
+        const { incomplete } = await contrast.analyze();
         expect(
           violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target).join(', ')}`),
         ).toEqual([]);
