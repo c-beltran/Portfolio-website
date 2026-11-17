@@ -68,8 +68,8 @@ def clay(scene):
 
 # Per-mode settings: which light collection renders, the sky, screen brightness, exposure.
 MODES = {
-    "day": dict(world="sky_day", show="lights_day", hide="lights_lamp", screen=0.8, exposure=0.55),
-    "lamp": dict(world="sky_night", show="lights_lamp", hide="lights_day", screen=1.5, exposure=0.6),
+    "day": dict(world="sky_day", show="lights_day", hide="lights_lamp", screen=1.0, exposure=0.15),
+    "lamp": dict(world="sky_night", show="lights_lamp", hide="lights_day", screen=2.6, exposure=0.4),
 }
 
 
@@ -87,7 +87,7 @@ def set_mode(scene, mode):
                     n.inputs["Emission Strength"].default_value = m["screen"]
     scene.view_settings.exposure = m["exposure"]
     try:
-        scene.view_settings.look = "AgX - Medium High Contrast"
+        scene.view_settings.look = "AgX - Punchy"
     except TypeError:
         pass
 

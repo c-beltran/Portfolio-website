@@ -55,13 +55,54 @@ def srgb(h):
     return tuple(((v + 0.055) / 1.055) ** 2.4 if v > 0.04045 else v / 12.92 for v in c)
 
 
-def glass(name, tint=(1, 1, 1), rough=0.02):
+def glass(name, tint=(1, 1, 1), rough=0.02, ior=1.45):
     m = new_material(name)
     b = bsdf_of(m)
     b.inputs["Base Color"].default_value = (*tint, 1)
     b.inputs["Transmission Weight"].default_value = 1.0
     b.inputs["Roughness"].default_value = rough
-    b.inputs["IOR"].default_value = 1.5
+    b.inputs["IOR"].default_value = ior
+    return m
+
+
+def fine(m, scale=420.0):
+    """Make a material's roughness variation fine-grained (no large mottling)."""
+    for n in m.node_tree.nodes:
+        if n.type == "TEX_NOISE":
+            n.inputs["Scale"].default_value = scale
+    return m
+
+
+def plaster(m):
+    """Subtle plaster bump on walls."""
+    nt = m.node_tree
+    noise = nt.nodes.new("ShaderNodeTexNoise")
+    noise.inputs["Scale"].default_value = 180.0
+    noise.inputs["Detail"].default_value = 8
+    bump = nt.nodes.new("ShaderNodeBump")
+    bump.inputs["Strength"].default_value = 0.06
+    nt.links.new(noise.outputs["Fac"], bump.inputs["Height"])
+    nt.links.new(bump.outputs["Normal"], bsdf_of(m).inputs["Normal"])
+    return m
+
+
+def photo_print(name):
+    """A neutral, soft landscape-like gradient print: reads as a photo, shows nothing personal."""
+    m = new_material(name)
+    nt = m.node_tree
+    b = bsdf_of(m)
+    coord = nt.nodes.new("ShaderNodeTexCoord")
+    sep = nt.nodes.new("ShaderNodeSeparateXYZ")
+    ramp = nt.nodes.new("ShaderNodeValToRGB")
+    els = ramp.color_ramp.elements
+    els[0].position, els[0].color = 0.0, (*srgb("#4D5A4A"), 1)
+    els[1].position, els[1].color = 1.0, (*srgb("#C9D3DE"), 1)
+    e = els.new(0.45)
+    e.color = (*srgb("#8E9A86"), 1)
+    nt.links.new(coord.outputs["UV"], sep.inputs["Vector"])
+    nt.links.new(sep.outputs["Y"], ramp.inputs["Fac"])
+    nt.links.new(ramp.outputs["Color"], b.inputs["Base Color"])
+    b.inputs["Roughness"].default_value = 0.35
     return m
 
 
@@ -113,14 +154,14 @@ def desk_mat(name):
     edge.clamp = True
     mix = nt.nodes.new("ShaderNodeMix")
     mix.data_type = "RGBA"
-    mix.inputs["A"].default_value = (*srgb("#1A1A1D"), 1)
-    mix.inputs["B"].default_value = (*srgb("#7E4A57"), 1)
+    mix.inputs["A"].default_value = (*srgb("#0E0E10"), 1)
+    mix.inputs["B"].default_value = (*srgb("#D0607F"), 1)
     nt.links.new(coord.outputs["Object"], vor.inputs["Vector"])
     nt.links.new(vor.outputs["Distance"], edge.inputs["Value"])
     nt.links.new(edge.outputs["Result"], mix.inputs["Factor"])
     nt.links.new(mix.outputs["Result"], b.inputs["Base Color"])
-    b.inputs["Roughness"].default_value = 0.85
-    b.inputs["Sheen Weight"].default_value = 0.3
+    b.inputs["Roughness"].default_value = 0.6
+    b.inputs["Sheen Weight"].default_value = 0.2
     return m
 
 
@@ -313,6 +354,25 @@ def laptop_screen(root, img):
             nt.links.new(tex.outputs["Color"], em.inputs["B"])
             nt.links.new(em.outputs["Result"], b.inputs["Emission Color"])
             b.inputs["Emission Strength"].default_value = 1.0
+            # Inside the screen: near-black, glossy base (a powered display, not a print).
+            base_link = next((l for l in nt.links if l.to_node == b and l.to_socket.name == "Base Color"), None)
+            if base_link:
+                dark = nt.nodes.new("ShaderNodeMix")
+                dark.data_type = "RGBA"
+                dark.inputs["B"].default_value = (0.008, 0.008, 0.01, 1)
+                nt.links.new(base_link.from_socket, dark.inputs["A"])
+                nt.links.new(mask.outputs[0], dark.inputs["Factor"])
+                nt.links.new(dark.outputs["Result"], b.inputs["Base Color"])
+            rough_link = next((l for l in nt.links if l.to_node == b and l.to_socket.name == "Roughness"), None)
+            gloss = nt.nodes.new("ShaderNodeMix")
+            gloss.data_type = "FLOAT"
+            gloss.inputs["B"].default_value = 0.1
+            if rough_link:
+                nt.links.new(rough_link.from_socket, gloss.inputs["A"])
+            else:
+                gloss.inputs["A"].default_value = b.inputs["Roughness"].default_value
+            nt.links.new(mask.outputs[0], gloss.inputs["Factor"])
+            nt.links.new(gloss.outputs["Result"], b.inputs["Roughness"])
             m["screen"] = True
 
 

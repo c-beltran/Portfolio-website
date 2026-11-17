@@ -48,9 +48,10 @@ def box(name, size, loc, coll, rot=(0, 0, 0), bevel=0.002):
     o = bpy.context.active_object
     o.name = name
     o.scale = size
+    bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
+    # Origin stays at the box centre, with rotation kept on the object (M3b animates these).
     o.location = (loc[0], loc[1], loc[2] + size[2] / 2)
     o.rotation_euler = [math.radians(a) for a in rot]
-    bpy.ops.object.transform_apply(scale=True)
     if bevel:
         m = o.modifiers.new("bevel", "BEVEL")
         m.width = bevel
@@ -80,9 +81,9 @@ def plane(name, size, loc, coll, rot=(0, 0, 0)):
     o = bpy.context.active_object
     o.name = name
     o.scale = (size[0], size[1], 1)
+    bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
     o.location = loc
     o.rotation_euler = [math.radians(a) for a in rot]
-    bpy.ops.object.transform_apply(scale=True)
     move_to(o, coll)
     return o
 
@@ -156,27 +157,27 @@ def build_simple_objects(coll):
     box("obj_card", (0.085, 0.055, 0.0006), (0.28, -0.22, t), coll, rot=(0, 0, -12), bevel=0.0002)
     # ID badge (CR80 card in a sleeve) lying by the laptop stand, lanyard coiled beside it.
     badge = box("obj_badge", (0.054, 0.086, 0.003), (-0.46, 0.0, DESK_TOP), coll, rot=(0, 0, 25), bevel=0.0008)
-    bpy.ops.mesh.primitive_torus_add(major_radius=0.05, minor_radius=0.004, location=(-0.42, 0.07, DESK_TOP + 0.004))
-    lan = bpy.context.active_object
-    lan.name = "deco_lanyard"
-    lan.scale = (1, 0.6, 0.3)
-    move_to(lan, coll)
     # Small framed photo (13×18 cm frame) leaning against the wall right of the monitor.
-    frame = box("obj_photo", (0.13, 0.018, 0.18), (0.42, 0.5, DESK_TOP), coll, rot=(-12, 0, -8), bevel=0.002)
+    frame = box("obj_photo", (0.13, 0.018, 0.18), (0.5, 0.48, DESK_TOP), coll, rot=(-12, 0, -18), bevel=0.002)
     frame["role"] = "photo_frame"
     bpy.ops.mesh.primitive_plane_add(size=1)
     prt = bpy.context.active_object
     prt.name = "deco_photo_print"
     prt.scale = (0.105, 0.15, 1)
-    bpy.ops.object.transform_apply(scale=True)
+    bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
     move_to(prt, coll)
     prt.parent = frame  # local frame: the box's centre, metres (its scale was applied)
     prt.location = (0, -0.0095, 0)
     prt.rotation_euler = (math.radians(90), 0, 0)
     # Backflow test-kit case (hard case with handle) beside the laptop, on the desk.
-    case = box("obj_kit", (0.30, 0.21, 0.10), (-0.33, 0.3, DESK_TOP), coll, rot=(0, 0, -14), bevel=0.012)
-    handle = box("deco_kit_handle", (0.11, 0.025, 0.02), (-0.33, 0.3, DESK_TOP + 0.10), coll, rot=(0, 0, -14), bevel=0.006)
+    case = box("obj_kit", (0.26, 0.18, 0.085), (-0.33, 0.3, DESK_TOP), coll, rot=(0, 0, -14), bevel=0.012)
+    handle = box("deco_kit_handle", (0.1, 0.022, 0.018), (-0.33, 0.3, DESK_TOP + 0.085), coll, rot=(0, 0, -14), bevel=0.006)
     set_parent(handle, case)
+    for i, dx in enumerate((-0.075, 0.075)):  # two latches on the front face
+        lx = -0.33 + dx * math.cos(math.radians(-14)) + 0.091 * math.sin(math.radians(-14))
+        ly = 0.3 + dx * math.sin(math.radians(-14)) - 0.091 * math.cos(math.radians(-14))
+        latch = box(f"deco_kit_latch_{i}", (0.028, 0.008, 0.022), (lx, ly, DESK_TOP + 0.045), coll, rot=(0, 0, -14), bevel=0.002)
+        set_parent(latch, case)
     # Walnut wrist rest in front of the keyboard (from the reference photo).
     box("deco_wrist_rest", (0.33, 0.075, 0.018), (-0.03, -0.205, t), coll, bevel=0.006)
     return {"pad": pad, "case": case}
@@ -275,10 +276,45 @@ def add_water(key, coll, fill):
     if not root:
         return
     lo, hi = world_bounds([o for o in root.children_recursive if o.type == "MESH"])
-    r = min(hi.x - lo.x, hi.y - lo.y) / 2 * 0.86
+    r = min(hi.x - lo.x, hi.y - lo.y) / 2 * 0.8
     h = (hi.z - lo.z) * fill
-    w = cylinder(f"deco_water_{key}", r, h, ((lo.x + hi.x) / 2, (lo.y + hi.y) / 2, lo.z + 0.006), coll, verts=48, bevel=0)
+    w = cylinder(f"deco_water_{key}", r, h, ((lo.x + hi.x) / 2, (lo.y + hi.y) / 2, lo.z + 0.008), coll, verts=48, bevel=0)
     w["role"] = "water"
+
+
+def set_dressing(coll):
+    """Coasters under the glass and mug, a short book stack, and cables: the clutter of a real desk."""
+    for key in ("glass", "mug"):
+        root = bpy.data.objects.get(f"deco_{key}")
+        if root:
+            lo, hi = world_bounds([o for o in root.children_recursive if o.type == "MESH"])
+            cx, cy = (lo.x + hi.x) / 2, (lo.y + hi.y) / 2
+            if key == "mug":
+                cx -= (hi.x - lo.x) * 0.12  # centre under the cup, not the handle
+            cylinder(f"deco_coaster_{key}", 0.05, 0.005, (cx, cy, DESK_TOP), coll, verts=48, bevel=0.001)
+            root.location.z += 0.005
+    for i, (w, d, t, rz) in enumerate(((0.21, 0.15, 0.028, -6), (0.19, 0.13, 0.022, 4))):
+        z = DESK_TOP + sum((0.028, 0.022)[:i])
+        box(f"deco_book_{i}", (w, d, t), (0.32, 0.42, z), coll, rot=(0, 0, rz), bevel=0.002)
+
+    def cable(name, pts, r=0.0022):
+        cu = bpy.data.curves.new(name, "CURVE")
+        cu.dimensions = "3D"
+        cu.bevel_depth = r
+        cu.bevel_resolution = 3
+        sp = cu.splines.new("BEZIER")
+        sp.bezier_points.add(len(pts) - 1)
+        for bp, p in zip(sp.bezier_points, pts):
+            bp.co = p
+            bp.handle_left_type = bp.handle_right_type = "AUTO"
+        o = bpy.data.objects.new(name, cu)
+        coll.objects.link(o)
+        return o
+
+    z = DESK_TOP + 0.0024
+    cable("deco_cable_keyboard", [(-0.03, -0.03, z + 0.01), (-0.02, 0.06, z), (0.06, 0.2, z), (0.1, 0.4, z), (0.08, 0.6, z)])
+    cable("deco_cable_laptop", [(-0.52, 0.12, DESK_TOP + 0.03), (-0.47, 0.16, z), (-0.42, 0.34, z), (-0.5, 0.6, z)])
+    cable("deco_cable_mouse", [(0.27, -0.03, z + 0.008), (0.25, 0.1, z), (0.2, 0.3, z), (0.12, 0.58, z)], r=0.0016)
 
 
 def build_laptop_stand(coll):
@@ -329,7 +365,9 @@ def build_cameras(coll):
 
     overview = cam("cam_overview", "HORIZONTAL", 36)
     # Phone crop: same position, same vertical field of view as the 16:9 overview, portrait aspect.
-    cam("cam_phone_crop", "VERTICAL", 36 * 9 / 16)
+    crop = cam("cam_phone_crop", "VERTICAL", 36 * 9 / 16)
+    crop.data.shift_x = 0.09  # toward the mug and glass
+    crop.data.shift_y = 0.03  # less empty desk edge
     bpy.context.scene.camera = overview
 
 
@@ -341,9 +379,9 @@ def apply_materials():
     C, h = M.principled, M.srgb
     by_prefix = {
         "room_floor": C("floor", h("#8E8781"), 0.55),
-        "room_": C("wall", h("#ECEBE8"), 0.85, spread=0.04),
+        "room_": M.plaster(C("wall", h("#ECEBE8"), 0.85, spread=0.04)),
         "window_": C("window_frame", h("#26221F"), 0.4, metal=0.5),
-        "deco_desk_top": C("desk_top", h("#1D1D20"), 0.5, spread=0.08),
+        "deco_desk_top": M.fine(C("desk_top", h("#1D1D20"), 0.5, spread=0.04)),
         "deco_desk_": C("desk_steel", h("#2B2B2E"), 0.35, metal=1.0),
         "deco_mat": M.desk_mat("desk_mat"),
         "obj_notepad": C("paper_pad", h("#F2EFE8"), 0.85, spread=0.05),
@@ -352,13 +390,18 @@ def apply_materials():
         "obj_badge": C("badge_plastic", h("#F7F7F5"), 0.3, coat=0.4),
         "deco_lanyard": C("lanyard", h("#23314F"), 0.8),
         "obj_photo": C("photo_frame", h("#18181A"), 0.45),
-        "deco_photo_print": C("photo_print", h("#8C98A6"), 0.6, spread=0.05),
-        "obj_kit": C("kit_case", h("#2F3742"), 0.45, spread=0.12),
+        "deco_photo_print": M.photo_print("photo_print"),
+        "obj_kit": C("kit_case", h("#2B3038"), 0.5, spread=0.12),
         "deco_kit_handle": C("kit_handle", h("#141416"), 0.4),
         "deco_laptop_stand": C("aluminium", h("#B9BCC1"), 0.3, metal=1.0),
         "deco_wrist_rest": M.walnut("walnut"),
         "obj_lightbar": C("lightbar", h("#2E2F33"), 0.35, metal=0.8),
         "deco_water_": M.water("water"),
+        "deco_coaster_": C("cork", h("#9C7651"), 0.85, spread=0.08),
+        "deco_book_0": C("book_cover_a", h("#2E3B33"), 0.7),
+        "deco_book_1": C("book_cover_b", h("#C8B79A"), 0.75),
+        "deco_kit_latch_": C("latch_steel", h("#B8BBBF"), 0.3, metal=1.0),
+        "deco_cable_": C("cable", h("#141416"), 0.5),
     }
     imported_roots = set(NAMES.values()) | {f"deco_{k}" for k in COMPLEX}
 
@@ -370,7 +413,7 @@ def apply_materials():
         return False
 
     for o in bpy.data.objects:
-        if o.type != "MESH" or imported(o):
+        if o.type not in ("MESH", "CURVE") or imported(o):
             continue
         mat = next((m for k, m in by_prefix.items() if o.name.startswith(k)), None)
         if mat:
@@ -384,7 +427,7 @@ def apply_materials():
     if get("deco_laptop"):
         M.laptop_screen(get("deco_laptop"), M.laptop_image())
     if get("deco_keyboard"):
-        M.tint_texture_material(get("deco_keyboard"), "#F6E7CB")
+        M.tint_texture_material(get("deco_keyboard"), "#EFCFA6")
     if get("deco_mouse"):
         M.set_all(get("deco_mouse"), C("mouse", h("#141416"), 0.42))
     if get("obj_phone"):
@@ -407,15 +450,16 @@ def build_lights():
     portal = M.light("portal_window", "AREA", both, 1.0, loc=(1.05, 0.97, 1.62), aim=(0, -1, 0), size=(2.3, 2.15))
     portal.data.cycles.is_portal = True
     # Day: low warm sun from outside, through the window.
-    M.light("sun_dusk", "SUN", day, 2.2, color=(1.0, 0.78, 0.58), loc=(1.5, 4.0, 3.0), aim=(-0.45, -1.0, -0.3), size=3.0)
+    M.light("sun_dusk", "SUN", day, 0.7, color=(1.0, 0.72, 0.5), loc=(1.5, 4.0, 3.0), aim=(-0.45, -1.0, -0.22), size=8.0)
     # Lamp: the light bar casts a warm pool on the desk.
     bar = bpy.data.objects.get("obj_lightbar")
     bx, by, bz = bar.location if bar else (-0.04, 0.25, 1.3)
-    M.light("lightbar_pool", "AREA", lamp, 14.0, color=(1.0, 0.84, 0.64), loc=(bx, by - 0.04, bz - 0.02), aim=(0, -0.45, -1), size=(0.42, 0.03))
-    M.sky_world("sky_day", [(0.0, "#E9BFA0"), (0.05, "#C9B9C2"), (0.2, "#93A3C4"), (1.0, "#5C719E")], 1.15)
+    # Asymmetric monitor bar: aimed forward and down onto the mat, never back at the screen.
+    M.light("lightbar_pool", "AREA", lamp, 9.0, color=(1.0, 0.84, 0.64), loc=(bx, by - 0.05, bz - 0.02), aim=(0, -0.62, -1), size=(0.42, 0.03), spread=math.radians(55))
+    M.sky_world("sky_day", [(0.0, "#E9A277"), (0.03, "#DDBCAE"), (0.1, "#B5BED4"), (0.3, "#8EA3C8"), (1.0, "#5671A3")], 3.0)
     # Day: soft room fill from behind the camera, so the window can keep its sky colour.
-    M.light("fill_room", "AREA", day, 22.0, color=(1.0, 0.96, 0.9), loc=(0.2, -1.8, 2.6), aim=(0, 1.0, -0.8), size=(1.6, 1.2))
-    M.sky_world("sky_night", [(0.0, "#3A3244"), (0.08, "#1F2439"), (1.0, "#070A16")], 0.25)
+    M.light("fill_room", "AREA", day, 8.0, color=(1.0, 0.96, 0.9), loc=(0.2, -1.8, 2.6), aim=(0, 1.0, -0.8), size=(1.6, 1.2))
+    M.sky_world("sky_night", [(0.0, "#3A3244"), (0.08, "#1F2439"), (1.0, "#070A16")], 0.08)
     bpy.context.scene.world = bpy.data.worlds["sky_day"]
 
 
@@ -434,6 +478,7 @@ def main():
     build_laptop_stand(objs)
     add_water("glass", objs, 0.55)
     add_water("bottle", objs, 0.6)
+    set_dressing(objs)
     build_light_bar(objs)
     build_cameras(cams)
     apply_materials()
