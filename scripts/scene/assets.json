@@ -1,0 +1,101 @@
+{
+  "note": "Inputs as downloaded into ~/Portfolio-assets/downloads/. CC-BY: credit each author on the site (credits line on /classic). Pinned by the sha256 of the downloaded archive.",
+  "models": [
+    {
+      "slot": "keyboard",
+      "file": "sketchfab_keyboard_a8393df7/scene.gltf",
+      "name": "Compact Keyboard \u2013 Custom 75% Gaming Keyboard",
+      "author": "Saksham Tale",
+      "author_url": "https://sketchfab.com/saksham_tale",
+      "source": "https://sketchfab.com/3d-models/compact-keyboard-custom-75-gaming-keyboard-a8393df7a4944f0680869141fcc56b86",
+      "license": "CC Attribution",
+      "license_url": "http://creativecommons.org/licenses/by/4.0/",
+      "zip_sha256": "1e93bed8502504735f255a583231d8027af9b12ae261f45c77a27baa0fee38b8",
+      "rot_z": 0
+    },
+    {
+      "slot": "monitor",
+      "file": "sketchfab_monitor_a698bfca/scene.gltf",
+      "name": "Ultrawide Monitor",
+      "author": "Superenforcer_xp",
+      "author_url": "https://sketchfab.com/Superenforcer_xp",
+      "source": "https://sketchfab.com/3d-models/ultrawide-monitor-a698bfcab8204ee09749455f2aa03530",
+      "license": "CC Attribution",
+      "license_url": "http://creativecommons.org/licenses/by/4.0/",
+      "zip_sha256": "fdf672100dda76b48a29afdb70402e778afca9391ebe6934e52f06adeb9d6229",
+      "rot_z": 0
+    },
+    {
+      "slot": "laptop",
+      "file": "sketchfab_laptop_e6411007/scene.gltf",
+      "name": "Modern Silver Laptop",
+      "author": "Ottto3d",
+      "author_url": "https://sketchfab.com/Ottto3ds",
+      "source": "https://sketchfab.com/3d-models/modern-silver-laptop-e641100794e8482d91bea533f26f6ebb",
+      "license": "CC Attribution",
+      "license_url": "http://creativecommons.org/licenses/by/4.0/",
+      "zip_sha256": "c16c6bd6717cb58474f40a148134bab35aaf0189bc990bb3c0d9df6598b4ea93",
+      "rot_z": 0
+    },
+    {
+      "slot": "phone",
+      "file": "sketchfab_phone_793ce433/scene.gltf",
+      "name": "Smartphone",
+      "author": "Naudaff3D",
+      "author_url": "https://sketchfab.com/Naudaff3D",
+      "source": "https://sketchfab.com/3d-models/smartphone-793ce4333ddb4cb8ab30c6b1da96df81",
+      "license": "CC Attribution",
+      "license_url": "http://creativecommons.org/licenses/by/4.0/",
+      "zip_sha256": "fd5fa6e58c230a75c0f7ea171b667453ebe8132475f3657769dfed7fad44b640",
+      "rot_z": 0
+    },
+    {
+      "slot": "mug",
+      "file": "sketchfab_mug_5f5ccee1/scene.gltf",
+      "name": "Coffee Mug (School Project)",
+      "author": "Ole Gunnar Isager",
+      "author_url": "https://sketchfab.com/FrenchBaguette",
+      "source": "https://sketchfab.com/3d-models/coffee-mug-school-project-5f5ccee1514c440887c072fae8e0d699",
+      "license": "CC Attribution",
+      "license_url": "http://creativecommons.org/licenses/by/4.0/",
+      "zip_sha256": "0a91db3b5fa86e75614975eb7f5aa516a26bab0dcbc1eca8ad4c35434f95a42e",
+      "rot_z": 0
+    },
+    {
+      "slot": "glass",
+      "file": "sketchfab_glass_6e116881/scene.gltf",
+      "name": "Tall Drinking Glass",
+      "author": "AleixoAlonso",
+      "author_url": "https://sketchfab.com/AleixoAlonso",
+      "source": "https://sketchfab.com/3d-models/tall-drinking-glass-6e1168814f8d4c44b4a833f41093905a",
+      "license": "CC Attribution",
+      "license_url": "http://creativecommons.org/licenses/by/4.0/",
+      "zip_sha256": "77acb15f225408ef01866b49c5c4f214d28b3fe38908a7fd8d163d4b0966410c",
+      "rot_z": 0
+    },
+    {
+      "slot": "bottle",
+      "file": "sketchfab_bottle_5038ee58/scene.gltf",
+      "name": "34oz Glass IKEA VARMBLIXT Carafe Sabine Marcelis",
+      "author": "metabrains.ai",
+      "author_url": "https://sketchfab.com/metabrains.ai",
+      "source": "https://sketchfab.com/3d-models/34oz-glass-ikea-varmblixt-carafe-sabine-marcelis-5038ee58c12d43d8bdbe155703243870",
+      "license": "CC Attribution",
+      "license_url": "http://creativecommons.org/licenses/by/4.0/",
+      "zip_sha256": "a5b0c143a219801ec9f3e31fc28495d606c4f61a99889735626f6ba252bbb3de",
+      "rot_z": 0
+    },
+    {
+      "slot": "mouse",
+      "file": "sketchfab_mouse_4a6e2b1c/scene.gltf",
+      "name": "Computer mouse.",
+      "author": "kubassa",
+      "author_url": "https://sketchfab.com/kubassa",
+      "source": "https://sketchfab.com/3d-models/computer-mouse-4a6e2b1cf5d54ed5b97da093ed1e74a4",
+      "license": "CC Attribution",
+      "license_url": "http://creativecommons.org/licenses/by/4.0/",
+      "zip_sha256": "4d1a74bf9a36470d4dfbcf0a64558b7084a947889b7a7426b33c0d9671ff2839",
+      "rot_z": 0
+    }
+  ]
+}
