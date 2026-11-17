@@ -66,6 +66,32 @@ def clay(scene):
     scene.collection.objects.link(sun)
 
 
+# Per-mode settings: which light collection renders, the sky, screen brightness, exposure.
+MODES = {
+    "day": dict(world="sky_day", show="lights_day", hide="lights_lamp", screen=0.8, exposure=0.55),
+    "lamp": dict(world="sky_night", show="lights_lamp", hide="lights_day", screen=1.5, exposure=0.6),
+}
+
+
+def set_mode(scene, mode):
+    m = MODES[mode]
+    scene.world = bpy.data.worlds[m["world"]]
+    for name, hidden in ((m["show"], False), (m["hide"], True)):
+        c = bpy.data.collections.get(name)
+        if c:
+            c.hide_render = hidden
+    for mat in bpy.data.materials:
+        if mat.get("screen") and mat.use_nodes:
+            for n in mat.node_tree.nodes:
+                if n.type == "BSDF_PRINCIPLED":
+                    n.inputs["Emission Strength"].default_value = m["screen"]
+    scene.view_settings.exposure = m["exposure"]
+    try:
+        scene.view_settings.look = "AgX - Medium High Contrast"
+    except TypeError:
+        pass
+
+
 def main():
     a = args()
     scene = bpy.context.scene
@@ -81,7 +107,8 @@ def main():
         clay(scene)
         scene.cycles.samples = a.samples or 96
     else:
-        raise SystemExit("day/lamp materials and lighting arrive after the clay checkpoint")
+        set_mode(scene, a.mode)
+        scene.cycles.samples = a.samples or 384
     scene.render.filepath = a.out
     bpy.ops.render.render(write_still=True)
     print(f"rendered {a.out}")

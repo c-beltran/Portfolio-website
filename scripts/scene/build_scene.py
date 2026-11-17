@@ -20,6 +20,7 @@ import bpy
 from mathutils import Vector
 
 HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE))
 ASSETS_DIR = Path.home() / "Portfolio-assets"
 DESK_TOP = 0.75
 
@@ -111,7 +112,7 @@ def parent(children, name, coll):
 
 def build_room(coll):
     # Floor and the back wall (left part, plain); the window fills the right part.
-    plane("room_floor", (8, 8), (0, 0, 0), coll)
+    plane("room_floor", (4.6, 3.6), (0, -0.85, 0), coll)  # inside the room only (nothing visible outside)
     plane("room_wall_back", (2.2, 2.8), (-1.2, 0.95, 1.4), coll, rot=(90, 0, 0))
     plane("room_wall_left", (4, 2.8), (-2.3, -1.0, 1.4), coll, rot=(90, 0, 90))
     # Window: frame and mullions in front of a generic sky plane (privacy: never a real view).
@@ -123,8 +124,12 @@ def build_room(coll):
     frame.append(box("window_head", (x1 - x0 + 0.06, 0.08, 0.06), ((x0 + x1) / 2, y, z1), coll))
     frame.append(box("window_transom", (x1 - x0, 0.06, 0.05), ((x0 + x1) / 2, y, 1.45), coll))
     parent(frame, "window_frame", coll)
-    sky = plane("window_sky", (6, 3.4), (1.0, 3.5, 1.6), coll, rot=(90, 0, 0))
-    sky["role"] = "sky"
+    # Enclose the room so light enters only through the window (the sky is the world).
+    plane("room_ceiling", (8, 8), (0, 0, 2.8), coll, rot=(180, 0, 0))
+    plane("room_wall_right", (4, 2.8), (2.3, -1.0, 1.4), coll, rot=(90, 0, -90))
+    plane("room_wall_front", (5, 2.8), (0, -2.6, 1.4), coll, rot=(90, 0, 180))
+    plane("room_wall_under_window", (x1 - x0 + 0.1, z0), ((x0 + x1) / 2, y + 0.02, z0 / 2), coll, rot=(90, 0, 0))
+    plane("room_wall_over_window", (x1 - x0 + 0.1, 2.8 - z1), ((x0 + x1) / 2, y + 0.02, (z1 + 2.8) / 2), coll, rot=(90, 0, 0))
 
 
 # ---------------------------------------------------------------- desk and simple objects (built in code)
@@ -159,6 +164,15 @@ def build_simple_objects(coll):
     # Small framed photo (13×18 cm frame) leaning against the wall right of the monitor.
     frame = box("obj_photo", (0.13, 0.018, 0.18), (0.42, 0.5, DESK_TOP), coll, rot=(-12, 0, -8), bevel=0.002)
     frame["role"] = "photo_frame"
+    bpy.ops.mesh.primitive_plane_add(size=1)
+    prt = bpy.context.active_object
+    prt.name = "deco_photo_print"
+    prt.scale = (0.105, 0.15, 1)
+    bpy.ops.object.transform_apply(scale=True)
+    move_to(prt, coll)
+    prt.parent = frame  # local frame: the box's centre, metres (its scale was applied)
+    prt.location = (0, -0.0095, 0)
+    prt.rotation_euler = (math.radians(90), 0, 0)
     # Backflow test-kit case (hard case with handle) beside the laptop, on the desk.
     case = box("obj_kit", (0.30, 0.21, 0.10), (-0.33, 0.3, DESK_TOP), coll, rot=(0, 0, -14), bevel=0.012)
     handle = box("deco_kit_handle", (0.11, 0.025, 0.02), (-0.33, 0.3, DESK_TOP + 0.10), coll, rot=(0, 0, -14), bevel=0.006)
@@ -255,6 +269,18 @@ def import_or_proxy(key, coll, assets):
     return root
 
 
+def add_water(key, coll, fill):
+    """A water volume inside an imported glass vessel: slightly narrower, filled to a fraction."""
+    root = bpy.data.objects.get(f"deco_{key}")
+    if not root:
+        return
+    lo, hi = world_bounds([o for o in root.children_recursive if o.type == "MESH"])
+    r = min(hi.x - lo.x, hi.y - lo.y) / 2 * 0.86
+    h = (hi.z - lo.z) * fill
+    w = cylinder(f"deco_water_{key}", r, h, ((lo.x + hi.x) / 2, (lo.y + hi.y) / 2, lo.z + 0.006), coll, verts=48, bevel=0)
+    w["role"] = "water"
+
+
 def build_laptop_stand(coll):
     # Aluminium laptop stand (simple object, built in code): a tilted plate on two side legs.
     plate = box("deco_laptop_stand", (0.26, 0.24, 0.006), (-0.6, 0.2, DESK_TOP + 0.045), coll, rot=(12, 0, 8), bevel=0.002)
@@ -307,6 +333,92 @@ def build_cameras(coll):
     bpy.context.scene.camera = overview
 
 
+# ---------------------------------------------------------------- materials and lights
+
+def apply_materials():
+    import materials as M
+
+    C, h = M.principled, M.srgb
+    by_prefix = {
+        "room_floor": C("floor", h("#8E8781"), 0.55),
+        "room_": C("wall", h("#ECEBE8"), 0.85, spread=0.04),
+        "window_": C("window_frame", h("#26221F"), 0.4, metal=0.5),
+        "deco_desk_top": C("desk_top", h("#1D1D20"), 0.5, spread=0.08),
+        "deco_desk_": C("desk_steel", h("#2B2B2E"), 0.35, metal=1.0),
+        "deco_mat": M.desk_mat("desk_mat"),
+        "obj_notepad": C("paper_pad", h("#F2EFE8"), 0.85, spread=0.05),
+        "deco_pen": C("pen", h("#151517"), 0.25, coat=0.6),
+        "obj_card": C("card_stock", h("#F4F1EA"), 0.8, spread=0.05),
+        "obj_badge": C("badge_plastic", h("#F7F7F5"), 0.3, coat=0.4),
+        "deco_lanyard": C("lanyard", h("#23314F"), 0.8),
+        "obj_photo": C("photo_frame", h("#18181A"), 0.45),
+        "deco_photo_print": C("photo_print", h("#8C98A6"), 0.6, spread=0.05),
+        "obj_kit": C("kit_case", h("#2F3742"), 0.45, spread=0.12),
+        "deco_kit_handle": C("kit_handle", h("#141416"), 0.4),
+        "deco_laptop_stand": C("aluminium", h("#B9BCC1"), 0.3, metal=1.0),
+        "deco_wrist_rest": M.walnut("walnut"),
+        "obj_lightbar": C("lightbar", h("#2E2F33"), 0.35, metal=0.8),
+        "deco_water_": M.water("water"),
+    }
+    imported_roots = set(NAMES.values()) | {f"deco_{k}" for k in COMPLEX}
+
+    def imported(o):
+        while o.parent:
+            o = o.parent
+            if o.name in imported_roots:
+                return True
+        return False
+
+    for o in bpy.data.objects:
+        if o.type != "MESH" or imported(o):
+            continue
+        mat = next((m for k, m in by_prefix.items() if o.name.startswith(k)), None)
+        if mat:
+            o.data.materials.clear()
+            o.data.materials.append(mat)
+
+    get = bpy.data.objects.get
+    black = C("black_plastic", h("#111113"), 0.45)
+    if get("obj_monitor"):
+        M.remap(get("obj_monitor"), {"Wallpaper": M.emissive_image("screen_monitor", M.editor_image(), 1.0)}, default=black)
+    if get("deco_laptop"):
+        M.laptop_screen(get("deco_laptop"), M.laptop_image())
+    if get("deco_keyboard"):
+        M.tint_texture_material(get("deco_keyboard"), "#F6E7CB")
+    if get("deco_mouse"):
+        M.set_all(get("deco_mouse"), C("mouse", h("#141416"), 0.42))
+    if get("obj_phone"):
+        dark_glass = C("phone_glass", h("#050506"), 0.05, coat=1.0)
+        M.remap(get("obj_phone"), {"Lock_Screen": dark_glass, "Glass": dark_glass, "Camera_Lens": dark_glass,
+                                   "Color": C("phone_body", h("#2C2D31"), 0.3, metal=0.7)}, default=black)
+    if get("deco_mug"):
+        M.remap(get("deco_mug"), {"material": C("ceramic", h("#E9E1D3"), 0.25, coat=0.5)})
+    if get("deco_glass"):
+        M.set_all(get("deco_glass"), M.glass("glass_blue", (0.82, 0.9, 1.0)))
+    if get("deco_bottle"):
+        M.set_all(get("deco_bottle"), M.glass("glass_clear"))
+
+
+def build_lights():
+    import materials as M
+
+    both, day, lamp = (collection(n) for n in ("lights_both", "lights_day", "lights_lamp"))
+    # Portal at the window opening: guides sampling of the sky (light enters only there).
+    portal = M.light("portal_window", "AREA", both, 1.0, loc=(1.05, 0.97, 1.62), aim=(0, -1, 0), size=(2.3, 2.15))
+    portal.data.cycles.is_portal = True
+    # Day: low warm sun from outside, through the window.
+    M.light("sun_dusk", "SUN", day, 2.2, color=(1.0, 0.78, 0.58), loc=(1.5, 4.0, 3.0), aim=(-0.45, -1.0, -0.3), size=3.0)
+    # Lamp: the light bar casts a warm pool on the desk.
+    bar = bpy.data.objects.get("obj_lightbar")
+    bx, by, bz = bar.location if bar else (-0.04, 0.25, 1.3)
+    M.light("lightbar_pool", "AREA", lamp, 14.0, color=(1.0, 0.84, 0.64), loc=(bx, by - 0.04, bz - 0.02), aim=(0, -0.45, -1), size=(0.42, 0.03))
+    M.sky_world("sky_day", [(0.0, "#E9BFA0"), (0.05, "#C9B9C2"), (0.2, "#93A3C4"), (1.0, "#5C719E")], 1.15)
+    # Day: soft room fill from behind the camera, so the window can keep its sky colour.
+    M.light("fill_room", "AREA", day, 22.0, color=(1.0, 0.96, 0.9), loc=(0.2, -1.8, 2.6), aim=(0, 1.0, -0.8), size=(1.6, 1.2))
+    M.sky_world("sky_night", [(0.0, "#3A3244"), (0.08, "#1F2439"), (1.0, "#070A16")], 0.25)
+    bpy.context.scene.world = bpy.data.worlds["sky_day"]
+
+
 def main():
     a = args()
     reset()
@@ -320,8 +432,12 @@ def main():
     for key in COMPLEX:
         import_or_proxy(key, objs, assets)
     build_laptop_stand(objs)
+    add_water("glass", objs, 0.55)
+    add_water("bottle", objs, 0.6)
     build_light_bar(objs)
     build_cameras(cams)
+    apply_materials()
+    build_lights()
     Path(a.out).parent.mkdir(parents=True, exist_ok=True)
     bpy.ops.wm.save_as_mainfile(filepath=a.out)
     print(f"saved {a.out}")
