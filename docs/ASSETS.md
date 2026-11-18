@@ -1,29 +1,45 @@
 # Assets
 
-Raw source files (LiDAR scans, `.blend` files, photos, the handwriting photo) live **outside this repo** (decision Q12). Only optimized outputs are committed:
+Raw source files (downloads, `.blend` files, renders, later scans and photos) live **outside this repo** in `~/Portfolio-assets/` on Carlos's Mac (decision Q12). Only optimized outputs are committed:
 
-- `public/models/`: GLB files (Meshopt/Draco geometry, KTX2 textures), produced by `scripts/optimize-models.sh`
-- `public/stills/`: Tier 1 renders (AVIF + WebP), produced by `scripts/export-stills.ts`
+- `public/models/`: GLB files (Meshopt/Draco geometry, KTX2 textures), from M3b
+- `public/stills/`: Tier 1 renders (AVIF + WebP), after Carlos approves the M3a look
 
 ## Where the raw files live
 
-`[TODO: Carlos — folder location, e.g. iCloud Drive/Portfolio-assets/]`
-
-Expected layout of that folder:
-
 ```
-scans/        Polycam exports (test kit, mug, badge), raw and cleaned
-blender/      desk.blend (the scene used for the bakes)
-photos/       polaroid photo, sticky-note handwriting photo
+~/Portfolio-assets/
+  downloads/   CC0 / licensed inputs exactly as downloaded (glTF, HDR, textures)
+  blend/       workspace.blend, built by scripts/scene/build_scene.py
+  renders/     Cycles stills (clay, day, lamp; overview and phone)
+  compare/     the look-review sheet (private: never committed)
 ```
+
+The scene is rebuilt from scratch by `scripts/scene/build_scene.py`. Every downloaded input is pinned by URL and sha256 in `scripts/scene/assets.json`.
 
 ## Asset register
 
-Every model, texture and image used in the build is listed here, with its source and license.
+Every model, texture and image used in the build is listed here, with its source and license. The register grows as inputs are added. It must match `scripts/scene/assets.json`.
 
-| Asset                             | Source                                | License      | Raw file | Output   |
-| --------------------------------- | ------------------------------------- | ------------ | -------- | -------- |
-| Backflow test kit (gauge + hoses) | Scanned by Carlos (Polycam)           | Carlos's own | `[TODO]` | `[TODO]` |
-| Desk, laptop, phone, lamp         | `[TODO: CC0 source, e.g. Poly Haven]` | `[TODO]`     | `[TODO]` | `[TODO]` |
-| Polaroid photo                    | Carlos (Q13)                          | Carlos's own | `[TODO]` | `[TODO]` |
-| Sticky-note handwriting           | Carlos (Q13)                          | Carlos's own | `[TODO]` | `[TODO]` |
+**CC-BY models** require a visible credit to each author on the site. It goes on `/classic` before launch (M5 TODO). CC BY 4.0 also asks that changes are indicated. Every model below is scaled, placed and re-materialed by the build, so each credit reads "modified", with these changes:
+
+- **Keyboard:** unlit materials rebuilt as lit ones, with a warm cream tint.
+- **Monitor:** screen replaced with a generated editor image; other materials set to black.
+- **Laptop:** screen replaced with a generated image on a glossy black base.
+- **Phone:** materials replaced (dark glass screen, dark metal body).
+- **Mug:** material replaced with ceramic.
+- **Glass:** material replaced with glass, plus a water volume added.
+- **Mouse:** materials replaced with matte black plastic.
+
+| Asset                                                                                            | Source                                                                                                                                                                       | License                          | Raw file                                           | Output        |
+| ------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- | -------------------------------------------------- | ------------- |
+| Keyboard: "Compact Keyboard – Custom 75% Gaming Keyboard"                                        | [Saksham Tale](https://sketchfab.com/saksham_tale), [Sketchfab](https://sketchfab.com/3d-models/compact-keyboard-custom-75-gaming-keyboard-a8393df7a4944f0680869141fcc56b86) | CC Attribution (credit required) | `downloads/sketchfab_keyboard_a8393df7/scene.gltf` | `[TODO: M3b]` |
+| Monitor: "Ultrawide Monitor"                                                                     | [Superenforcer_xp](https://sketchfab.com/Superenforcer_xp), [Sketchfab](https://sketchfab.com/3d-models/ultrawide-monitor-a698bfcab8204ee09749455f2aa03530)                  | CC Attribution (credit required) | `downloads/sketchfab_monitor_a698bfca/scene.gltf`  | `[TODO: M3b]` |
+| Laptop: "Modern Silver Laptop"                                                                   | [Ottto3d](https://sketchfab.com/Ottto3ds), [Sketchfab](https://sketchfab.com/3d-models/modern-silver-laptop-e641100794e8482d91bea533f26f6ebb)                                | CC Attribution (credit required) | `downloads/sketchfab_laptop_e6411007/scene.gltf`   | `[TODO: M3b]` |
+| Phone: "Smartphone"                                                                              | [Naudaff3D](https://sketchfab.com/Naudaff3D), [Sketchfab](https://sketchfab.com/3d-models/smartphone-793ce4333ddb4cb8ab30c6b1da96df81)                                       | CC Attribution (credit required) | `downloads/sketchfab_phone_793ce433/scene.gltf`    | `[TODO: M3b]` |
+| Mug: "Coffee Mug (School Project)"                                                               | [Ole Gunnar Isager](https://sketchfab.com/FrenchBaguette), [Sketchfab](https://sketchfab.com/3d-models/coffee-mug-school-project-5f5ccee1514c440887c072fae8e0d699)           | CC Attribution (credit required) | `downloads/sketchfab_mug_5f5ccee1/scene.gltf`      | `[TODO: M3b]` |
+| Glass: "Tall Drinking Glass"                                                                     | [AleixoAlonso](https://sketchfab.com/AleixoAlonso), [Sketchfab](https://sketchfab.com/3d-models/tall-drinking-glass-6e1168814f8d4c44b4a833f41093905a)                        | CC Attribution (credit required) | `downloads/sketchfab_glass_6e116881/scene.gltf`    | `[TODO: M3b]` |
+| Mouse: "Computer mouse."                                                                         | [kubassa](https://sketchfab.com/kubassa), [Sketchfab](https://sketchfab.com/3d-models/computer-mouse-4a6e2b1cf5d54ed5b97da093ed1e74a4)                                       | CC Attribution (credit required) | `downloads/sketchfab_mouse_4a6e2b1c/scene.gltf`    | `[TODO: M3b]` |
+| Desk, mat, notepad, pen, card, badge, photo frame, kit case, light bar, laptop stand, wrist rest | Built in code (`scripts/scene/build_scene.py`)                                                                                                                               | This repo                        | generated                                          | `[TODO: M3b]` |
+| Photo in the frame                                                                               | Carlos (Q13)                                                                                                                                                                 | Carlos's own                     | `[TODO]`                                           | `[TODO]`      |
+| Handwriting on the notepad                                                                       | Carlos (Q13)                                                                                                                                                                 | Carlos's own                     | `[TODO]`                                           | `[TODO]`      |
