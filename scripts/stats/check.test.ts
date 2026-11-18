@@ -41,6 +41,10 @@ describe('findHandTypedStats', () => {
     '1 human + agents',
     "P05: 'Power Walk: built from specs and plans'",
     "{ label: 'Commits', value: (s) => s.potaflow.commits }",
+    // a stat word inside a longer word is not a stat key
+    '"aspect": 0.5625',
+    'aspect: 1',
+    'inspection = 3',
   ])('does not flag %s', (text) => {
     expect(findHandTypedStats(text)).toEqual([]);
   });

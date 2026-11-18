@@ -13,10 +13,15 @@ const NUMBER_BEFORE = new RegExp(
   String.raw`(?<![\w.])(?!(?:19|20)\d\d\b)(?:${NUMBER}|\b${NUMBER_WORD})\s+(?:of\s+)?(?:[A-Za-z-]+\s+){0,2}${STAT}\b`,
   'gi',
 );
-/** A stat-named key or identifier assigned a number: "mergedPRs: 218", "commits = 1532", "PR #247". */
+/**
+ * A stat-named key or identifier assigned a number: "mergedPRs: 218", "commits = 1532", "PR #247".
+ * The stat word starts the key or a camelCase part of it, so "aspect: 1" (a-spec-t) is not a stat.
+ */
+const STAT_KEY_START = String.raw`(?:[Cc]ommits?|PRs?|[Pp]rs?|[Pp]ull[Rr]equests?|[Ss]pecs?|[Pp]lans?|[Dd]irections?)`;
+const STAT_KEY_PART = String.raw`(?:Commits?|PRs?|Prs?|PullRequests?|Specs?|Plans?|Directions?)`;
 const NUMBER_AFTER = new RegExp(
-  String.raw`\b[A-Za-z]*(?:commits?|prs?|pullrequests?|specs?|plans?|directions?)[A-Za-z]*\s*[:=#]\s*\d`,
-  'gi',
+  String.raw`\b(?:${STAT_KEY_START}|[a-z][A-Za-z]*?${STAT_KEY_PART})[A-Za-z]*\s*[:=#]\s*\d`,
+  'g',
 );
 
 /** Blank out markup and quoting (keeping offsets and newlines) so styled stats still match. */
