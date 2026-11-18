@@ -149,14 +149,14 @@ def build_desk(coll):
 def build_simple_objects(coll):
     t = DESK_TOP + 0.003  # on the mat
     # Notepad (A5, spiral side up) and pen, front left.
-    pad = box("obj_notepad", (0.148, 0.21, 0.008), (-0.6, -0.12, DESK_TOP), coll, rot=(0, 0, 8), bevel=0.001)
+    pad = box("obj_notepad", (0.148, 0.21, 0.008), (-0.5, -0.1, DESK_TOP), coll, rot=(0, 0, 8), bevel=0.001)
     # cylinder() lifts by half its length (for upright use); the pen lies flat.
-    pen = cylinder("deco_pen", 0.0045, 0.14, (-0.57, -0.13, DESK_TOP + 0.013 - 0.07), coll, rot=(0, 90, 20))
+    pen = cylinder("deco_pen", 0.0045, 0.14, (-0.47, -0.11, DESK_TOP + 0.013 - 0.07), coll, rot=(0, 90, 20))
     set_parent(pen, pad)
     # Business card (85×55 mm), front right of the keyboard.
     box("obj_card", (0.085, 0.055, 0.0006), (0.28, -0.22, t), coll, rot=(0, 0, -12), bevel=0.0002)
     # ID badge (CR80 card in a sleeve) lying by the laptop stand, lanyard coiled beside it.
-    badge = box("obj_badge", (0.054, 0.086, 0.003), (-0.46, 0.0, DESK_TOP), coll, rot=(0, 0, 25), bevel=0.0008)
+    badge = box("obj_badge", (0.054, 0.086, 0.003), (-0.34, 0.06, DESK_TOP), coll, rot=(0, 0, 25), bevel=0.0008)
     # Small framed photo (13×18 cm frame) leaning against the wall right of the monitor.
     frame = box("obj_photo", (0.13, 0.018, 0.18), (0.5, 0.48, DESK_TOP), coll, rot=(-12, 0, -18), bevel=0.002)
     frame["role"] = "photo_frame"
@@ -196,7 +196,6 @@ COMPLEX = {
     "phone": dict(proxy=(0.072, 0.15, 0.008), rot=(-90, 0, 15), width=0.072, at=(0.17, 0.06, DESK_TOP + 0.003)),
     "mug": dict(proxy=(0.12, 0.09, 0.095), rot=(0, 0, 200), width=0.12, at=(0.48, -0.02, DESK_TOP)),
     "glass": dict(proxy=(0.075, 0.075, 0.12), rot=(0, 0, 0), width=0.075, at=(0.4, 0.2, DESK_TOP)),
-    "bottle": dict(proxy=(0.11, 0.11, 0.24), rot=(0, 0, 0), width=0.11, at=(0.58, 0.2, DESK_TOP), drop_materials=("Stick",)),
 }
 # Interactive vs decoration naming for the complex objects.
 NAMES = {"monitor": "obj_monitor", "phone": "obj_phone"}
@@ -346,8 +345,9 @@ def build_light_bar(coll):
 # ---------------------------------------------------------------- cameras
 
 def build_cameras(coll):
-    target = Vector((-0.02, 0.24, 0.95))
-    eye = Vector((0.16, -1.55, 1.36))
+    # Tight like the reference photo: closer and lower, the desk surface fills the frame.
+    target = Vector((-0.02, 0.2, 0.92))
+    eye = Vector((0.12, -1.22, 1.29))
 
     def cam(name, sensor_fit, sensor):
         data = bpy.data.cameras.new(name)
@@ -427,7 +427,7 @@ def apply_materials():
     if get("deco_laptop"):
         M.laptop_screen(get("deco_laptop"), M.laptop_image())
     if get("deco_keyboard"):
-        M.tint_texture_material(get("deco_keyboard"), "#EFCFA6")
+        M.tint_texture_material(get("deco_keyboard"), "#D8A574")
     if get("deco_mouse"):
         M.set_all(get("deco_mouse"), C("mouse", h("#141416"), 0.42))
     if get("obj_phone"):
@@ -438,8 +438,6 @@ def apply_materials():
         M.remap(get("deco_mug"), {"material": C("ceramic", h("#E9E1D3"), 0.25, coat=0.5)})
     if get("deco_glass"):
         M.set_all(get("deco_glass"), M.glass("glass_blue", (0.82, 0.9, 1.0)))
-    if get("deco_bottle"):
-        M.set_all(get("deco_bottle"), M.glass("glass_clear"))
 
 
 def build_lights():
@@ -455,11 +453,13 @@ def build_lights():
     bar = bpy.data.objects.get("obj_lightbar")
     bx, by, bz = bar.location if bar else (-0.04, 0.25, 1.3)
     # Asymmetric monitor bar: aimed forward and down onto the mat, never back at the screen.
-    M.light("lightbar_pool", "AREA", lamp, 9.0, color=(1.0, 0.84, 0.64), loc=(bx, by - 0.05, bz - 0.02), aim=(0, -0.62, -1), size=(0.42, 0.03), spread=math.radians(55))
+    M.light("lightbar_pool", "AREA", lamp, 6.0, color=(1.0, 0.84, 0.64), loc=(bx, by - 0.05, bz - 0.02), aim=(0, -0.62, -1), size=(0.42, 0.03), spread=math.radians(55))
     M.sky_world("sky_day", [(0.0, "#E9A277"), (0.03, "#DDBCAE"), (0.1, "#B5BED4"), (0.3, "#8EA3C8"), (1.0, "#5671A3")], 3.0)
     # Day: soft room fill from behind the camera, so the window can keep its sky colour.
     M.light("fill_room", "AREA", day, 8.0, color=(1.0, 0.96, 0.9), loc=(0.2, -1.8, 2.6), aim=(0, 1.0, -0.8), size=(1.6, 1.2))
-    M.sky_world("sky_night", [(0.0, "#3A3244"), (0.08, "#1F2439"), (1.0, "#070A16")], 0.08)
+    M.sky_world("sky_night", [(0.0, "#3A3244"), (0.08, "#1F2439"), (1.0, "#070A16")], 0.22)
+    # Lamp: a faint warm room light so the walls, window frame and desk edges still read.
+    M.light("fill_room_lamp", "AREA", lamp, 4.0, color=(1.0, 0.82, 0.62), loc=(-0.8, -1.4, 2.6), aim=(0.5, 1.0, -0.9), size=(1.2, 1.2))
     bpy.context.scene.world = bpy.data.worlds["sky_day"]
 
 
@@ -477,7 +477,6 @@ def main():
         import_or_proxy(key, objs, assets)
     build_laptop_stand(objs)
     add_water("glass", objs, 0.55)
-    add_water("bottle", objs, 0.6)
     set_dressing(objs)
     build_light_bar(objs)
     build_cameras(cams)

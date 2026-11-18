@@ -74,18 +74,6 @@
       "rot_z": 0
     },
     {
-      "slot": "bottle",
-      "file": "sketchfab_bottle_5038ee58/scene.gltf",
-      "name": "34oz Glass IKEA VARMBLIXT Carafe Sabine Marcelis",
-      "author": "metabrains.ai",
-      "author_url": "https://sketchfab.com/metabrains.ai",
-      "source": "https://sketchfab.com/3d-models/34oz-glass-ikea-varmblixt-carafe-sabine-marcelis-5038ee58c12d43d8bdbe155703243870",
-      "license": "CC Attribution",
-      "license_url": "http://creativecommons.org/licenses/by/4.0/",
-      "zip_sha256": "a5b0c143a219801ec9f3e31fc28495d606c4f61a99889735626f6ba252bbb3de",
-      "rot_z": 0
-    },
-    {
       "slot": "mouse",
       "file": "sketchfab_mouse_4a6e2b1c/scene.gltf",
       "name": "Computer mouse.",

@@ -272,28 +272,37 @@ def remap(root, mapping, default=None):
 
 
 def tint_texture_material(root, tint_hex):
-    """Multiply an imported base-colour texture by a tint (keyboard keycaps grey → cream)."""
+    """Imported keyboard: its glTF materials are unlit (emission only), which glows and ignores
+    the scene's light. Rebuild each as a lit Principled material from the same texture, tinted
+    (keycaps grey → cream)."""
+    done = {}
     for o in [root] + list(root.children_recursive):
         if o.type != "MESH":
             continue
         for slot in o.material_slots:
-            m = slot.material
-            if not m or not m.use_nodes or m.get("tinted"):
+            old = slot.material
+            if not old:
                 continue
-            nt = m.node_tree
-            b = next((n for n in nt.nodes if n.type == "BSDF_PRINCIPLED"), None)
-            link = next((l for l in nt.links if b and l.to_node == b and l.to_socket.name == "Base Color"), None)
-            if not link:
-                continue
-            mix = nt.nodes.new("ShaderNodeMix")
-            mix.data_type = "RGBA"
-            mix.blend_type = "MULTIPLY"
-            mix.inputs["Factor"].default_value = 1.0
-            mix.inputs["B"].default_value = (*srgb(tint_hex), 1)
-            nt.links.new(link.from_socket, mix.inputs["A"])
-            nt.links.new(mix.outputs["Result"], b.inputs["Base Color"])
-            b.inputs["Roughness"].default_value = 0.45
-            m["tinted"] = True
+            if old.name not in done:
+                img_node = next((n for n in old.node_tree.nodes if n.type == "TEX_IMAGE"), None)
+                m = new_material(f"{old.name}_lit")
+                nt = m.node_tree
+                b = bsdf_of(m)
+                mix = nt.nodes.new("ShaderNodeMix")
+                mix.data_type = "RGBA"
+                mix.blend_type = "MULTIPLY"
+                mix.inputs["Factor"].default_value = 1.0
+                mix.inputs["B"].default_value = (*srgb(tint_hex), 1)
+                if img_node and img_node.image:
+                    tex = nt.nodes.new("ShaderNodeTexImage")
+                    tex.image = img_node.image
+                    nt.links.new(tex.outputs["Color"], mix.inputs["A"])
+                else:
+                    mix.inputs["A"].default_value = (0.2, 0.2, 0.22, 1)
+                nt.links.new(mix.outputs["Result"], b.inputs["Base Color"])
+                rough_variation(m, 0.45, 0.08, 300.0)
+                done[old.name] = m
+            slot.material = done[old.name]
 
 
 def laptop_screen(root, img):
