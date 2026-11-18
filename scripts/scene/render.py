@@ -114,4 +114,5 @@ def main():
     print(f"rendered {a.out}")
 
 
-main()
+if __name__ == "__main__":
+    main()
