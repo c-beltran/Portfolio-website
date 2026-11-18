@@ -569,3 +569,41 @@ button {
     transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
   }
 }
+
+/* ---- M3b lab page (/lab/monitor; throwaway, deleted when Part C starts) ---- */
+.lab {
+  padding: 16px;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+.lab__title {
+  font-size: 1.1rem;
+}
+.lab__stage {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #111;
+}
+.lab__stage--phone {
+  aspect-ratio: 1;
+}
+.lab__media {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.lab__controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  margin-top: 12px;
+}
+.lab__controls button,
+.lab__controls label {
+  min-height: 44px;
+  min-width: 44px;
+}
