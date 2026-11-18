@@ -12,3 +12,12 @@ $B -b ~/Portfolio-assets/blend/workspace.blend --python scripts/scene/render.py 
 
 - **Object names** (the contract later steps rely on): `obj_monitor`, `obj_kit`, `obj_phone`, `obj_badge`, `obj_photo`, `obj_notepad`, `obj_card`, `obj_lightbar`. Decoration is named `deco_*`.
 - **Downloads:** glTF only, CC0 or CC-BY, pinned by sha256 in `assets.json`. Never open a downloaded `.blend`. Blender runs with autoexec off, which is the default.
+
+## Hotspot bounds
+
+```sh
+Blender -b --factory-startup ~/Portfolio-assets/blend/workspace.blend \
+  --python scripts/scene/export_bounds.py -- --out content/scene/bounds.json
+```
+
+Projects each `obj_*` through `cam_overview` into `content/scene/bounds.json` (normalized boxes, y down) and records `minCollisionFreeWidth`: the narrowest desk at which every hotspot, grown to at least 44×44 px, is free of overlaps. `content/scene/bounds.test.ts` re-derives it. It is a report: objects are never moved to make hotspots fit. The monitor's box is its screen, not its arm and clamp.
