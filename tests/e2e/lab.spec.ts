@@ -33,4 +33,22 @@ test.describe('/lab/monitor', () => {
     await expect(page.getByTestId('lab-state')).toHaveText('monitor', { timeout: 10_000 });
     await expect(page.getByTestId('lab-fps')).toContainText('fps');
   });
+
+  test('has both clips decoded before the first move', async ({ page }) => {
+    await page.goto('/lab/monitor');
+    const videos = page.locator('video');
+    await expect(videos).toHaveCount(2);
+    // HAVE_ENOUGH_DATA: a click starts playback at once, not a fetch.
+    await expect
+      .poll(() => videos.evaluateAll((vs) => vs.map((v) => (v as HTMLVideoElement).readyState)))
+      .toEqual([4, 4]);
+  });
+
+  test('plays the clip back to the overview', async ({ page }) => {
+    await page.goto('/lab/monitor');
+    await page.getByRole('button', { name: 'Monitor' }).click();
+    await expect(page.getByTestId('lab-state')).toHaveText('monitor', { timeout: 10_000 });
+    await page.getByRole('button', { name: 'Back' }).click();
+    await expect(page.getByTestId('lab-state')).toHaveText('overview', { timeout: 10_000 });
+  });
 });
