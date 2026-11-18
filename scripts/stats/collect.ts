@@ -8,6 +8,7 @@ import {
   countCoAuthored,
   parseDirections,
   percentFloor,
+  isPromotionPR,
   summarizeMergedPRs,
   validateDirectionFiles,
 } from './derive';
@@ -28,7 +29,7 @@ export function ghRepoOf(dir: string): string {
   return m[1]!;
 }
 
-type PR = { mergedBy: { login: string } | null };
+type PR = { mergedBy: { login: string } | null; headRefName?: string; baseRefName?: string };
 
 const PR_LIMIT = 5000;
 /** GitHub's search API returns at most 1000 results, whatever --limit says. */
@@ -53,12 +54,13 @@ function mergedPRs(dir: string, search?: string): PR[] {
     '--limit',
     '5000',
     '--json',
-    'mergedBy',
+    'mergedBy,headRefName,baseRefName',
   ];
   if (search) args.push('--search', search);
   const prs = JSON.parse(run('gh', args)) as PR[];
   assertNotTruncated(prs.length, search ? SEARCH_LIMIT : PR_LIMIT, `merged PRs in ${dir}`);
-  return prs;
+  // Only PRs that carry real changes count; development → main promotions don't (Q23).
+  return prs.filter((pr) => !isPromotionPR(pr));
 }
 
 export function collectRepo(dir: string): RepoStats {

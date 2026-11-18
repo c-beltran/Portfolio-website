@@ -28,8 +28,8 @@ export const PANELS: Record<SectionSlug, PanelBlock[]> = {
     { kind: 'fact', fact: 'ABOUT' },
     {
       kind: 'prose',
-      facts: ['F02', 'F07'],
-      text: "Weekdays, I make an ad platform faster. Weekends, [TODO: Q3 backflow credential]. That's how Potaflow happened.",
+      facts: ['F02', 'F07', 'P01'],
+      text: 'Weekdays, I make an ad platform faster. I also build Potaflow.',
       draft: true,
     },
   ],
@@ -50,7 +50,7 @@ export const PANELS: Record<SectionSlug, PanelBlock[]> = {
     {
       kind: 'prose',
       facts: ['F11'],
-      text: 'Agents plan, build and review in parallel. [TODO: Q24 confirm: "I write the spec" and "Nothing merges until I\'ve read it"]',
+      text: "I write the spec. Agents plan, build and review in parallel. Nothing merges until I've read it.",
       draft: true,
     },
     { kind: 'list', facts: ['F11', 'F09', 'F10'] },
@@ -62,7 +62,7 @@ export const PANELS: Record<SectionSlug, PanelBlock[]> = {
     {
       kind: 'prose',
       facts: ['P03'],
-      text: '[TODO: Q3 backflow credential, and whether the gauge is his own tool] Custom skills give the agents the rules: NY DOH-1013 and how each device is physically tested. [TODO: Q24 confirm review claim]',
+      text: 'Custom skills give the agents the rules: NY DOH-1013 and how each device is physically tested.',
       draft: true,
     },
     {
@@ -75,22 +75,22 @@ export const PANELS: Record<SectionSlug, PanelBlock[]> = {
       ],
     },
     { kind: 'fact', fact: 'P02' },
-    { kind: 'link', href: null, label: 'Visit potaflow.com', todo: 'Q7' },
-    { kind: 'todo', text: '[TODO: Q7 Potaflow screenshot]' },
+    { kind: 'link', href: 'https://potaflow.com', label: 'Visit potaflow.com' },
+    { kind: 'todo', text: '[TODO: Q7 Potaflow screenshot from Carlos]' },
   ],
   'power-walk': [
     { kind: 'eyebrow', text: 'THE PHONE · PROJECT 02' },
     { kind: 'title', text: 'Power Walk', draft: true },
-    { kind: 'todo', text: '[TODO: Q7 confirm public name]' },
+    { kind: 'todo', text: '[TODO: Q26 in development, not public yet: landing page to decide]' },
     { kind: 'fact', fact: 'P04' },
     {
       kind: 'prose',
       facts: ['P05'],
-      text: 'Spec first: agents built against written specs and plans. [TODO: Q24 confirm: who wrote the specs, and the review claim]',
+      text: 'Spec first: I write the specs and plans, and agents build against them.',
       draft: true,
     },
     { kind: 'fact', fact: 'P05' },
-    { kind: 'todo', text: '[TODO: Q7 Coming soon badge + screenshot]' },
+    { kind: 'todo', text: '[TODO: Q26 in-development badge + screenshot from Carlos]' },
   ],
   'this-site': [
     { kind: 'eyebrow', text: 'THE NOTE · PROJECT 03' },

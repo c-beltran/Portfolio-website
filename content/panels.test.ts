@@ -60,7 +60,8 @@ describe('panels', () => {
 });
 
 describe('claims (checkpoint 2)', () => {
-  const UNBACKED = /I write the spec|I wrote|I review|I reviewed|until I've read|tool of mine/i;
+  // Q24 (2026-11-17) confirmed "I write the spec" and "Nothing merges until I've read it".
+  const UNBACKED = /I wrote|I review|I reviewed|tool of mine|licensed/i;
 
   it('makes no authorship or review claim the stats cannot back', () => {
     for (const b of allBlocks) {
@@ -121,5 +122,35 @@ describe('desk object faces', () => {
   it('describes every object for assistive tech', () => {
     const d = deskDescription();
     DESK_OBJECTS.forEach((o) => expect(d).toContain(o.ariaLabel));
+  });
+});
+
+describe('answered questions (Q3, Q7, Q24, Q26)', () => {
+  const text = (slug: keyof typeof PANELS) => PANELS[slug].map(textOf).join(' ');
+  const all = Object.keys(PANELS)
+    .map((k) => text(k as keyof typeof PANELS))
+    .join(' ');
+
+  it('makes no backflow credential claim and leaves no Q3 or Q24 TODO', () => {
+    expect(all).not.toMatch(/TODO: Q3|TODO: Q24|licensed|credential/i);
+  });
+
+  it('restores the two confirmed claims on How I build', () => {
+    expect(text('how-i-build')).toContain('I write the spec');
+    expect(text('how-i-build')).toContain("Nothing merges until I've read it");
+  });
+
+  it('never claims Carlos reviewed everything', () => {
+    expect(all).not.toMatch(/reviewed everything|review every change/i);
+  });
+
+  it('links Potaflow to potaflow.com', () => {
+    const link = PANELS.potaflow.find((b) => b.kind === 'link');
+    expect(link && 'href' in link && link.href).toBe('https://potaflow.com');
+  });
+
+  it('marks Power Walk as in development, not public (Q26)', () => {
+    expect(text('power-walk')).toContain('TODO: Q26');
+    expect(text('power-walk')).not.toContain('TODO: Q7 confirm public name');
   });
 });

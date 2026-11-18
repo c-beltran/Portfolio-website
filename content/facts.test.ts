@@ -135,6 +135,10 @@ describe('statsFootnote', () => {
     expect(note).toContain('all commits pushed to GitHub, on every branch');
     expect(note).toContain('2026-11-13');
   });
+
+  it('defines co-authored as a message that credits Claude (Q22)', () => {
+    expect(statsFootnote(makeStats())).toContain('credits Claude as co-author');
+  });
 });
 
 describe('FACT_IDS', () => {

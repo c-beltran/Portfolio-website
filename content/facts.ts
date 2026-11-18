@@ -77,5 +77,5 @@ export function tenSecondFacts(now: Date = new Date()): string[] {
 }
 
 export function statsFootnote(s: Stats = STATS): string {
-  return `Co-authored share: commits whose message carries a "Co-Authored-By: Claude" line, out of ${s.potaflow.coAuthoredDenominator}. Counts as of ${s.asOf}.`;
+  return `Co-authored share: commits whose message credits Claude as co-author (a "Co-Authored-By: Claude" line), out of ${s.potaflow.coAuthoredDenominator}. Counts as of ${s.asOf}.`;
 }
