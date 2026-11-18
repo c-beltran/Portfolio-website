@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   countAgentAuthored,
+  isPromotionPR,
   countCoAuthored,
   parseDirections,
   percentFloor,
@@ -110,5 +111,21 @@ describe('assertNotTruncated', () => {
   it('throws when a list reaches its fetch limit, since it may be cut off', () => {
     expect(() => assertNotTruncated(4999, 5000, 'PRs')).not.toThrow();
     expect(() => assertNotTruncated(5000, 5000, 'PRs')).toThrow(/limit/);
+  });
+});
+
+describe('isPromotionPR', () => {
+  it('flags PRs that only promote the development branch into main (Q23)', () => {
+    expect(isPromotionPR({ headRefName: 'development', baseRefName: 'main' })).toBe(true);
+    expect(isPromotionPR({ headRefName: 'develop', baseRefName: 'main' })).toBe(true);
+    expect(isPromotionPR({ headRefName: 'development', baseRefName: 'master' })).toBe(true);
+  });
+
+  it('keeps real-change PRs, including ones into development', () => {
+    expect(isPromotionPR({ headRefName: 'cb/address-page', baseRefName: 'development' })).toBe(
+      false,
+    );
+    expect(isPromotionPR({ headRefName: 'fix/login', baseRefName: 'main' })).toBe(false);
+    expect(isPromotionPR({})).toBe(false);
   });
 });

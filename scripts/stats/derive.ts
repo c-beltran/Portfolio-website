@@ -26,6 +26,15 @@ export function summarizeMergedPRs(
   };
 }
 
+/** Branches whose PRs only promote already-merged work into the release branch (Q23). */
+const PROMOTION_HEADS = new Set(['development', 'develop']);
+const RELEASE_BASES = new Set(['main', 'master']);
+
+/** A PR that only promotes the development branch into main carries no new work of its own. */
+export function isPromotionPR(pr: { headRefName?: string; baseRefName?: string }): boolean {
+  return PROMOTION_HEADS.has(pr.headRefName ?? '') && RELEASE_BASES.has(pr.baseRefName ?? '');
+}
+
 export function parseDirections(filenames: string[]): Direction[] {
   return filenames
     .flatMap((file) => {
