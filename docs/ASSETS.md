@@ -11,7 +11,7 @@ Raw source files (downloads, `.blend` files, renders, later scans and photos) li
 ~/Portfolio-assets/
   downloads/   CC0 / licensed inputs exactly as downloaded (glTF, HDR, textures)
   blend/       workspace.blend, built by scripts/scene/build_scene.py
-  renders/     Cycles stills (clay, day, lamp, phone crop)
+  renders/     Cycles stills (clay, day, lamp; overview and phone)
   compare/     the look-review sheet (private: never committed)
 ```
 

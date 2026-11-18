@@ -1,5 +1,5 @@
 // Builds the M3a look-review sheet (never committed): the reference photo beside each render at
-// 400 px wide, the phone crops at 360 px, and each render at 1280 px. Also saves a PNG of the sheet.
+// 400 px wide, the phone views at 360 px, and each render at 1280 px. Also saves a PNG of the sheet.
 //
 //   node scripts/scene/compare.mjs <reference.jpg> [renders dir] [out dir]
 //
@@ -20,8 +20,8 @@ const files = {
   ref: resolve(refArg),
   day: join(renders, 'final-day-overview.png'),
   lamp: join(renders, 'final-lamp-overview.png'),
-  dayPhone: join(renders, 'final-day-phone-crop.png'),
-  lampPhone: join(renders, 'final-lamp-phone-crop.png'),
+  dayPhone: join(renders, 'final-day-phone.png'),
+  lampPhone: join(renders, 'final-lamp-phone.png'),
 };
 for (const [k, f] of Object.entries(files)) {
   if (!existsSync(f)) throw new Error(`missing ${k}: ${f}`);
@@ -43,7 +43,7 @@ const html = `<!doctype html><meta charset="utf-8"><title>M3a look review</title
 <p>The bar: at 400 px, beside the reference, the render reads as a photograph of the same kind of desk.</p>
 ${pair('ref', 'day', 'Day (dusk), 400 px')}
 ${pair('ref', 'lamp', 'Lamp mode (night), 400 px')}
-<section><h2>Phone crops, 360 px</h2><div class="row">
+<section><h2>Phone, 360 px</h2><div class="row">
   <figure>${img('dayPhone', 360)}<figcaption>Day</figcaption></figure>
   <figure>${img('lampPhone', 360)}<figcaption>Lamp</figcaption></figure></div></section>
 <section><h2>Day, 1280 px</h2>${img('day', 1280)}</section>

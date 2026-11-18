@@ -6,7 +6,7 @@ Builds and renders the 3D scene of the workspace headlessly with Blender 5.3. In
 B=/Applications/Blender.app/Contents/MacOS/Blender
 # Build the scene from the code-built objects and the pinned downloads in assets.json
 $B -b --factory-startup --python scripts/scene/build_scene.py -- --out ~/Portfolio-assets/blend/workspace.blend
-# Render a view: clay | day | lamp, overview | phone-crop
+# Render a view: clay | day | lamp, overview | phone (square)
 $B -b ~/Portfolio-assets/blend/workspace.blend --python scripts/scene/render.py -- --mode clay --camera overview --out ~/Portfolio-assets/renders/clay-overview.png
 ```
 

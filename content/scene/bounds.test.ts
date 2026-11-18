@@ -50,8 +50,13 @@ describe('minCollisionFreeWidth', () => {
   });
 });
 
-describe('content/scene/bounds.json', () => {
-  const path = new URL('./bounds.json', import.meta.url);
+const VIEWS = [
+  { file: 'bounds.json', camera: 'cam_overview', aspect: 1440 / 2560 },
+  { file: 'bounds-phone.json', camera: 'cam_phone', aspect: 1 },
+] as const;
+
+describe.each(VIEWS)('content/scene/$file', ({ file, camera, aspect }) => {
+  const path = new URL(`./${file}`, import.meta.url);
 
   it('exists (written by scripts/scene/export_bounds.py)', () => {
     expect(existsSync(path)).toBe(true);
@@ -72,8 +77,8 @@ describe('content/scene/bounds.json', () => {
   });
 
   it('records the minCollisionFreeWidth its boxes give', () => {
-    expect(data!.camera).toBe('cam_overview');
-    expect(data!.aspect).toBeCloseTo(ASPECT, 6);
+    expect(data!.camera).toBe(camera);
+    expect(data!.aspect).toBeCloseTo(aspect, 6);
     expect(data!.minCollisionFreeWidth).toBe(minCollisionFreeWidth(data!.objects, data!.aspect));
   });
 });

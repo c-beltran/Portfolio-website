@@ -2,7 +2,7 @@
 Renders one view of workspace.blend (M3a).
 
     Blender -b ~/Portfolio-assets/blend/workspace.blend --python scripts/scene/render.py -- \
-        --mode clay|day|lamp --camera overview|phone-crop --out <png> [--samples N]
+        --mode clay|day|lamp --camera overview|phone --out <png> [--samples N]
 
 clay: one neutral grey material and a simple sun and sky, for the layout checkpoint.
 """
@@ -17,7 +17,7 @@ def args():
     argv = sys.argv[sys.argv.index("--") + 1 :]
     p = argparse.ArgumentParser()
     p.add_argument("--mode", choices=["clay", "day", "lamp"], required=True)
-    p.add_argument("--camera", choices=["overview", "phone-crop"], default="overview")
+    p.add_argument("--camera", choices=["overview", "phone"], default="overview")
     p.add_argument("--out", required=True)
     p.add_argument("--samples", type=int, default=0)
     return p.parse_args(argv)
@@ -99,10 +99,10 @@ def main():
     use_gpu(scene)
     scene.cycles.use_denoising = True
     scene.view_settings.view_transform = "AgX"
-    portrait = a.camera == "phone-crop"
-    scene.render.resolution_x, scene.render.resolution_y = (1080, 1920) if portrait else (2560, 1440)
+    phone = a.camera == "phone"
+    scene.render.resolution_x, scene.render.resolution_y = (1080, 1080) if phone else (2560, 1440)
     scene.render.resolution_percentage = 100
-    scene.camera = bpy.data.objects["cam_phone_crop" if portrait else "cam_overview"]
+    scene.camera = bpy.data.objects["cam_phone" if phone else "cam_overview"]
     if a.mode == "clay":
         clay(scene)
         scene.cycles.samples = a.samples or 96

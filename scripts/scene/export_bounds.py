@@ -4,7 +4,7 @@ Projects each interactive object through the overview camera and writes content/
 which re-derives it in the unit test).
 
     Blender -b ~/Portfolio-assets/blend/workspace.blend --python scripts/scene/export_bounds.py -- \
-        --out content/scene/bounds.json
+        --camera overview|phone --out content/scene/bounds.json   (bounds-phone.json for the phone)
 
 A report, not a gate: objects are never moved to make hotspots fit. The box is each object's
 projected hull (its meshes and its children's), clipped to the frame; occlusion is not removed.
@@ -21,6 +21,8 @@ import bpy
 from bpy_extras.object_utils import world_to_camera_view
 
 OBJECTS = ["obj_monitor", "obj_kit", "obj_phone", "obj_badge", "obj_photo", "obj_notepad", "obj_card", "obj_lightbar"]
+# Camera and still resolution per view (matching render.py).
+VIEWS = {"overview": ("cam_overview", 2560, 1440), "phone": ("cam_phone", 1080, 1080)}
 MIN_TARGET = 44
 MAX_WIDTH = 4000
 
@@ -28,6 +30,7 @@ MAX_WIDTH = 4000
 def args():
     argv = sys.argv[sys.argv.index("--") + 1 :]
     p = argparse.ArgumentParser()
+    p.add_argument("--camera", choices=list(VIEWS), default="overview")
     p.add_argument("--out", required=True)
     return p.parse_args(argv)
 
@@ -94,9 +97,9 @@ def min_free_width(boxes, aspect):
 def main():
     a = args()
     scene = bpy.context.scene
-    scene.render.resolution_x, scene.render.resolution_y = 2560, 1440
+    cam_name, scene.render.resolution_x, scene.render.resolution_y = VIEWS[a.camera]
     scene.render.resolution_percentage = 100
-    cam = bpy.data.objects["cam_overview"]
+    cam = bpy.data.objects[cam_name]
     depsgraph = bpy.context.evaluated_depsgraph_get()
     aspect = scene.render.resolution_y / scene.render.resolution_x
     boxes = {name: project(scene, cam, bpy.data.objects[name], depsgraph) for name in OBJECTS}
@@ -106,7 +109,7 @@ def main():
         json.dump(data, f, indent=2)
         f.write("\n")
     print(f"wrote {a.out}; minCollisionFreeWidth = {width}")
-    for w in (500, 720, 1024, 1440):
+    for w in ((320, 360, 390, 430) if a.camera == "phone" else (500, 720, 1024, 1440)):
         print(f"  at {w}px: {colliding(boxes, w, aspect) or 'no overlaps'}")
     if width is None:
         print(f"  overlapping at every width: {colliding(boxes, MAX_WIDTH, aspect)}")

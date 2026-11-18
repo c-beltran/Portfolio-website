@@ -349,25 +349,22 @@ def build_cameras(coll):
     target = Vector((-0.02, 0.2, 0.92))
     eye = Vector((0.12, -1.22, 1.29))
 
-    def cam(name, sensor_fit, sensor):
+    def cam(name, eye, target, lens, sensor_width):
         data = bpy.data.cameras.new(name)
-        data.lens = 35
-        data.sensor_fit = sensor_fit
-        if sensor_fit == "VERTICAL":
-            data.sensor_height = sensor
-        else:
-            data.sensor_width = sensor
+        data.lens = lens
+        data.sensor_fit = "HORIZONTAL"
+        data.sensor_width = sensor_width
         o = bpy.data.objects.new(name, data)
         coll.objects.link(o)
         o.location = eye
         o.rotation_euler = (target - eye).to_track_quat("-Z", "Y").to_euler()
         return o
 
-    overview = cam("cam_overview", "HORIZONTAL", 36)
-    # Phone crop: same position, same vertical field of view as the 16:9 overview, portrait aspect.
-    crop = cam("cam_phone_crop", "VERTICAL", 36 * 9 / 16)
-    crop.data.shift_x = 0.09  # toward the mug and glass
-    crop.data.shift_y = 0.03  # less empty desk edge
+    overview = cam("cam_overview", eye, target, 35, 36)
+    # Phone portrait (approved 2026-11-18, option B): its own camera, higher and steeper so the
+    # desk's depth runs down the screen; a square frame with all eight objects in view.
+    phone = cam("cam_phone", Vector((-0.03, -0.85, 1.75)), Vector((-0.06, 0.16, 0.85)), 19.5, 18)
+    phone.data.shift_y = 0.033  # crop the floor, keep the light bar's label room
     bpy.context.scene.camera = overview
 
 
