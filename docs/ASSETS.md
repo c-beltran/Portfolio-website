@@ -21,7 +21,15 @@ The scene is rebuilt from scratch by `scripts/scene/build_scene.py`. Every downl
 
 Every model, texture and image used in the build is listed here, with its source and license. The register grows as inputs are added. It must match `scripts/scene/assets.json`.
 
-**CC-BY models** require a visible credit to each author on the site. It goes on `/classic` before launch (M5 TODO).
+**CC-BY models** require a visible credit to each author on the site. It goes on `/classic` before launch (M5 TODO). CC BY 4.0 also asks that changes are indicated. Every model below is scaled, placed and re-materialed by the build, so each credit reads "modified", with these changes:
+
+- **Keyboard:** unlit materials rebuilt as lit ones, with a warm cream tint.
+- **Monitor:** screen replaced with a generated editor image; other materials set to black.
+- **Laptop:** screen replaced with a generated image on a glossy black base.
+- **Phone:** materials replaced (dark glass screen, dark metal body).
+- **Mug:** material replaced with ceramic.
+- **Glass:** material replaced with glass, plus a water volume added.
+- **Mouse:** materials replaced with matte black plastic.
 
 | Asset                                                                                            | Source                                                                                                                                                                       | License                          | Raw file                                           | Output        |
 | ------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- | -------------------------------------------------- | ------------- |

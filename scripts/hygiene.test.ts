@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -30,5 +31,13 @@ describe('docs/design hygiene', () => {
       .filter((f) => /\.(md|html|txt|json)$/.test(f))
       .filter((f) => pattern.test(readFileSync(f, 'utf8')));
     expect(hits).toEqual([]);
+  });
+});
+
+describe('tracked files', () => {
+  // Build byproducts can embed local paths (a .pyc records its source's absolute path).
+  it('include no compiled Python', () => {
+    const tracked = execFileSync('git', ['ls-files'], { encoding: 'utf8' }).split('\n');
+    expect(tracked.filter((f) => /(^|\/)__pycache__\/|\.pyc$/.test(f))).toEqual([]);
   });
 });

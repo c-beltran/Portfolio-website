@@ -17,3 +17,7 @@ playwright-report/
 .lighthouseci/
 next-env.d.ts
 *.tsbuildinfo
+
+# Python build byproducts (Blender scripts)
+__pycache__/
+*.pyc

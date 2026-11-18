@@ -11,7 +11,7 @@ $B -b ~/Portfolio-assets/blend/workspace.blend --python scripts/scene/render.py 
 ```
 
 - **Object names** (the contract later steps rely on): `obj_monitor`, `obj_kit`, `obj_phone`, `obj_badge`, `obj_photo`, `obj_notepad`, `obj_card`, `obj_lightbar`. Decoration is named `deco_*`.
-- **Downloads:** glTF only, CC0 or CC-BY, pinned by sha256 in `assets.json`. Never open a downloaded `.blend`. Blender runs with autoexec off, which is the default.
+- **Downloads:** glTF only, CC0 or CC-BY, pinned by sha256 in `assets.json`. Each is a zip in `~/Portfolio-assets/downloads/`, fetched from the source in `docs/ASSETS.md`. The build checks the zip against its pin and every extracted file against the zip (`pins.py`; tests: `python3 -I scripts/scene/test_pins.py`), and stops on a missing or changed download. `--allow-proxy` builds with placeholder blocks instead, for layout only. Never open a downloaded `.blend`. Blender runs with autoexec off, which is the default.
 
 ## Hotspot bounds
 

@@ -5,9 +5,10 @@ Builds Carlos's workspace scene headlessly (DESK_SPEC.md §2, §6; M3a).
 
 Units are metres. +X is right, +Y is away from the camera (towards the wall), +Z is up.
 The desk top is at z = DESK_TOP. Interactive objects are named obj_*; decoration deco_*.
-Complex objects (keyboard, laptop, monitor, mug, bottle, glass, phone) are imported from
-pinned glTF downloads listed in assets.json; until a download exists, a true-size proxy block
-stands in (named proxy_*), so the layout and cameras can be reviewed first.
+Complex objects (keyboard, laptop, monitor, mouse, mug, glass, phone) are imported from glTF
+downloads pinned by sha256 in assets.json (checked by pins.py; the build stops on a missing or
+changed download). With --allow-proxy, a missing download becomes a true-size proxy block
+(named proxy_*), for reviewing layout and cameras only.
 """
 
 import argparse
@@ -29,6 +30,7 @@ def args():
     argv = sys.argv[sys.argv.index("--") + 1 :] if "--" in sys.argv else []
     p = argparse.ArgumentParser()
     p.add_argument("--out", default=str(ASSETS_DIR / "blend" / "workspace.blend"))
+    p.add_argument("--allow-proxy", action="store_true", help="stand in a block for a missing download")
     return p.parse_args(argv)
 
 
@@ -225,6 +227,11 @@ def level_rotation(objs):
     c = pts - pts.mean(axis=0)
     _, vecs = np.linalg.eigh(np.cov(c.T))  # ascending variance
     x, z = vecs[:, 2], vecs[:, 0]
+    # eigh's eigenvector signs are arbitrary (they can differ between numpy/LAPACK builds), which
+    # would turn the model 180 degrees. Fix x: its largest component is negative (the approved look).
+    if x[np.argmax(np.abs(x))] > 0:
+        x = -x
+    print("LEVEL x:", [round(float(v), 4) for v in x])
     if (c @ z > 0).sum() > (c @ z < 0).sum():  # keycaps are the busier side: put it up (+Z)
         z = -z
     y = np.cross(z, x)
@@ -232,12 +239,20 @@ def level_rotation(objs):
     return m.to_quaternion()
 
 
-def import_or_proxy(key, coll, assets):
+def import_or_proxy(key, coll, assets, allow_proxy=False):
+    from pins import PinError, verify_download
+
     cfg = COMPLEX[key]
     name = NAMES.get(key, f"deco_{key}")
     entry = next((m for m in assets.get("models", []) if m.get("slot") == key), None)
-    path = ASSETS_DIR / "downloads" / entry["file"] if entry else None
-    if not (path and path.exists()):
+    try:
+        if not entry:
+            raise PinError(f"{key}: no model in assets.json")
+        path = verify_download(ASSETS_DIR / "downloads", entry["file"], entry["zip_sha256"])
+    except PinError as e:
+        if not allow_proxy:
+            raise SystemExit(f"{e}\n(pass --allow-proxy to build with a placeholder block)")
+        print(f"WARNING: {e}; using a proxy block for {key}")
         o = box(f"proxy_{key}", cfg["proxy"], cfg["at"], coll, rot=(0, 0, cfg["rot"][2]), bevel=0.004)
         o["proxy_for"] = name
         return o
@@ -471,7 +486,7 @@ def main():
     build_simple_objects(objs)
     assets = load_assets()
     for key in COMPLEX:
-        import_or_proxy(key, objs, assets)
+        import_or_proxy(key, objs, assets, a.allow_proxy)
     build_laptop_stand(objs)
     add_water("glass", objs, 0.55)
     set_dressing(objs)
