@@ -380,6 +380,17 @@ def build_cameras(coll):
     # desk's depth runs down the screen; a square frame with all eight objects in view.
     phone = cam("cam_phone", Vector((-0.03, -0.85, 1.75)), Vector((-0.06, 0.16, 0.85)), 19.5, 18)
     phone.data.shift_y = 0.033  # crop the floor, keep the light bar's label room
+    # Monitor close-up (M3b): straight in front of the screen's centre, at its height, far enough
+    # back that the screen fills about 80% of a 16:9 frame at 35 mm.
+    mon = bpy.data.objects.get("obj_monitor")
+    screen = [o for o in (mon.children_recursive if mon else []) if o.type == "MESH"
+              and any(m and m.name.startswith("Wallpaper") for m in o.data.materials)]
+    if screen:
+        lo, hi = world_bounds(screen)
+        centre = (lo + hi) / 2
+        half_fov = math.atan(36 / 2 / 35)
+        back = ((hi.x - lo.x) / 0.8) / 2 / math.tan(half_fov)
+        cam("cam_monitor", Vector((centre.x, lo.y - back, centre.z)), centre, 35, 36)
     bpy.context.scene.camera = overview
 
 
