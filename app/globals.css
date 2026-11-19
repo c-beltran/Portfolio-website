@@ -271,6 +271,26 @@ button {
 }
 
 /*
+ * The live scene (M3b preview, ?tier=2): over the photo, under every hotspot, never a pointer
+ * target. Invisible until its first frame is ready, so the still never blinks.
+ */
+.desk-still__live {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.desk-still__live[data-ready='true'] {
+  opacity: 1;
+}
+
+.desk-still__live canvas {
+  display: block;
+}
+
+/*
  * Placement is transform-only (spec §4). Each box is its object's projected bounds, grown to
  * 44px around its centre (WCAG 2.5.5); --lift always has a value, or the whole transform
  * computes to none.
@@ -330,6 +350,10 @@ button {
 }
 
 @media (prefers-reduced-motion: no-preference) {
+  .desk-still__live {
+    transition: opacity 0.3s ease-out;
+  }
+
   .desk-still__photo--lamp img {
     transition:
       opacity 0.6s ease,

@@ -1,6 +1,8 @@
 import { useEffect, useRef, type MouseEvent } from 'react';
+import { PORTRAIT } from '@/content/deskLayout';
 import { deskDescription, DESK_OBJECTS, type SectionSlug } from '@/content/objects';
 import { useTheme } from '@/lib/useTheme';
+import { LiveLayer } from '@/components/scene/LiveLayer';
 import { Hotspot } from './Hotspot';
 
 type Props = {
@@ -9,8 +11,6 @@ type Props = {
   onClose: () => void;
 };
 
-/** The site's portrait phone layout; the phone camera's square still is art-directed in. */
-const PORTRAIT = '(max-width: 719px) and (orientation: portrait)';
 const DESK_SIZES = '(min-width: 1024px) 66vw, 100vw';
 
 const srcSet = (view: 'desk' | 'phone', mode: 'day' | 'lamp', widths: number[], ext: string) =>
@@ -100,6 +100,7 @@ export function DeskStill({ selected, onOpen, onClose }: Props) {
         <div className="desk-still__layer" aria-hidden="true" onClick={onLayerClick}>
           <DeskPhoto mode="day" />
           <DeskPhoto mode="lamp" />
+          <LiveLayer />
           {DESK_OBJECTS.map((o) => (
             <Hotspot
               key={o.id}

@@ -19,6 +19,9 @@ const BOUNDS: Record<LayoutName, SceneBounds> = {
   phone: phoneBounds as SceneBounds,
 };
 
+/** The site's portrait phone layout: the phone camera's square framing (still and live). */
+export const PORTRAIT = '(max-width: 719px) and (orientation: portrait)';
+
 /** Desk width / height: the stills' (2560×1440 overview, 1080×1080 phone camera). */
 export const DESK_ASPECT: Record<LayoutName, number> = { wide: 16 / 9, phone: 1 };
 
