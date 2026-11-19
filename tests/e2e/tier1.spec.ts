@@ -16,10 +16,11 @@ test.describe('reduced motion', () => {
       hotspots: [...document.querySelectorAll('button.hotspot')].map(
         (el) => getComputedStyle(el).transitionDuration,
       ),
-      steam: getComputedStyle(document.querySelector('.steam')!).animationName,
+      lamp: getComputedStyle(document.querySelector('.desk-still__photo--lamp img')!)
+        .transitionDuration,
     }));
     expect(new Set(motion.hotspots)).toEqual(new Set(['0s']));
-    expect(motion.steam).toBe('none');
+    expect(motion.lamp).toBe('0s');
     await hotspot(page, 'kit').click();
     expect(path(page)).toBe('/potaflow');
     await expect(panelTitle(page)).toBeFocused();

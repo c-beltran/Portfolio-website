@@ -221,7 +221,7 @@ button {
   border: 0;
 }
 
-/* ---- The still desk (Tier 1). Layout data: content/deskLayout.ts. ---- */
+/* ---- The still desk (Tier 1): the approved render. Layout data: content/deskLayout.ts. ---- */
 
 .desk-still {
   margin: 0 0 14px;
@@ -234,91 +234,72 @@ button {
   box-shadow: inset 0 -6px 0 rgba(0, 0, 0, 0.18);
 }
 
-/* The hotspots' containing block: h% and translate() resolve against this box. */
+/*
+ * The hotspots' containing block. Inline-size containment gives cqw; the desk's height is its
+ * width × --aspect, so a y percent of the desk is var(--cy) × --aspect cqw.
+ */
 .desk-still__layer {
   position: relative;
-  aspect-ratio: 16 / 10.5;
+  aspect-ratio: 16 / 9;
+  --aspect: 0.5625;
   overflow: hidden;
   border-radius: 14px;
   container-type: inline-size;
-  --pool-x: 55%;
-  --pool-y: 38%;
+  background: #15110d;
 }
 
-.desk-still__felt {
+.desk-still__photo img {
   position: absolute;
   inset: 0;
-  background-color: var(--felt);
-  background-image:
-    repeating-linear-gradient(0deg, var(--felt-line) 0 1px, transparent 1px 22px),
-    repeating-linear-gradient(90deg, var(--felt-line) 0 1px, transparent 1px 22px);
-}
-
-.desk-still__scrawl {
-  position: absolute;
-  left: 3%;
-  top: 3%;
-  font-family: var(--font-hand), cursive;
-  font-weight: 700;
-  font-size: max(14px, 2.2cqw);
-  line-height: 1;
-  color: var(--scrawl);
-  transform: rotate(-3deg);
-}
-
-/* Lamp mode: multiply by dusk, except a warm pool under the lamp. In day both are white (no-op). */
-.desk-still__light {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  pointer-events: none;
-  mix-blend-mode: multiply;
-  background: radial-gradient(
-    ellipse 60% 75% at var(--pool-x) var(--pool-y),
-    var(--pool) 0%,
-    var(--dusk) 72%
-  );
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
 /*
- * Placement is transform-only (spec §4). Requirements (checkpoint 1):
- * --lift always has a value, or the whole transform computes to none; the origin stays centred,
- * so rotation and the selected scale pivot on the object.
+ * Lamp mode cross-fades to the lamp render; nothing moves. Until then it is display: none, which
+ * (with loading=lazy) keeps day visitors from downloading it.
+ */
+.desk-still__photo--lamp img {
+  display: none;
+  opacity: 0;
+}
+
+:root[data-theme='lamp'] .desk-still__photo--lamp img {
+  display: block;
+  opacity: 1;
+}
+
+/*
+ * Placement is transform-only (spec §4). Each box is its object's projected bounds, grown to
+ * 44px around its centre (WCAG 2.5.5); --lift always has a value, or the whole transform
+ * computes to none.
  */
 .hotspot {
   position: absolute;
   left: 0;
   top: 0;
-  width: var(--w);
-  height: var(--h);
+  width: max(44px, calc(var(--w) * 1%));
+  height: max(44px, calc(var(--h) * 1%));
   margin: 0;
   padding: 0;
   border: 0;
+  border-radius: 10px;
   background: none;
   color: inherit;
   cursor: pointer;
-  z-index: 1;
+  z-index: var(--z);
   --lift: translate(0);
-  transform: translate(var(--tx), var(--ty)) rotate(var(--rot)) var(--lift);
+  transform: translate(calc(var(--cx) * 1cqw - 50%), calc(var(--cy) * var(--aspect) * 1cqw - 50%))
+    var(--lift);
   transform-origin: 50% 50%;
-  filter: drop-shadow(0 5px 5px rgba(0, 0, 0, 0.35));
 }
 
-.hotspot .art {
-  display: block;
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-}
-
-/* The mug is decoration. Labels are part of their object: a tap on one opens it. */
-.hotspot--deco {
-  pointer-events: none;
-}
-
-/* Labels read at one size on every object: sized from the desk's width (cqw), not the art. */
+/* The tape label: one size on every object, from the desk's width (cqw). Part of its object. */
 .sticker {
   position: absolute;
+  left: 50%;
+  bottom: 4px;
   padding: 0.25em 0.7em;
   background: var(--sticker);
   color: var(--sticker-ink);
@@ -327,126 +308,64 @@ button {
   line-height: 1.2;
   letter-spacing: 0.06em;
   white-space: nowrap;
-  transform-origin: 0 0;
+  transform: translateX(-50%) rotate(-2deg);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
 }
 
-.hotspot--deco {
-  cursor: default;
-}
-
 @media (hover: hover) {
-  .hotspot:not(.hotspot--deco):hover {
-    --lift: translateY(-1%) scale(1.03);
+  .hotspot:hover {
+    box-shadow: inset 0 0 0 2px var(--sticker);
   }
 }
 
+/* The open object: ringed and lit, its label lifted. */
 .hotspot[data-slug][aria-pressed='true'] {
-  --lift: translateY(-2%) scale(1.07);
-  filter: drop-shadow(0 18px 16px rgba(0, 0, 0, 0.45));
-  z-index: 3;
+  box-shadow:
+    inset 0 0 0 2px var(--sticker),
+    0 0 28px 6px rgba(255, 216, 77, 0.28);
 }
 
-.art-display {
-  font-family: var(--font-display), sans-serif;
-}
-
-.art-mono {
-  font-family: var(--font-mono), monospace;
-}
-
-.art-hand {
-  font-family: var(--font-hand), cursive;
-}
-
-.needle {
-  transform-box: view-box;
-  transform-origin: 50px 44px;
-  transform: rotate(-52deg);
-}
-
-.hotspot[aria-pressed='true'] .needle {
-  transform: rotate(58deg);
-}
-
-.phone-screen {
-  fill: #1c2430;
-}
-
-.phone-bulb {
-  stroke: #8c98a8;
-}
-
-.phone-spill {
-  opacity: 0;
-}
-
-.hotspot[aria-pressed='true'] .phone-screen {
-  fill: #ffd84d;
-}
-
-.hotspot[aria-pressed='true'] .phone-bulb {
-  stroke: #15191c;
-}
-
-.hotspot[aria-pressed='true'] .phone-spill {
-  opacity: 1;
+.hotspot[data-slug][aria-pressed='true'] .sticker {
+  transform: translateX(-50%) translateY(-3px) rotate(-2deg);
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .hotspot {
+  .desk-still__photo--lamp img {
     transition:
-      transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1),
-      filter 0.35s ease;
+      opacity 0.6s ease,
+      display 0.6s allow-discrete;
   }
 
-  .needle {
-    transition: transform 0.9s cubic-bezier(0.3, 1.6, 0.5, 1);
+  /* Only a switch fades; a visit that starts in lamp mode paints it at once. */
+  @starting-style {
+    :root[data-desk-ready][data-theme='lamp'] .desk-still__photo--lamp img {
+      opacity: 0;
+    }
   }
 
-  .phone-screen,
-  .phone-spill {
+  .hotspot,
+  .sticker {
     transition:
-      fill 0.5s ease,
-      opacity 0.5s ease;
-  }
-
-  .steam {
-    animation: steam 3s ease-in-out infinite;
+      box-shadow 0.35s ease,
+      transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
   }
 }
 
-@keyframes steam {
-  0%,
-  100% {
-    opacity: 0.25;
-    transform: translateY(0);
-  }
-  50% {
-    opacity: 0.6;
-    transform: translateY(-4%);
-  }
-}
-
-/* Portrait phones: the rearranged portrait desk. Landscape keeps the wide desk (shorter). */
+/* Portrait phones: the phone camera's square render. Landscape keeps the wide desk (shorter). */
 @media (max-width: 719px) and (orientation: portrait) {
   .desk-still__layer {
-    aspect-ratio: 3 / 4;
-    --pool-x: 55%;
-    --pool-y: 30%;
-  }
-
-  .desk-still__scrawl {
-    top: auto;
-    bottom: 4%;
-    left: auto;
-    right: 4%;
+    aspect-ratio: 1;
+    --aspect: 1;
   }
 
   .hotspot {
-    width: var(--p-w);
-    height: var(--p-h);
-    transform: translate(var(--p-tx), var(--p-ty)) rotate(var(--p-rot)) var(--lift);
+    width: max(44px, calc(var(--p-w) * 1%));
+    height: max(44px, calc(var(--p-h) * 1%));
+    transform: translate(
+        calc(var(--p-cx) * 1cqw - 50%),
+        calc(var(--p-cy) * var(--aspect) * 1cqw - 50%)
+      )
+      var(--lift);
   }
 }
 
@@ -537,8 +456,8 @@ button {
 }
 
 /*
- * Landscape: a shorter sheet, and a desk no wider than lets its tallest object (the laptop, about
- * half the desk's height, plus the selected lift) fit in the 60dvh above the sheet.
+ * Landscape: a shorter sheet, and a desk no wider than lets the whole 16:9 still fit in the 60dvh
+ * above the sheet.
  */
 @media (max-width: 1023px) and (orientation: landscape) {
   .desk > .panel {
@@ -546,10 +465,10 @@ button {
   }
 
   .desk-still {
-    /* Never below 500px of felt (44px targets), even when toolbars shrink the viewport. */
+    /* Never below 500px of desk (44px targets), even when toolbars shrink the viewport. */
     max-width: max(
       500px + 2 * clamp(8px, 1.2vw, 16px),
-      calc((60dvh - 28px) * 3.05 + 2 * clamp(8px, 1.2vw, 16px))
+      calc((60dvh - 28px) * 16 / 9 + 2 * clamp(8px, 1.2vw, 16px))
     );
     margin-inline: auto;
   }

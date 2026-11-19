@@ -45,7 +45,7 @@ export const PANELS: Record<SectionSlug, PanelBlock[]> = {
     { kind: 'list', facts: ['F03', 'F04', 'F06', 'F07', 'F08'] },
   ],
   'how-i-build': [
-    { kind: 'eyebrow', text: 'THE LAPTOP · HOW I BUILD' },
+    { kind: 'eyebrow', text: 'THE MONITOR · HOW I BUILD' },
     { kind: 'title', text: 'I set the bar. Agents do the legwork.', draft: true },
     {
       kind: 'prose',
@@ -56,7 +56,7 @@ export const PANELS: Record<SectionSlug, PanelBlock[]> = {
     { kind: 'list', facts: ['F11', 'F09', 'F10'] },
   ],
   potaflow: [
-    { kind: 'eyebrow', text: 'THE GAUGE · PROJECT 01' },
+    { kind: 'eyebrow', text: 'THE KIT CASE · PROJECT 01' },
     { kind: 'title', text: 'Potaflow', draft: true },
     { kind: 'fact', fact: 'P01' },
     {
@@ -93,7 +93,7 @@ export const PANELS: Record<SectionSlug, PanelBlock[]> = {
     { kind: 'todo', text: '[TODO: Q26 in-development badge + screenshot from Carlos]' },
   ],
   'this-site': [
-    { kind: 'eyebrow', text: 'THE NOTE · PROJECT 03' },
+    { kind: 'eyebrow', text: 'THE NOTEPAD · PROJECT 03' },
     { kind: 'title', text: 'This website', draft: true },
     { kind: 'fact', fact: 'P06' },
     {

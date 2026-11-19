@@ -20,8 +20,6 @@ export type DeskObject = {
   ariaLabel: string;
   /** The fact used for the route's meta description. */
   metaFactId: FactId;
-  /** Text printed on the object's art (decorative; the drawer and panel carry the content). */
-  face: readonly string[];
 };
 
 /** THE object registry: drawer, hotspots, scene, panels and routes all read it. */
@@ -32,7 +30,6 @@ export const DESK_OBJECTS: readonly DeskObject[] = [
     label: 'About',
     ariaLabel: 'Small framed photo: About me',
     metaFactId: 'F02',
-    face: ['[TODO: Q13 photo]'],
   },
   {
     id: 'badge',
@@ -40,7 +37,6 @@ export const DESK_OBJECTS: readonly DeskObject[] = [
     label: 'Experience',
     ariaLabel: 'ID badge on its lanyard: Experience',
     metaFactId: 'F01',
-    face: ['C. BELTRAN', 'Sr. Software Engineer', 'PEOPLE INC.', 'since July 2019'],
   },
   {
     id: 'monitor',
@@ -48,7 +44,6 @@ export const DESK_OBJECTS: readonly DeskObject[] = [
     label: 'How I build',
     ariaLabel: 'Ultrawide monitor: How I build',
     metaFactId: 'F11',
-    face: [],
   },
   {
     id: 'kit',
@@ -56,7 +51,6 @@ export const DESK_OBJECTS: readonly DeskObject[] = [
     label: 'Potaflow',
     ariaLabel: 'Backflow test-kit case: Potaflow project',
     metaFactId: 'P01',
-    face: [],
   },
   {
     id: 'phone',
@@ -64,7 +58,6 @@ export const DESK_OBJECTS: readonly DeskObject[] = [
     label: 'Power Walk',
     ariaLabel: 'Phone, face up on the mat: Power Walk project',
     metaFactId: 'P04',
-    face: [],
   },
   {
     id: 'notepad',
@@ -72,7 +65,6 @@ export const DESK_OBJECTS: readonly DeskObject[] = [
     label: 'This site',
     ariaLabel: 'Notepad and pen: how this website was built',
     metaFactId: 'P06',
-    face: ['this site:', 'built with', 'AI agents'],
   },
   {
     id: 'card',
@@ -80,7 +72,6 @@ export const DESK_OBJECTS: readonly DeskObject[] = [
     label: 'Contact',
     ariaLabel: 'Business card: Contact',
     metaFactId: 'F02',
-    face: ['Carlos Beltran', 'Senior Software Engineer', 'linkedin · github'],
   },
 ];
 

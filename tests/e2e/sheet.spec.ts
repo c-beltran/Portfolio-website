@@ -105,10 +105,9 @@ test.describe('phone bottom sheet', () => {
       await page.evaluate(() => (window as unknown as { transitions: string[] }).transitions),
     ).toEqual([]);
     expect(await panel(page).evaluate((el) => getComputedStyle(el).transform)).toBe('none');
-    const lift = await hotspot(page, 'kit').evaluate((el) =>
-      getComputedStyle(el).getPropertyValue('--lift'),
-    );
-    expect(lift).toContain('scale(1.07)');
+    // The open object paints already ringed.
+    const ring = await hotspot(page, 'kit').evaluate((el) => getComputedStyle(el).boxShadow);
+    expect(ring).not.toBe('none');
   });
 
   test('the first section opened slides the sheet up', async ({ page }) => {

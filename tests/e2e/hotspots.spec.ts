@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { DESK_ASPECT } from '../../content/deskLayout';
+import { DESK_ASPECT, INTERACTIVE, LAYOUT, MIN_RENDER_WIDTH } from '../../content/deskLayout';
 import { DESK_OBJECTS } from '../../content/objects';
 import { titleFor } from '../../lib/deskRoutes';
 import {
@@ -10,6 +10,7 @@ import {
   headerLamp,
   historyLength,
   hotspot,
+  layer,
   panelTitle,
   path,
 } from './desk';
@@ -168,15 +169,31 @@ test.describe('still desk hotspots', () => {
     expect(stripped).not.toMatch(/\d/);
   });
 
-  test('the gauge needle is up when Potaflow is open', async ({ page }) => {
-    const needle = () =>
-      page
-        .locator('.hotspot[data-item="kit"] .needle')
-        .evaluate((el) => getComputedStyle(el).transform);
+  test('the lamp render is downloaded once the page is idle, so the switch is instant', async ({
+    page,
+  }) => {
     await gotoDesk(page, '/');
-    const resting = await needle();
-    await gotoDesk(page, '/potaflow');
-    expect(await needle()).not.toBe(resting);
+    await expect
+      .poll(() =>
+        page
+          .locator('.desk-still__photo--lamp img')
+          .evaluate(
+            (el) => (el as HTMLImageElement).complete && (el as HTMLImageElement).naturalWidth > 0,
+          ),
+      )
+      .toBe(true);
+  });
+
+  test('lamp mode shows the lamp render', async ({ page }) => {
+    const lampOpacity = () =>
+      page
+        .locator('.desk-still__photo--lamp img')
+        .evaluate((el) => Number(getComputedStyle(el).opacity));
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await gotoDesk(page, '/');
+    const before = await page.evaluate(() => document.documentElement.dataset.theme);
+    await hotspot(page, 'lightbar').click();
+    expect(await lampOpacity()).toBe(before === 'lamp' ? 0 : 1);
   });
 
   test('the desk is Tier 1 and described for assistive tech', async ({ page }) => {
@@ -185,3 +202,35 @@ test.describe('still desk hotspots', () => {
     await expect(desk(page).locator('.visually-hidden')).toContainText(DESK_OBJECTS[0]!.ariaLabel);
   });
 });
+
+// Spec §3.1 / M3b B3: every object is clickable at its own place in the render, at the narrowest
+// desk each layout renders (wide 500px in a 568×320 landscape phone; phone 272px at 320×568).
+for (const [name, viewport] of [
+  ['wide', { width: 568, height: 320 }],
+  ['phone', { width: 320, height: 568 }],
+] as const) {
+  test.describe(`clicking the centre of each object's projected box (${name})`, () => {
+    test.use({ viewport });
+    for (const id of INTERACTIVE) {
+      test(`opens ${id}`, async ({ page }) => {
+        await gotoDesk(page, '/');
+        const l = layer(page);
+        await l.evaluate((el) => el.scrollIntoView({ block: 'start', behavior: 'instant' }));
+        const r = (await l.boundingBox())!;
+        expect(Math.round(r.width)).toBe(MIN_RENDER_WIDTH[name]);
+        const b = LAYOUT[name][id];
+        await page.mouse.click(
+          r.x + (r.width * (b.x + b.w / 2)) / 100,
+          r.y + (r.height * (b.y + b.h / 2)) / 100,
+        );
+        if (id === 'lightbar') {
+          await expect(hotspot(page, id)).toHaveAttribute('aria-pressed', 'true');
+          return;
+        }
+        const obj = DESK_OBJECTS.find((o) => o.id === id)!;
+        await expect.poll(() => path(page)).toBe(`/${obj.slug}`);
+        await expect(hotspot(page, id)).toHaveAttribute('aria-pressed', 'true');
+      });
+    }
+  });
+}

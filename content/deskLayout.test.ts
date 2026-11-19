@@ -1,18 +1,24 @@
 import { describe, expect, it } from 'vitest';
 import {
-  ART_ASPECT,
   DESK_ASPECT,
+  HOTSPOT_STACK,
   hotspotVars,
   INTERACTIVE,
   LAYOUT,
   MIN_RENDER_WIDTH,
-  type Box,
   type DeskItemId,
   type LayoutName,
 } from './deskLayout';
+import { collidingPairs, type SceneBounds } from './scene/bounds';
+import wideBounds from './scene/bounds.json';
+import phoneBounds from './scene/bounds-phone.json';
 
 const LAYOUTS: LayoutName[] = ['wide', 'phone'];
-const ALL_ITEMS: DeskItemId[] = [
+const BOUNDS: Record<LayoutName, SceneBounds> = {
+  wide: wideBounds as SceneBounds,
+  phone: phoneBounds as SceneBounds,
+};
+const ITEMS: DeskItemId[] = [
   'photo',
   'badge',
   'monitor',
@@ -21,59 +27,49 @@ const ALL_ITEMS: DeskItemId[] = [
   'notepad',
   'card',
   'lightbar',
-  'mug',
+];
+/** Front object first: the smaller, nearer one stacks over the one behind it. */
+const IN_FRONT: [DeskItemId, DeskItemId][] = [
+  ['lightbar', 'monitor'],
+  ['badge', 'kit'],
+  ['kit', 'monitor'],
+  ['photo', 'monitor'],
 ];
 
-const overlaps = (a: Box, b: Box) =>
-  a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
-
 describe.each(LAYOUTS)('%s layout', (name) => {
-  const layout = LAYOUT[name];
-
-  it('places every desk item', () => {
-    expect(Object.keys(layout).sort()).toEqual([...ALL_ITEMS].sort());
+  it.each(ITEMS)('puts %s on its projected box', (id) => {
+    const b = BOUNDS[name].objects[`obj_${id}`]!;
+    const box = LAYOUT[name][id];
+    expect(box.x).toBeCloseTo(b.x0 * 100, 2);
+    expect(box.y).toBeCloseTo(b.y0 * 100, 2);
+    expect(box.w).toBeCloseTo((b.x1 - b.x0) * 100, 2);
+    expect(box.h).toBeCloseTo((b.y1 - b.y0) * 100, 2);
   });
 
-  it.each(ALL_ITEMS)('keeps %s inside the desk', (id) => {
-    const b = layout[id];
-    expect(b.x).toBeGreaterThanOrEqual(0);
-    expect(b.y).toBeGreaterThanOrEqual(0);
-    expect(b.x + b.w).toBeLessThanOrEqual(100);
-    expect(b.y + b.h).toBeLessThanOrEqual(100);
+  it('has the still aspect', () => {
+    expect(DESK_ASPECT[name]).toBeCloseTo(1 / BOUNDS[name].aspect, 6);
   });
 
-  it('never overlaps two interactive items', () => {
-    const clashes: string[] = [];
-    INTERACTIVE.forEach((a, i) =>
-      INTERACTIVE.slice(i + 1).forEach((b) => {
-        if (overlaps(layout[a], layout[b])) clashes.push(`${a}/${b}`);
-      }),
-    );
-    expect(clashes).toEqual([]);
-  });
-
-  it.each([...INTERACTIVE])('gives %s a touch target of at least 44px', (id) => {
-    const W = MIN_RENDER_WIDTH[name];
-    const b = layout[id];
-    expect((b.w / 100) * W).toBeGreaterThanOrEqual(44);
-    expect(((b.h / 100) * W) / DESK_ASPECT[name]).toBeGreaterThanOrEqual(44);
+  it('stacks the front object over the back one in every overlap', () => {
+    const boxes = Object.fromEntries(ITEMS.map((id) => [id, BOUNDS[name].objects[`obj_${id}`]!]));
+    for (let w = MIN_RENDER_WIDTH[name]; w <= 2560; w += 4) {
+      for (const [a, b] of collidingPairs(boxes, w, BOUNDS[name].aspect)) {
+        const pair = IN_FRONT.find(([f, k]) => (f === a && k === b) || (f === b && k === a));
+        expect(pair, `${a}×${b} at ${w}px has no stacking rule`).toBeDefined();
+      }
+    }
   });
 });
 
-describe('both layouts', () => {
-  it.each(ALL_ITEMS)('size %s to its art aspect (no stretching)', (id) => {
-    for (const n of LAYOUTS) {
-      const W = 1000;
-      const b = LAYOUT[n][id];
-      const pxAspect = ((b.w / 100) * W) / ((b.h / 100) * (W / DESK_ASPECT[n]));
-      expect(Math.abs(pxAspect / ART_ASPECT[id] - 1), `${n}/${id}`).toBeLessThanOrEqual(0.01);
-    }
+describe('stacking', () => {
+  it.each(IN_FRONT)('%s stacks over %s', (front, back) => {
+    expect(HOTSPOT_STACK[front]).toBeGreaterThan(HOTSPOT_STACK[back]);
   });
+});
 
-  it('excludes the decorative mug from interaction', () => {
-    expect(INTERACTIVE).not.toContain('mug');
-    expect(INTERACTIVE).toContain('lightbar');
-    expect(INTERACTIVE).toHaveLength(8);
+describe('the clickable items', () => {
+  it('are the seven section objects plus the light bar', () => {
+    expect([...INTERACTIVE].sort()).toEqual([...ITEMS].sort());
   });
 });
 
@@ -81,15 +77,12 @@ describe('hotspotVars', () => {
   it('places with transform variables only, never left or top', () => {
     const vars = hotspotVars('kit');
     expect(Object.keys(vars).some((k) => /left|top/.test(k))).toBe(false);
-    expect(vars['--tx']).toBe('342.857%'); // 72 / 21 × 100
-    expect(vars['--w']).toBe('21%');
-    expect(vars['--rot']).toBe('4deg');
     expect(Object.keys(vars).sort()).toEqual(
-      ['w', 'h', 'tx', 'ty', 'rot'].flatMap((k) => [`--${k}`, `--p-${k}`]).sort(),
+      [...['cx', 'cy', 'w', 'h'].flatMap((k) => [`--${k}`, `--p-${k}`]), '--z'].sort(),
     );
   });
 
-  it.each(ALL_ITEMS)('round-trips %s to its box in both layouts', (id) => {
+  it.each(ITEMS)('centres %s on its box in both layouts', (id) => {
     const v = hotspotVars(id);
     for (const [n, pre] of [
       ['wide', '--'],
@@ -97,13 +90,11 @@ describe('hotspotVars', () => {
     ] as const) {
       const b = LAYOUT[n][id];
       const num = (k: string) => parseFloat(v[`${pre}${k}` as `--${string}`]!);
-      expect((num('tx') * num('w')) / 100).toBeCloseTo(b.x, 2);
-      expect((num('ty') * num('h')) / 100).toBeCloseTo(b.y, 2);
-      expect(num('rot')).toBe(b.rot);
+      expect(num('cx')).toBeCloseTo(b.x + b.w / 2, 2);
+      expect(num('cy')).toBeCloseTo(b.y + b.h / 2, 2);
+      expect(num('w')).toBeCloseTo(b.w, 2);
+      expect(num('h')).toBeCloseTo(b.h, 2);
     }
-  });
-
-  it('starts the wide gauge where the mock put it', () => {
-    expect(LAYOUT.wide.kit).toMatchObject({ x: 72, y: 5, w: 21, rot: 4 });
+    expect(v['--z']).toBe(String(HOTSPOT_STACK[id]));
   });
 });

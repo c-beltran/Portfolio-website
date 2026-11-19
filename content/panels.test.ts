@@ -123,25 +123,6 @@ describe('objects', () => {
   });
 });
 
-describe('desk object faces', () => {
-  const lines = DESK_OBJECTS.flatMap((o) => o.face);
-
-  it('shows no digits except the badge year', () => {
-    // TODO markers carry question numbers (Q13), which aren't stats.
-    const text = (l: string) => l.replace(/\[TODO: Q\d+[^\]]*\]/g, '');
-    expect(lines.filter((l) => /\d/.test(text(l)) && l !== 'since July 2019')).toEqual([]);
-  });
-
-  it.each(['@', 'Hempstead', 'reviewed'])('never says %s', (word) => {
-    expect(lines.filter((l) => l.toLowerCase().includes(word.toLowerCase()))).toEqual([]);
-  });
-
-  it('describes every object for assistive tech', () => {
-    const d = deskDescription();
-    DESK_OBJECTS.forEach((o) => expect(d).toContain(o.ariaLabel));
-  });
-});
-
 describe('answered questions (Q3, Q7, Q24, Q26)', () => {
   const text = (slug: keyof typeof PANELS) => PANELS[slug].map(textOf).join(' ');
   const all = Object.keys(PANELS)
@@ -169,5 +150,25 @@ describe('answered questions (Q3, Q7, Q24, Q26)', () => {
   it('marks Power Walk as in development, not public (Q26)', () => {
     expect(text('power-walk')).toContain('TODO: Q26');
     expect(text('power-walk')).not.toContain('TODO: Q7 confirm public name');
+  });
+});
+
+describe('desk description', () => {
+  it('describes every object for assistive tech', () => {
+    const d = deskDescription();
+    DESK_OBJECTS.forEach((o) => expect(d).toContain(o.ariaLabel));
+  });
+});
+
+describe('panel eyebrows', () => {
+  it.each([
+    ['how-i-build', 'THE MONITOR · HOW I BUILD'],
+    ['potaflow', 'THE KIT CASE · PROJECT 01'],
+    ['this-site', 'THE NOTEPAD · PROJECT 03'],
+  ] as const)('%s names its Workspace object', (slug, eyebrow) => {
+    expect(PANELS[slug].find((b) => b.kind === 'eyebrow')).toEqual({
+      kind: 'eyebrow',
+      text: eyebrow,
+    });
   });
 });
