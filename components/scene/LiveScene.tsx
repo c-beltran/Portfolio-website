@@ -36,6 +36,7 @@ function Scene({ lamp, onReady }: { lamp: boolean; onReady: () => void }) {
   ];
   const textures = useTexture(urls);
   const invalidate = useThree((s) => s.invalidate);
+  const canvas = useThree((s) => s.gl.domElement);
   const materials = useMemo(() => {
     const n = 2 * GROUPS.length;
     const probe = [textures[n]!, textures[n + 1]!] as [THREE.Texture, THREE.Texture];
@@ -72,20 +73,25 @@ function Scene({ lamp, onReady }: { lamp: boolean; onReady: () => void }) {
   }, [scene, materials, invalidate, onReady]);
 
   // Day ↔ lamp cross-fade (0.6 s), rendering on demand only while it runs.
+  const first = useRef(true);
   useEffect(() => {
     const to = lamp ? 1 : 0;
-    const from = materials.room.uniforms.fade!.value as number;
+    // The first frame is already in the current mode: no day-lit flash when it appears.
+    const from = first.current ? to : (materials.room.uniforms.fade!.value as number);
+    first.current = false;
     const start = performance.now();
     let id = 0;
     const step = () => {
       const k = Math.min(1, (performance.now() - start) / 600);
-      for (const m of Object.values(materials)) m.uniforms.fade!.value = from + (to - from) * k;
+      const fade = from + (to - from) * k;
+      for (const m of Object.values(materials)) m.uniforms.fade!.value = fade;
+      canvas.dataset.fade = fade.toFixed(2); // where the scene is between day and lamp (tests, M3c)
       invalidate();
       if (k < 1) id = requestAnimationFrame(step);
     };
     step();
     return () => cancelAnimationFrame(id);
-  }, [lamp, materials, invalidate]);
+  }, [lamp, materials, invalidate, canvas]);
 
   return <primitive object={scene} />;
 }
@@ -152,11 +158,17 @@ function Rig({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [view]);
 
+  const detached = useMemo(() => document.createElement('div'), []);
   const NONE = 0; // CameraControls.ACTION.NONE: the camera is directed, never orbited (spec §4)
   return (
     <CameraControls
       ref={controls}
       makeDefault
+      // Connected to a detached element and disabled: camera-controls never sets touch-action or
+      // listens on the page, so scroll and pinch-zoom over the desk stay the page's. setLookAt
+      // and update still drive the camera.
+      domElement={detached}
+      enabled={false}
       mouseButtons={{ left: NONE, middle: NONE, right: NONE, wheel: NONE }}
       touches={{ one: NONE, two: NONE, three: NONE }}
     />
@@ -174,6 +186,8 @@ export default function LiveScene(props: {
 }) {
   return (
     <Canvas
+      // Never a pointer target: the hotspots and the page own every pointer and touch.
+      style={{ pointerEvents: 'none' }}
       frameloop="demand"
       dpr={[1, 2]}
       gl={{

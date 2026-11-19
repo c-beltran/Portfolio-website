@@ -1,7 +1,15 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import {
+  Component,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type ReactNode,
+} from 'react';
 import { PORTRAIT } from '@/content/deskLayout';
 import { forcedTier } from '@/lib/tier';
 import { useTheme } from '@/lib/useTheme';
@@ -16,6 +24,26 @@ function subscribe(onChange: () => void) {
   return () => mq.removeEventListener('change', onChange);
 }
 const framing = (): Framing => (matchMedia(PORTRAIT).matches ? 'phone' : 'desktop');
+
+/**
+ * Any failure inside the scene (no context after all, a missing GLB or texture, a shader error)
+ * unmounts it and leaves the still (spec §3.1: any 3D failure falls back to Tier 1).
+ */
+class Fallback extends Component<
+  { onError: () => void; children: ReactNode },
+  { failed: boolean }
+> {
+  state = { failed: false };
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+  componentDidCatch() {
+    this.props.onError();
+  }
+  render() {
+    return this.state.failed ? null : this.props.children;
+  }
+}
 
 const hasWebGL2 = () => {
   try {
@@ -49,24 +77,27 @@ export function LiveLayer() {
     return () => clearTimeout(id);
   }, []);
 
+  const lost = useCallback(() => {
+    setOn(false);
+    setReady(false);
+  }, []);
+
   // Context loss: unmount and leave the still. Capture, since the event doesn't bubble.
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    const lost = () => {
-      setOn(false);
-      setReady(false);
-    };
     el.addEventListener('webglcontextlost', lost, true);
     return () => el.removeEventListener('webglcontextlost', lost, true);
-  }, [on]);
+  }, [on, lost]);
 
   const onReady = useCallback(() => setReady(true), []);
 
   if (!on) return null;
   return (
     <div ref={ref} className="desk-still__live" data-ready={ready} data-lamp={theme === 'lamp'}>
-      <LiveScene view="overview" framing={view} lamp={theme === 'lamp'} onReady={onReady} />
+      <Fallback onError={lost}>
+        <LiveScene view="overview" framing={view} lamp={theme === 'lamp'} onReady={onReady} />
+      </Fallback>
     </div>
   );
 }

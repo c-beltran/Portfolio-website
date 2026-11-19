@@ -97,3 +97,55 @@ test('/potaflow?tier=2 opens the panel and mounts the scene', async ({ page }) =
   await expect(panelTitle(page)).toBeVisible();
   await waitLive(page);
 });
+
+test('?tier=2 falls back to the still when a scene asset fails to load', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  await page.route('**/scene/bake/probe-day.webp', (r) => r.abort());
+  await gotoDesk(page, '/?tier=2');
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(1500);
+  await expect(page.locator('.desk-still__photo--day img')).toBeVisible();
+  await expect(page.locator('button.hotspot')).toHaveCount(8);
+  await expect(page.locator('.desk-still canvas')).toHaveCount(0);
+  await hotspot(page, 'kit').click();
+  expect(path(page)).toBe('/potaflow');
+});
+
+test('?tier=2 leaves bare desk to the page: no pointer target, scroll and zoom intact', async ({
+  page,
+}) => {
+  await gotoDesk(page, '/?tier=2');
+  await waitLive(page);
+  const hit = await page.locator('.desk-still__layer').evaluate((layer) => {
+    const r = layer.getBoundingClientRect();
+    const el = document.elementFromPoint(r.left + r.width * 0.005, r.top + r.height * 0.5)!;
+    const touch = [...layer.querySelectorAll('.desk-still__live, .desk-still__live *')].map(
+      (e) => getComputedStyle(e).touchAction,
+    );
+    return { inLive: !!el.closest('.desk-still__live'), touch };
+  });
+  expect(hit.inLive).toBe(false);
+  expect(hit.touch).not.toContain('none');
+});
+
+test('?tier=2 with lamp chosen first: the scene is already lamp-lit when it appears', async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    localStorage.setItem('desk-theme', 'lamp');
+    // The canvas's day↔lamp blend at the moment the layer turns visible.
+    new MutationObserver((_, obs) => {
+      const live = document.querySelector('.desk-still__live');
+      if (live?.getAttribute('data-ready') !== 'true') return;
+      (window as unknown as { fadeAtReady: string }).fadeAtReady =
+        live.querySelector('canvas')?.dataset.fade ?? 'none';
+      obs.disconnect();
+    }).observe(document, { subtree: true, attributes: true, childList: true });
+  });
+  await gotoDesk(page, '/?tier=2');
+  await waitLive(page);
+  expect(
+    await page.evaluate(() => (window as unknown as { fadeAtReady: string }).fadeAtReady),
+  ).toBe('1.00');
+});
