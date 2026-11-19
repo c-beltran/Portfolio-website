@@ -15,12 +15,14 @@ if (!OUT) throw new Error('usage: match.mjs <out dir> [base url]');
 mkdirSync(OUT, { recursive: true });
 
 const FRAMES = [
-  { view: 'desk', viewport: { width: 1280, height: 720 }, dpr: 1, still: 2560 },
+  { view: 'desk', viewport: { width: 1280, height: 720 }, dpr: 1 },
   // Portrait phone: the site's phone framing (the square camera).
-  { view: 'phone', viewport: { width: 390, height: 844 }, dpr: 2, still: 1080 },
+  { view: 'phone', viewport: { width: 390, height: 844 }, dpr: 2 },
 ];
-// Only the canvas: no labels, no photo underneath.
-const HIDE = '.hotspot, .desk-still__photo { visibility: hidden !important; }';
+// Live: only the canvas (no labels, no photo underneath). Still: the photo the browser draws in
+// the same box, so both go through the same sizing as at the swap a visitor will see.
+const LIVE = '.hotspot, .desk-still__photo { visibility: hidden !important; }';
+const STILL = '.hotspot, .desk-still__live { visibility: hidden !important; }';
 
 const browser = await chromium.launch();
 const results = {};
@@ -32,19 +34,25 @@ for (const f of FRAMES) {
     const page = await ctx.newPage();
     await page.goto(`${BASE}/?tier=2`);
     await page.locator('.desk-still__live[data-ready="true"]').waitFor({ timeout: 30_000 });
-    await page.addStyleTag({ content: HIDE });
+    const live1 = await page.addStyleTag({ content: LIVE });
     await page.waitForTimeout(1000); // past the fade-in and the lamp cross-fade
-    const shot = await page.locator('.desk-still__layer').screenshot();
+    const layer = page.locator('.desk-still__layer');
+    const shot = await layer.screenshot();
+    await live1.evaluate((el) => el.remove());
+    await page.addStyleTag({ content: STILL });
+    await page.waitForFunction(() =>
+      [...document.querySelectorAll('.desk-still__photo img')].every(
+        (i) => getComputedStyle(i).display === 'none' || (i.complete && i.naturalWidth > 0),
+      ),
+    );
+    await page.waitForTimeout(700); // past the lamp photo's cross-fade
+    const stillShot = await layer.screenshot();
     await ctx.close();
 
     const { width, height } = await sharp(shot).metadata();
     const raw = (img) => img.removeAlpha().raw().toBuffer();
     const live = await raw(sharp(shot));
-    const still = await raw(
-      sharp(`public/stills/${f.view}-${mode}-${f.still}.webp`).resize(width, height, {
-        fit: 'fill',
-      }),
-    );
+    const still = await raw(sharp(stillShot));
     const r = diff(live, still);
     results[name] = { meanAbs: +r.meanAbs.toFixed(2), over40: +(r.over40 * 100).toFixed(1) };
     console.log(
