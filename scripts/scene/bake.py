@@ -28,6 +28,7 @@ import bpy
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import render as R  # noqa: E402  (mode settings: world, lights, screen strength, exposure)
+from bake_logic import GROUPS, backdrop_covers, group_for, lift_for  # noqa: E402
 
 ASSETS = Path.home() / "Portfolio-assets"
 # Atlas sizes (px). The screen keeps the editor image's aspect (3440x1440).
@@ -59,29 +60,23 @@ def top(o):
 
 
 def groups():
-    """Static meshes by group, from the build's names (room_*, deco_*, obj_*)."""
+    """Static meshes by group, from the build's names (bake_logic.group_for)."""
     scene_objs = [o for o in bpy.context.scene.objects if o.type in ("MESH", "CURVE") and not o.hide_render]
-    g = {k: [] for k in ("room", "desk", "monitor", "props", "screen", "glass", "water")}
+    g = {k: [] for k in GROUPS}
     for o in scene_objs:
-        t = top(o).name
-        if o.name.startswith("room_") or t == "window_frame" or o.name.startswith("window"):
-            g["room"].append(o)
-        elif t in ("deco_desk", "deco_mat"):
-            g["desk"].append(o)
-        elif t == "obj_monitor":
-            g["screen" if is_screen(o) else "monitor"].append(o)
-        elif t == "obj_lightbar":
-            g["monitor"].append(o)
-        elif t == "deco_glass":
-            g["glass"].append(o)
-        elif t == "deco_water_glass":
-            g["water"].append(o)
-        else:
-            g["props"].append(o)
+        g[group_for(o.name, top(o).name, is_screen(o))].append(o)
     for k in ("room", "desk", "monitor", "props", "screen"):
         if not g[k]:
             raise SystemExit(f"bake: group {k} is empty (object names changed?)")
     return g
+
+
+def lift(objs):
+    """Separate faces that share a plane (bake_logic.LIFTS): in memory only, the still is untouched."""
+    for o in objs:
+        if lift_for(o.name):
+            o.location.z += lift_for(o.name)
+            print(f"  lift {o.name} {lift_for(o.name) * 1000:.1f} mm")
 
 
 def select(objs, active=None):
@@ -208,6 +203,42 @@ def sky_backdrop():
     return o
 
 
+# The frame each camera renders (export_cameras.py, stills): what world_to_camera_view projects into.
+FRAMES = {"cam_overview": (2560, 1440), "cam_phone": (1080, 1080), "cam_monitor": (2560, 1440)}
+
+
+def window_corners():
+    """The window opening (the frame's outer bounds, in its plane), read before the room is joined."""
+    from mathutils import Vector
+
+    frame = bpy.data.objects["window_frame"]
+    parts = [c for c in frame.children_recursive if c.type == "MESH"]
+    pts = [c.matrix_world @ Vector(v) for c in parts for v in c.bound_box]
+    x0, x1 = min(p.x for p in pts), max(p.x for p in pts)
+    z0, z1 = min(p.z for p in pts), max(p.z for p in pts)
+    y = sum(p.y for p in pts) / len(pts)
+    return [Vector((x0, y, z0)), Vector((x1, y, z0)), Vector((x1, y, z1)), Vector((x0, y, z1))]
+
+
+def check_backdrop(sky, scene, window):
+    """The backdrop must fill the window opening in every camera, or the bake shows its edge."""
+    from bpy_extras.object_utils import world_to_camera_view
+
+    plane = [sky.matrix_world @ v.co for v in sky.data.vertices]
+    plane = [plane[i] for i in (0, 1, 3, 2)]  # primitive plane vertex order -> a loop
+    res = (scene.render.resolution_x, scene.render.resolution_y, scene.camera)
+    try:
+        for name, (w, h) in FRAMES.items():
+            cam = bpy.data.objects[name]
+            scene.render.resolution_x, scene.render.resolution_y = w, h
+            proj = lambda ps: [tuple(world_to_camera_view(scene, cam, p))[:2] for p in ps]  # noqa: E731
+            if not backdrop_covers(proj(window), proj(plane)):
+                raise SystemExit(f"bake: the sky backdrop does not fill the window from {name}")
+            print(f"  backdrop covers the window from {name}")
+    finally:
+        scene.render.resolution_x, scene.render.resolution_y, scene.camera = res
+
+
 def sky_material_for(o, world):
     wt = world.node_tree
     wramp = next(n for n in wt.nodes if n.type == "VALTORGB")
@@ -294,13 +325,16 @@ def main():
     scene.cycles.samples = a.samples
     scene.view_settings.view_transform = "AgX"
 
+    window = window_corners()
     g = groups()
+    lift([o for objs in g.values() for o in objs])
     for k in g:
         g[k] = join_group(to_plain_meshes(g[k]), k) if g[k] else []
     for k in ("room", "desk", "monitor", "props"):
         add_bake_uv(g[k])
     add_bake_uv(g["screen"], unwrap=False)
     sky = sky_backdrop()
+    check_backdrop(sky, scene, window)
     g["sky"] = [sky]
     sky.data.uv_layers[0].name = "bake"  # the plane's own UVs fill 0-1
 
