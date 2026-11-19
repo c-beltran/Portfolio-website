@@ -1,7 +1,7 @@
 #!/bin/sh
 # Encodes a rendered transition (frames from render_clip.py) to H.264 at 60 fps for the web, plus
 # its reverse (the way back), and prints the sizes.
-#   sh scripts/scene/encode_clip.sh <frames dir> <out prefix>   e.g.  ... public/lab/monitor-desktop
+#   sh scripts/scene/encode_clip.sh <frames dir> <out prefix>   e.g.  ... <out dir>/monitor-desktop
 #   -> <out prefix>-in.mp4, <out prefix>-out.mp4
 set -eu
 SRC=$1

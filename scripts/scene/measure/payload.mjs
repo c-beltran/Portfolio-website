@@ -1,7 +1,7 @@
 // Measures what each approach on /lab/monitor downloads (M3b Part A), gzipped, against the 3 MB
 // 3D budget (spec §7). Needs the static export served (pnpm serve:out).
 //
-//   node scripts/lab/payload.mjs [base url]
+//   node scripts/scene/measure/payload.mjs [base url]
 //
 // The page shell (HTML, CSS, fonts, the still, the shared JS) is the same for both, so each
 // approach is charged only for what it alone needs: live = the model, the lightmaps and the JS
@@ -16,7 +16,7 @@ const kind = (u) =>
     ? 'js'
     : /\.glb/.test(u)
       ? 'model'
-      : /\/lab\/bake\/.*\.webp/.test(u)
+      : /\/scene\/bake\/.*\.webp/.test(u)
         ? 'texture'
         : /\.mp4/.test(u)
           ? 'video'

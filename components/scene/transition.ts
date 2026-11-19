@@ -18,7 +18,8 @@ export function cameraFor(view: View, framing: Framing): SceneCamera {
 
 export const hfov = (c: SceneCamera) => 2 * Math.atan(c.sensorWidth / 2 / c.lens);
 
-const lerp = (a: number, b: number, k: number) => a + (b - a) * k;
+// Exact at both ends (a + (b − a)·k misses b by a rounding step at k = 1).
+const lerp = (a: number, b: number, k: number) => a * (1 - k) + b * k;
 const lerp3 = (a: Vec3, b: Vec3, k: number): Vec3 => [
   lerp(a[0], b[0], k),
   lerp(a[1], b[1], k),

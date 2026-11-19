@@ -5,7 +5,7 @@
 set -eu
 RAW=${1:-$HOME/Portfolio-assets/glb/scene-raw.glb}
 BAKE=${2:-$HOME/Portfolio-assets/bake}
-OUT=${3:-public/lab}
+OUT=${3:-public/scene}
 mkdir -p "$OUT/bake"
 pnpm exec gltf-transform meshopt "$RAW" "$OUT/scene.glb" --level medium
 node scripts/scene/encode_bake.mjs "$BAKE" "$OUT/bake"

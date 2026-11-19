@@ -1,7 +1,7 @@
 """
 Renders a camera transition as frames (M3b live-vs-clips test): from one scene camera to another,
 easing out (easeOutCubic) over N frames. Eye, target, horizontal field of view and lens shift are
-interpolated exactly as the live scene does (components/lab: lerpLookAt with the same curve).
+interpolated exactly as the live scene does (components/scene/transition.ts: lerpLookAt with the same curve).
 
     Blender -b --factory-startup ~/Portfolio-assets/blend/workspace.blend --python scripts/scene/render_clip.py -- \
         --from overview --to monitor --frames 54 --res 1920 1080 --out ~/Portfolio-assets/clips/overview-monitor [--samples 128] [--mode day]
