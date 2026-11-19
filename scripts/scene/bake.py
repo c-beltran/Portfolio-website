@@ -46,6 +46,7 @@ def args():
     p.add_argument("--samples", type=int, default=512)
     p.add_argument("--scale", type=float, default=1.0, help="atlas size factor (0.25 for a quick check)")
     p.add_argument("--modes", default="day,lamp")
+    p.add_argument("--skip-gloss", action="store_true")
     return p.parse_args(argv)
 
 
@@ -290,6 +291,25 @@ def bake(objs, img, kind, filters, out_path, scene):
     print(f"  baked {out_path.name} {img.size[0]}x{img.size[1]} in {time.time() - t:.0f}s")
 
 
+# Roughness masks (Non-Color): the live shader's reflection probe term reads them on the bake UVs.
+GLOSS = {"desk": (512, 512)}  # the props' probe term measured worse than none (LiveScene GLOSSY)
+
+
+def bake_roughness(objs, name, size, out_path):
+    """Cycles ROUGHNESS bake into the group's atlas, written as raw 8-bit values (no view transform)."""
+    hdr = bpy.data.images.new(f"rough-{name}", *size, float_buffer=True, alpha=False)
+    select(objs)
+    target_image(objs, hdr.name, hdr.size)
+    bpy.ops.object.bake(type="ROUGHNESS", margin=4, use_clear=True, target="IMAGE_TEXTURES")
+    img = bpy.data.images.new(f"gloss-{name}", *size, alpha=False)
+    img.colorspace_settings.name = "Non-Color"
+    img.pixels.foreach_set(list(hdr.pixels))
+    img.filepath_raw = str(out_path)
+    img.file_format = "PNG"
+    img.save()
+    print(f"  baked {out_path.name} {size[0]}x{size[1]}")
+
+
 def export(g, glb):
     keep = []
     for name, objs in g.items():
@@ -355,6 +375,9 @@ def main():
             bake(g[name], img, kind, filters, out / f"{name}-{mode}.png", scene)
             times[f"{name}-{mode}"] = round(time.time() - t)
     print("bake times (s):", times)
+    if not a.skip_gloss:
+        for name, size in GLOSS.items():
+            bake_roughness(g[name], name, tuple(max(64, int(v * a.scale)) for v in size), out / f"gloss-{name}.png")
     export(g, a.glb)
 
 

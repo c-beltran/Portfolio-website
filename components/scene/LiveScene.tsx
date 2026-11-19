@@ -4,37 +4,68 @@ import { CameraControls, useGLTF, useTexture } from '@react-three/drei';
 import { Canvas, useThree } from '@react-three/fiber';
 import { Suspense, useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
-import { bakedMaterial } from './materials';
+import { bakedMaterial, glassMaterial } from './materials';
 import { blend, cameraFor, easeOutCubic, MOVE_MS, type Framing, type View } from './transition';
 
 const GROUPS = ['room', 'desk', 'monitor', 'props', 'screen', 'sky'] as const;
 type Group = (typeof GROUPS)[number];
 const tex = (g: Group, mode: 'day' | 'lamp') => `/scene/bake/${g}-${mode}.webp`;
+const PROBE = ['/scene/bake/probe-day.webp', '/scene/bake/probe-lamp.webp'];
+
+/**
+ * The view-dependent layer over the bake (materials.ts), tuned against the Tier 1 still with
+ * scripts/scene/measure/match.mjs: which groups reflect the probe, and how strongly.
+ */
+// Measured (docs/private/design/m3b/match): the desk's sheen helps in day; in lamp the probe
+// mirrors the lit screens where the still shows none, and on the props it costs more than it gives.
+type Glossy = { gloss: string; strength: number; strengthLamp: number };
+const GLOSSY: Partial<Record<Group, Glossy>> = {
+  desk: { gloss: '/scene/bake/gloss-desk.webp', strength: 2, strengthLamp: 0 },
+};
+// Dark and mostly clear: through the glass the still shows the dark desk, a rim of reflection.
+const GLASS = { tint: '#1c2128', fill: 0.15, strength: 1 };
+const WATER = { tint: '#1a2633', fill: 0.45, strength: 0.8 };
 
 function Scene({ lamp, onReady }: { lamp: boolean; onReady: () => void }) {
   const { scene } = useGLTF('/scene/scene.glb');
-  const urls = GROUPS.flatMap((g) => [tex(g, 'day'), tex(g, 'lamp')]);
+  const glossy = Object.entries(GLOSSY) as [Group, Glossy][];
+  const urls = [
+    ...GROUPS.flatMap((g) => [tex(g, 'day'), tex(g, 'lamp')]),
+    ...PROBE,
+    ...glossy.map(([, o]) => o.gloss),
+  ];
   const textures = useTexture(urls);
   const invalidate = useThree((s) => s.invalidate);
-  const materials = useMemo(
-    () =>
-      Object.fromEntries(
-        GROUPS.map((g, i) => [g, bakedMaterial(textures[2 * i]!, textures[2 * i + 1]!)]),
-      ),
-    [textures],
-  ) as Record<Group, THREE.ShaderMaterial>;
+  const materials = useMemo(() => {
+    const n = 2 * GROUPS.length;
+    const probe = [textures[n]!, textures[n + 1]!] as [THREE.Texture, THREE.Texture];
+    const baked = Object.fromEntries(
+      GROUPS.map((g, i) => {
+        const k = glossy.findIndex(([name]) => name === g);
+        const opts = k < 0 ? {} : { ...glossy[k]![1], probe, gloss: textures[n + 2 + k]! };
+        return [g, bakedMaterial(textures[2 * i]!, textures[2 * i + 1]!, opts)];
+      }),
+    ) as Record<Group, THREE.ShaderMaterial>;
+    const see = (o: typeof GLASS) =>
+      glassMaterial(probe, new THREE.Color(o.tint), o.fill, o.strength);
+    return { ...baked, glass: see(GLASS), water: see(WATER) };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [textures]);
 
   useEffect(() => {
-    const glass = new THREE.MeshBasicMaterial({
-      color: '#dfe8f5',
-      transparent: true,
-      opacity: 0.14,
-      depthWrite: false,
-    });
     scene.traverse((o) => {
       if (!(o instanceof THREE.Mesh)) return;
-      const g = (o.name in materials ? o.name : o.parent?.name) as Group | 'glass' | 'water';
-      o.material = g === 'glass' || g === 'water' ? glass : (materials[g as Group] ?? glass);
+      const g = (o.name in materials ? o.name : o.parent?.name) as keyof typeof materials;
+      const m = materials[g] ?? materials.glass;
+      if (g === 'glass' || g === 'water') {
+        // Each is one upright cylinder: its normal is radial from the vertical axis.
+        o.geometry.computeBoundingBox();
+        const c = o.geometry.boundingBox!.getCenter(new THREE.Vector3());
+        o.updateWorldMatrix(true, false);
+        m.uniforms.center!.value = c.applyMatrix4(o.matrixWorld);
+        o.renderOrder = g === 'water' ? 1 : 2; // water inside the glass
+      }
+      o.material = m;
     });
     invalidate();
     onReady();
