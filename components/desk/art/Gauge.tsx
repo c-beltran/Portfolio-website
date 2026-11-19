@@ -6,7 +6,7 @@ import { ArtSvg, label } from './svg';
 export function Gauge() {
   const o = objectBySlug('potaflow')!;
   return (
-    <ArtSvg id="gauge" sticker={{ x: 2, y: 74, rot: -5, text: label(o.label) }}>
+    <ArtSvg id="kit" sticker={{ x: 2, y: 74, rot: -5, text: label(o.label) }}>
       <g className="hoses" fill="none" strokeWidth={5} strokeLinecap="round">
         <path d="M42 84 C 30 110, 10 112, 2 128" stroke="#C8412B" />
         <path d="M50 88 C 52 110, 40 118, 44 128" stroke="#E5B53A" />

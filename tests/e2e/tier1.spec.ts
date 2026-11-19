@@ -20,7 +20,7 @@ test.describe('reduced motion', () => {
     }));
     expect(new Set(motion.hotspots)).toEqual(new Set(['0s']));
     expect(motion.steam).toBe('none');
-    await hotspot(page, 'gauge').click();
+    await hotspot(page, 'kit').click();
     expect(path(page)).toBe('/potaflow');
     await expect(panelTitle(page)).toBeFocused();
   });
@@ -82,7 +82,7 @@ test.describe('no JavaScript', () => {
   }) => {
     await page.goto('/potaflow');
     await expect(desk(page)).toBeVisible();
-    await expect(hotspot(page, 'gauge')).toHaveAttribute('aria-pressed', 'true');
+    await expect(hotspot(page, 'kit')).toHaveAttribute('aria-pressed', 'true');
     await expect(panelTitle(page)).toContainText('Potaflow');
   });
 });

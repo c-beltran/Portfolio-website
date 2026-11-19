@@ -15,7 +15,7 @@ test.describe('phone bottom sheet', () => {
 
   test('opens fixed to the bottom, with the object visible above it', async ({ page }) => {
     await gotoDesk(page, '/');
-    await hotspot(page, 'gauge').click();
+    await hotspot(page, 'kit').click();
     expect(path(page)).toBe('/potaflow');
     const vh = await page.evaluate(() => innerHeight);
     await expect
@@ -25,7 +25,7 @@ test.describe('phone bottom sheet', () => {
       })
       .toBeGreaterThanOrEqual(vh - 1);
     expect(await panel(page).evaluate((el) => getComputedStyle(el).position)).toBe('fixed');
-    await expect.poll(() => visibleAboveSheet(page, 'gauge')).toBe(true);
+    await expect.poll(() => visibleAboveSheet(page, 'kit')).toBe(true);
   });
 
   test('keyboard focus is never hidden under the open sheet', async ({ page }) => {
@@ -79,7 +79,7 @@ test.describe('phone bottom sheet', () => {
 
   test('an object visible above the sheet switches sections', async ({ page }) => {
     await gotoDesk(page, '/');
-    await hotspot(page, 'gauge').click();
+    await hotspot(page, 'kit').click();
     await expect.poll(() => visibleAboveSheet(page, 'photo')).toBe(true);
     await hotspot(page, 'photo').click();
     expect(path(page)).toBe('/about');
@@ -105,7 +105,7 @@ test.describe('phone bottom sheet', () => {
       await page.evaluate(() => (window as unknown as { transitions: string[] }).transitions),
     ).toEqual([]);
     expect(await panel(page).evaluate((el) => getComputedStyle(el).transform)).toBe('none');
-    const lift = await hotspot(page, 'gauge').evaluate((el) =>
+    const lift = await hotspot(page, 'kit').evaluate((el) =>
       getComputedStyle(el).getPropertyValue('--lift'),
     );
     expect(lift).toContain('scale(1.07)');
@@ -119,7 +119,7 @@ test.describe('phone bottom sheet', () => {
         (window as unknown as { slid: string[] }).slid.push(e.propertyName),
       );
     });
-    await hotspot(page, 'gauge').click();
+    await hotspot(page, 'kit').click();
     await expect
       .poll(() => page.evaluate(() => (window as unknown as { slid: string[] }).slid))
       .toContain('transform');
@@ -189,7 +189,7 @@ test.describe('landscape phones and small tablets', () => {
         const box = (await b.boundingBox())!;
         expect(Math.min(box.width, box.height)).toBeGreaterThanOrEqual(44);
       }
-      for (const item of ['gauge', 'laptop', 'card']) {
+      for (const item of ['kit', 'monitor', 'card']) {
         await hotspot(page, item).click();
         expect(await panel(page).evaluate((el) => getComputedStyle(el).position)).toBe('fixed');
         await expect.poll(() => visibleAboveSheet(page, item), { message: item }).toBe(true);
@@ -220,9 +220,9 @@ test.describe('wide layout', () => {
   test('below 1024px the panel is a sheet, not pushed under the desk', async ({ page }) => {
     await page.setViewportSize({ width: 900, height: 700 });
     await gotoDesk(page, '/');
-    await hotspot(page, 'gauge').click();
+    await hotspot(page, 'kit').click();
     expect(await panel(page).evaluate((el) => getComputedStyle(el).position)).toBe('fixed');
-    await expect.poll(() => visibleAboveSheet(page, 'gauge')).toBe(true);
+    await expect.poll(() => visibleAboveSheet(page, 'kit')).toBe(true);
   });
 
   test('the empty panel invites a pick', async ({ page }) => {
@@ -234,7 +234,7 @@ test.describe('wide layout', () => {
     page,
   }) => {
     await gotoDesk(page, '/');
-    await hotspot(page, 'gauge').click();
+    await hotspot(page, 'kit').click();
     await expect(panelTitle(page)).toBeFocused();
     await page.setViewportSize({ width: 390, height: 844 });
     expect(path(page)).toBe('/potaflow');

@@ -5,7 +5,7 @@ import type { DeskObject } from './objects';
  * custom properties at build time; a media query picks one, so no script ever reads the viewport.
  * In M4 the same boxes hold cut-outs from the baked render.
  */
-export type DeskItemId = DeskObject['id'] | 'lamp' | 'mug';
+export type DeskItemId = DeskObject['id'] | 'lightbar' | 'mug';
 export type LayoutName = 'wide' | 'phone';
 /** Percent of the desk's width (x, w) and height (y, h); rot in degrees. */
 export type Box = { x: number; y: number; w: number; h: number; rot: number };
@@ -24,13 +24,13 @@ export const MIN_RENDER_WIDTH: Record<LayoutName, number> = { wide: 500, phone: 
 /** Each item's art, width / height in px. Box heights derive from it, so art never stretches. */
 export const ART_ASPECT: Record<DeskItemId, number> = {
   badge: 0.6,
-  laptop: 1.15,
-  gauge: 100 / 130,
+  monitor: 1.15,
+  kit: 100 / 130,
   phone: 9 / 19,
   photo: 0.85,
-  note: 1,
+  notepad: 1,
   card: 1.75,
-  lamp: 0.8,
+  lightbar: 0.8,
   mug: 1,
 };
 
@@ -40,25 +40,25 @@ const PLACES: Record<LayoutName, Record<DeskItemId, Place>> = {
   // From the mock (x, y, w, rot). The laptop narrows from 40 to 36 to make room for the lamp.
   wide: {
     badge: { x: 4, y: 13, w: 15, rot: -8 },
-    laptop: { x: 25, y: 9, w: 36, rot: -1.5 },
-    lamp: { x: 62, y: 6, w: 9, rot: 0 },
-    gauge: { x: 72, y: 5, w: 21, rot: 4 },
+    monitor: { x: 25, y: 9, w: 36, rot: -1.5 },
+    lightbar: { x: 62, y: 6, w: 9, rot: 0 },
+    kit: { x: 72, y: 5, w: 21, rot: 4 },
     phone: { x: 82, y: 56, w: 10, rot: 12 },
     photo: { x: 5, y: 60, w: 14, rot: 6 },
-    note: { x: 27, y: 69, w: 14, rot: -5 },
+    notepad: { x: 27, y: 69, w: 14, rot: -5 },
     card: { x: 50, y: 74, w: 19, rot: 3 },
     mug: { x: 70, y: 78, w: 10, rot: 0 },
   },
   // Portrait rearrangement, three rows, every target at least 44px at a 320px viewport (272px desk).
   phone: {
     badge: { x: 3, y: 3, w: 18, rot: -8 },
-    laptop: { x: 26, y: 4, w: 46, rot: -1.5 },
-    lamp: { x: 78, y: 3, w: 17, rot: 0 },
-    gauge: { x: 4, y: 38, w: 24, rot: 4 },
+    monitor: { x: 26, y: 4, w: 46, rot: -1.5 },
+    lightbar: { x: 78, y: 3, w: 17, rot: 0 },
+    kit: { x: 4, y: 38, w: 24, rot: 4 },
     photo: { x: 35, y: 41, w: 19, rot: 6 },
     phone: { x: 61, y: 37, w: 17, rot: 12 },
     mug: { x: 83, y: 44, w: 13, rot: 0 },
-    note: { x: 6, y: 72, w: 18, rot: -5 },
+    notepad: { x: 6, y: 72, w: 18, rot: -5 },
     card: { x: 34, y: 74, w: 30, rot: 3 },
   },
 };
@@ -80,12 +80,12 @@ export const LAYOUT: Record<LayoutName, Record<DeskItemId, Box>> = {
 export const INTERACTIVE: readonly DeskItemId[] = [
   'photo',
   'badge',
-  'laptop',
-  'gauge',
+  'monitor',
+  'kit',
   'phone',
-  'note',
+  'notepad',
   'card',
-  'lamp',
+  'lightbar',
 ];
 
 const pct = (n: number) => `${n.toFixed(3)}%`;

@@ -15,12 +15,12 @@ const LAYOUTS: LayoutName[] = ['wide', 'phone'];
 const ALL_ITEMS: DeskItemId[] = [
   'photo',
   'badge',
-  'laptop',
-  'gauge',
+  'monitor',
+  'kit',
   'phone',
-  'note',
+  'notepad',
   'card',
-  'lamp',
+  'lightbar',
   'mug',
 ];
 
@@ -72,14 +72,14 @@ describe('both layouts', () => {
 
   it('excludes the decorative mug from interaction', () => {
     expect(INTERACTIVE).not.toContain('mug');
-    expect(INTERACTIVE).toContain('lamp');
+    expect(INTERACTIVE).toContain('lightbar');
     expect(INTERACTIVE).toHaveLength(8);
   });
 });
 
 describe('hotspotVars', () => {
   it('places with transform variables only, never left or top', () => {
-    const vars = hotspotVars('gauge');
+    const vars = hotspotVars('kit');
     expect(Object.keys(vars).some((k) => /left|top/.test(k))).toBe(false);
     expect(vars['--tx']).toBe('342.857%'); // 72 / 21 × 100
     expect(vars['--w']).toBe('21%');
@@ -104,6 +104,6 @@ describe('hotspotVars', () => {
   });
 
   it('starts the wide gauge where the mock put it', () => {
-    expect(LAYOUT.wide.gauge).toMatchObject({ x: 72, y: 5, w: 21, rot: 4 });
+    expect(LAYOUT.wide.kit).toMatchObject({ x: 72, y: 5, w: 21, rot: 4 });
   });
 });

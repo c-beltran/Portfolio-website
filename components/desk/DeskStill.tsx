@@ -33,7 +33,7 @@ export function DeskStill({ selected, onOpen, onClose }: Props) {
       ?.scrollIntoView({ block: 'nearest', behavior: reduce ? 'auto' : 'smooth' });
   }, [selected]);
   const Mug = ART.mug;
-  const Lamp = ART.lamp;
+  const Lamp = ART.lightbar;
 
   // Clicking bare felt goes back to the desk (spec §2); objects handle their own clicks.
   const onLayerClick = (e: MouseEvent<HTMLDivElement>) => {
@@ -68,7 +68,7 @@ export function DeskStill({ selected, onOpen, onClose }: Props) {
               </Hotspot>
             );
           })}
-          <Hotspot item="lamp" pressed={theme === 'lamp'} onClick={toggle}>
+          <Hotspot item="lightbar" pressed={theme === 'lamp'} onClick={toggle}>
             <Lamp />
           </Hotspot>
           <LampLight />

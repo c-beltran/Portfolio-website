@@ -96,8 +96,25 @@ describe('objects', () => {
     expect(DESK_OBJECTS.map((o) => o.slug)).toEqual([...SECTION_SLUGS]);
   });
 
+  it('uses the Workspace objects, paired with their sections', () => {
+    expect(DESK_OBJECTS.map((o) => [o.id, o.slug])).toEqual([
+      ['photo', 'about'],
+      ['badge', 'experience'],
+      ['monitor', 'how-i-build'],
+      ['kit', 'potaflow'],
+      ['phone', 'power-walk'],
+      ['notepad', 'this-site'],
+      ['card', 'contact'],
+    ]);
+  });
+
+  it('labels each object after the Workspace (spec §2)', () => {
+    expect(objectBySlug('how-i-build')?.ariaLabel).toBe('Ultrawide monitor: How I build');
+    expect(objectBySlug('potaflow')?.ariaLabel).toBe('Backflow test-kit case: Potaflow project');
+  });
+
   it('looks objects up by slug', () => {
-    expect(objectBySlug('potaflow')?.id).toBe('gauge');
+    expect(objectBySlug('potaflow')?.id).toBe('kit');
     expect(objectBySlug('nope')).toBeUndefined();
   });
 

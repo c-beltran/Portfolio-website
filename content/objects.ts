@@ -14,7 +14,7 @@ export const SECTION_SLUGS = [
 export type SectionSlug = (typeof SECTION_SLUGS)[number];
 
 export type DeskObject = {
-  id: 'photo' | 'badge' | 'laptop' | 'gauge' | 'phone' | 'note' | 'card';
+  id: 'photo' | 'badge' | 'monitor' | 'kit' | 'phone' | 'notepad' | 'card';
   slug: SectionSlug;
   label: string;
   ariaLabel: string;
@@ -30,7 +30,7 @@ export const DESK_OBJECTS: readonly DeskObject[] = [
     id: 'photo',
     slug: 'about',
     label: 'About',
-    ariaLabel: 'Polaroid photo: About me',
+    ariaLabel: 'Small framed photo: About me',
     metaFactId: 'F02',
     face: ['[TODO: Q13 photo]'],
   },
@@ -38,23 +38,23 @@ export const DESK_OBJECTS: readonly DeskObject[] = [
     id: 'badge',
     slug: 'experience',
     label: 'Experience',
-    ariaLabel: 'ID badge: Experience',
+    ariaLabel: 'ID badge on its lanyard: Experience',
     metaFactId: 'F01',
     face: ['C. BELTRAN', 'Sr. Software Engineer', 'PEOPLE INC.', 'since July 2019'],
   },
   {
-    id: 'laptop',
+    id: 'monitor',
     slug: 'how-i-build',
     label: 'How I build',
-    ariaLabel: 'Laptop: How I build',
+    ariaLabel: 'Ultrawide monitor: How I build',
     metaFactId: 'F11',
     face: [],
   },
   {
-    id: 'gauge',
+    id: 'kit',
     slug: 'potaflow',
     label: 'Potaflow',
-    ariaLabel: 'Backflow test kit gauge: Potaflow project',
+    ariaLabel: 'Backflow test-kit case: Potaflow project',
     metaFactId: 'P01',
     face: [],
   },
@@ -62,15 +62,15 @@ export const DESK_OBJECTS: readonly DeskObject[] = [
     id: 'phone',
     slug: 'power-walk',
     label: 'Power Walk',
-    ariaLabel: 'Phone: Power Walk project',
+    ariaLabel: 'Phone, face up on the mat: Power Walk project',
     metaFactId: 'P04',
     face: [],
   },
   {
-    id: 'note',
+    id: 'notepad',
     slug: 'this-site',
     label: 'This site',
-    ariaLabel: 'Sticky note: how this website was built',
+    ariaLabel: 'Notepad and pen: how this website was built',
     metaFactId: 'P06',
     face: ['this site:', 'built with', 'AI agents'],
   },
@@ -90,5 +90,5 @@ export function objectBySlug(slug: string): DeskObject | undefined {
 
 /** The still desk's text alternative (spec §5): read by assistive tech in place of the art. */
 export function deskDescription(): string {
-  return `Carlos's desk, seen from above: ${DESK_OBJECTS.map((o) => o.ariaLabel).join('; ')}. Use the Sections buttons below to open each one.`;
+  return `Carlos's workspace: ${DESK_OBJECTS.map((o) => o.ariaLabel).join('; ')}. Use the Sections buttons below to open each one.`;
 }

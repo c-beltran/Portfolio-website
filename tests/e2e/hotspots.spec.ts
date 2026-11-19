@@ -39,16 +39,16 @@ test.describe('still desk hotspots', () => {
 
   test('clicking the open object again adds no history', async ({ page }) => {
     await gotoDesk(page, '/');
-    await hotspot(page, 'gauge').click();
+    await hotspot(page, 'kit').click();
     const after = await historyLength(page);
-    await hotspot(page, 'gauge').click();
+    await hotspot(page, 'kit').click();
     expect(await historyLength(page)).toBe(after);
     expect(path(page)).toBe('/potaflow');
   });
 
   test('rapid object clicks, then Back, walk back in order', async ({ page }) => {
     await gotoDesk(page, '/');
-    for (const id of ['badge', 'laptop', 'gauge']) await hotspot(page, id).click();
+    for (const id of ['badge', 'monitor', 'kit']) await hotspot(page, id).click();
     await expect.poll(() => path(page)).toBe('/potaflow');
     for (const expected of ['/how-i-build', '/experience', '/']) {
       await page.goBack();
@@ -60,24 +60,27 @@ test.describe('still desk hotspots', () => {
     await gotoDesk(page, '/potaflow');
     const start = await historyLength(page);
     const before = await page.evaluate(() => document.documentElement.dataset.theme);
-    await hotspot(page, 'lamp').click();
+    await hotspot(page, 'lightbar').click();
     const after = await page.evaluate(() => document.documentElement.dataset.theme);
     expect(after).not.toBe(before);
     const pressed = String(after === 'lamp');
-    await expect(hotspot(page, 'lamp')).toHaveAttribute('aria-pressed', pressed);
+    await expect(hotspot(page, 'lightbar')).toHaveAttribute('aria-pressed', pressed);
     await expect(headerLamp(page)).toHaveAttribute('aria-pressed', pressed);
     expect(path(page)).toBe('/potaflow');
     await expect(panelTitle(page)).toContainText('Potaflow');
     expect(await historyLength(page)).toBe(start);
     await headerLamp(page).click();
-    await expect(hotspot(page, 'lamp')).toHaveAttribute('aria-pressed', String(after !== 'lamp'));
+    await expect(hotspot(page, 'lightbar')).toHaveAttribute(
+      'aria-pressed',
+      String(after !== 'lamp'),
+    );
   });
 
   test('clicking the desk lamp never focuses the hidden desk; Esc still refocuses the drawer', async ({
     page,
   }) => {
     await gotoDesk(page, '/potaflow');
-    await hotspot(page, 'lamp').click();
+    await hotspot(page, 'lightbar').click();
     expect(await page.evaluate(() => !!document.activeElement?.closest('.desk-still__layer'))).toBe(
       false,
     );
@@ -91,7 +94,7 @@ test.describe('still desk hotspots', () => {
   }) => {
     await gotoDesk(page, '/');
     await page.evaluate(() => {
-      for (const id of ['badge', 'laptop', 'gauge', 'gauge'])
+      for (const id of ['badge', 'monitor', 'kit', 'kit'])
         document.querySelector<HTMLElement>(`.hotspot[data-item="${id}"]`)!.click();
     });
     await expect.poll(() => path(page)).toBe('/potaflow');
@@ -168,7 +171,7 @@ test.describe('still desk hotspots', () => {
   test('the gauge needle is up when Potaflow is open', async ({ page }) => {
     const needle = () =>
       page
-        .locator('.hotspot[data-item="gauge"] .needle')
+        .locator('.hotspot[data-item="kit"] .needle')
         .evaluate((el) => getComputedStyle(el).transform);
     await gotoDesk(page, '/');
     const resting = await needle();

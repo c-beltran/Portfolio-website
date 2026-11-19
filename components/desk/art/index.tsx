@@ -17,12 +17,12 @@ import { Polaroid } from './Polaroid';
 export const ART: Record<DeskItemId, () => JSX.Element> = {
   photo: Polaroid,
   badge: Badge,
-  laptop: Laptop,
-  gauge: Gauge,
+  monitor: Laptop,
+  kit: Gauge,
   phone: Phone,
-  note: Note,
+  notepad: Note,
   card: Card,
-  lamp: Lamp,
+  lightbar: Lamp,
   mug: Mug,
 };
 

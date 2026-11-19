@@ -1,11 +1,11 @@
 import { ArtSvg, heightOf } from './svg';
 
-const H = heightOf('lamp');
+const H = heightOf('lightbar');
 
 /** The desk lamp, seen from above. Its bulb follows the theme token, so it lights without JS. */
 export function Lamp() {
   return (
-    <ArtSvg id="lamp" sticker={{ x: -4, y: H - 10, rot: -4, text: 'LAMP' }}>
+    <ArtSvg id="lightbar" sticker={{ x: -4, y: H - 10, rot: -4, text: 'LAMP' }}>
       <circle cx={50} cy={H - 24} r={22} fill="#2A3036" />
       <circle cx={50} cy={H - 24} r={6} fill="#3E454B" />
       <path

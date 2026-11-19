@@ -1,7 +1,7 @@
 import { objectBySlug } from '@/content/objects';
 import { ArtSvg, heightOf, label } from './svg';
 
-const H = heightOf('laptop');
+const H = heightOf('monitor');
 const EDITOR_LINES = [60, 44, 52, 30, 48, 38, 56, 26];
 const PANEL_LINES = [22, 16, 20, 12, 18];
 
@@ -9,7 +9,7 @@ const PANEL_LINES = [22, 16, 20, 12, 18];
 export function Laptop() {
   const o = objectBySlug('how-i-build')!;
   return (
-    <ArtSvg id="laptop" sticker={{ x: 58, y: H - 6, rot: -3, text: label(o.label) }}>
+    <ArtSvg id="monitor" sticker={{ x: 58, y: H - 6, rot: -3, text: label(o.label) }}>
       <rect x={4} y={0} width={92} height={56} rx={4} fill="#1E2328" />
       <rect x={8} y={4} width={84} height={48} rx={2} fill="#F7F8FA" />
       <rect x={8} y={4} width={84} height={5} rx={2} fill="#E3E6E9" />
