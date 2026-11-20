@@ -210,7 +210,8 @@ Carlos: "we should detect if user is on a mobile device and have an indicator to
 
 - The live view must match the Tier 1 still at the moment it takes over.
 - Approach: a camera-projected residual, exact at the seat's rest pose. The residual is the difference between the still and the live render from the seat, projected from the seat camera onto static geometry only.
-  - It fades out as the glance or a lean-in moves away from the rest pose.
+  - **(my call, phase 1, measured)** It stays at full weight through the ±3° glance. Projected onto the geometry from the seat, it stays on its surfaces as the head turns. It fades only for a lean-in (phase 3).
+  - **Measured at the seat (2026-11-20):** every review window, day and lamp, has a mean difference of 1.8–3.8 and at most 0.8% of pixels off by more than 40, including a portrait window swiped to either side. Before the residual it was 8.95 at 1280×800. The residual is 64 kB in all.
   - It's masked off any object that's out.
 - Target, as before: mean difference ≤ 6 and ≤ 3% of pixels off by more than 40, measured with `scripts/scene/measure/match.mjs` at the new cameras.
 - This was recommended earlier, and Carlos didn't object. The HDR multi-probe is the fallback if the residual shows seams while glancing.

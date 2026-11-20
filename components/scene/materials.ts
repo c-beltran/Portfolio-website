@@ -10,6 +10,18 @@ export type ProbeOptions = {
   /** Reflection strength in day mode, and in lamp mode (cross-faded with the bake). */
   strength?: number;
   strengthLamp?: number;
+  /**
+   * The residual (M3c): the Tier 1 still minus the live render, both at the seat's rest pose, in
+   * the seat master's image space (scripts/scene/measure/residual.mjs). Projected from the seat
+   * onto this geometry and added in sRGB, it closes the gap between the live scene and the still.
+   */
+  residual?: {
+    day: THREE.Texture;
+    lamp: THREE.Texture;
+    /** The seat camera at rest: projection (the full master, lens shift included) × view. */
+    viewProj: THREE.Matrix4;
+    weight?: number;
+  };
 };
 
 function lightmap(t: THREE.Texture) {
@@ -29,6 +41,33 @@ function probeMap(t: THREE.Texture) {
   t.minFilter = THREE.LinearMipmapLinearFilter;
   t.generateMipmaps = true;
 }
+
+function residualMap(t: THREE.Texture) {
+  // Raw differences, image top row up (as encoded); sampled 1:1-ish, so no mipmaps.
+  t.flipY = true;
+  t.colorSpace = THREE.NoColorSpace;
+  t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping;
+  t.minFilter = THREE.LinearFilter;
+  t.generateMipmaps = false;
+}
+
+/** d = (texel − ½)·2 of the seat's view of this point, added to the colour in sRGB. */
+const RESIDUAL_GLSL = [
+  'uniform sampler2D residualDay;',
+  'uniform sampler2D residualLamp;',
+  'uniform mat4 seatViewProj;',
+  'uniform float residualWeight;',
+  'vec3 toSRGB(vec3 c) { return mix(c * 12.92, 1.055 * pow(c, vec3(1.0 / 2.4)) - 0.055, step(0.0031308, c)); }',
+  'vec3 toLinear(vec3 c) { return mix(c / 12.92, pow((c + 0.055) / 1.055, vec3(2.4)), step(0.04045, c)); }',
+  'vec3 residual(vec3 base, vec3 world) {',
+  '  vec4 clip = seatViewProj * vec4(world, 1.0);',
+  '  if (clip.w <= 0.0) return base;',
+  '  vec2 uv = clip.xy / clip.w * 0.5 + 0.5;',
+  '  if (any(lessThan(uv, vec2(0.0))) || any(greaterThan(uv, vec2(1.0)))) return base;',
+  '  vec3 d = (mix(texture2D(residualDay, uv).rgb, texture2D(residualLamp, uv).rgb, fade) - 0.5) * 2.0;',
+  '  return toLinear(clamp(toSRGB(max(base, 0.0)) + d * residualWeight, 0.0, 1.0));',
+  '}',
+].join('\n');
 
 const VERTEX_PLAIN = [
   'varying vec2 vUv;',
@@ -75,7 +114,7 @@ export function bakedMaterial(day: THREE.Texture, lamp: THREE.Texture, opts: Pro
     lamp: { value: lamp },
     fade: { value: 0 },
   };
-  const { probe, gloss } = opts;
+  const { probe, gloss, residual } = opts;
   if (probe) {
     probe.forEach(probeMap);
     if (gloss) {
@@ -90,43 +129,53 @@ export function bakedMaterial(day: THREE.Texture, lamp: THREE.Texture, opts: Pro
       strengthLamp: { value: opts.strengthLamp ?? 0 },
     });
   }
-  const fragment = probe
-    ? [
-        'uniform sampler2D day;',
-        'uniform sampler2D lamp;',
-        'uniform sampler2D gloss;',
-        'uniform float strength;',
-        'uniform float strengthLamp;',
-        PROBE_GLSL,
-        'varying vec2 vUv;',
-        'varying vec3 vWorld;',
-        'void main() {',
-        '  vec4 base = mix(texture2D(day, vUv), texture2D(lamp, vUv), fade);',
-        '  vec3 v = normalize(vWorld - cameraPosition);',
-        '  vec3 n = normalize(cross(dFdx(vWorld), dFdy(vWorld)));',
-        '  if (dot(n, v) > 0.0) n = -n;',
-        '  float rough = texture2D(gloss, vUv).r;',
-        '  vec3 env = probe(reflect(v, n), rough * 7.0);',
-        '  base.rgb += mix(strength, strengthLamp, fade) * schlick(dot(-v, n)) * (1.0 - rough) * env;',
-        '  gl_FragColor = base;',
-        '  #include <colorspace_fragment>',
-        '}',
-      ]
-    : [
-        'uniform sampler2D day;',
-        'uniform sampler2D lamp;',
-        'uniform float fade;',
-        'varying vec2 vUv;',
-        'void main() {',
-        '  gl_FragColor = mix(texture2D(day, vUv), texture2D(lamp, vUv), fade);',
-        '  #include <colorspace_fragment>',
-        '}',
-      ];
+  if (residual) {
+    residualMap(residual.day);
+    residualMap(residual.lamp);
+    Object.assign(uniforms, {
+      residualDay: { value: residual.day },
+      residualLamp: { value: residual.lamp },
+      seatViewProj: { value: residual.viewProj },
+      residualWeight: { value: residual.weight ?? 1 },
+    });
+  }
+  const world = !!(probe || residual);
+  const fragment = [
+    'uniform sampler2D day;',
+    'uniform sampler2D lamp;',
+    ...(probe
+      ? [
+          'uniform sampler2D gloss;',
+          'uniform float strength;',
+          'uniform float strengthLamp;',
+          PROBE_GLSL,
+        ]
+      : ['uniform float fade;']),
+    ...(residual ? [RESIDUAL_GLSL] : []),
+    'varying vec2 vUv;',
+    ...(world ? ['varying vec3 vWorld;'] : []),
+    'void main() {',
+    '  vec4 base = mix(texture2D(day, vUv), texture2D(lamp, vUv), fade);',
+    ...(probe
+      ? [
+          '  vec3 v = normalize(vWorld - cameraPosition);',
+          '  vec3 n = normalize(cross(dFdx(vWorld), dFdy(vWorld)));',
+          '  if (dot(n, v) > 0.0) n = -n;',
+          '  float rough = texture2D(gloss, vUv).r;',
+          '  vec3 env = probe(reflect(v, n), rough * 7.0);',
+          '  base.rgb += mix(strength, strengthLamp, fade) * schlick(dot(-v, n)) * (1.0 - rough) * env;',
+        ]
+      : []),
+    ...(residual ? ['  base.rgb = residual(base.rgb, vWorld);'] : []),
+    '  gl_FragColor = base;',
+    '  #include <colorspace_fragment>',
+    '}',
+  ];
   return new THREE.ShaderMaterial({
     // Cycles shades both sides of a face; some imported faces (the monitor screen) wind backwards.
     side: THREE.DoubleSide,
     uniforms,
-    vertexShader: probe ? VERTEX : VERTEX_PLAIN,
+    vertexShader: world ? VERTEX : VERTEX_PLAIN,
     fragmentShader: fragment.join('\n'),
   });
 }

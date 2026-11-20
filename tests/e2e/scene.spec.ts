@@ -25,6 +25,12 @@ async function waitLive(page: Page) {
 const canvasAspect = (page: Page) =>
   canvas(page).evaluate((c: HTMLCanvasElement) => c.width / c.height);
 
+test('capture=master without tier=2 mounts nothing', async ({ page }) => {
+  await gotoDesk(page, '/?capture=master');
+  await page.waitForTimeout(500);
+  await expect(page.locator('.desk-still canvas')).toHaveCount(0);
+});
+
 test('without the flag, no three.js loads', async ({ page }) => {
   const scene: string[] = [];
   page.on('request', (r) => {

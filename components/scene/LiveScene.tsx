@@ -5,7 +5,7 @@ import { Canvas, useThree } from '@react-three/fiber';
 import { Suspense, useCallback, useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { bakedMaterial, glassMaterial } from './materials';
-import { CAMERAS } from '@/content/scene/cameras';
+import { CAMERAS, type Vec3 } from '@/content/scene/cameras';
 import { master, viewOffset } from '@/content/scene/framing';
 import { panOf } from '@/components/desk/pan';
 import { glanceShift, glanceTarget, useGlance, type Glance } from './glance';
@@ -30,13 +30,67 @@ const GLOSSY: Partial<Record<Group, Glossy>> = {
 const GLASS = { tint: '#1c2128', fill: 0.15, strength: 1 };
 const WATER = { tint: '#1a2633', fill: 0.45, strength: 0.8 };
 
-function Scene({ lamp, onReady }: { lamp: boolean; onReady: () => void }) {
+/**
+ * Points a camera through the seat (design 2026-11-19 §3): the full frustum is the seat's master
+ * render, `view` the window cut out of it (framing.ts viewOffset, fullW × fullH px, the window at
+ * x, y), plus Blender's lens shift, a fraction of the larger side (the master's width): +x right,
+ * +y up. The rig and the residual's projection both use it, so they can't drift apart.
+ */
+function aimSeat(
+  camera: THREE.PerspectiveCamera,
+  view: { fullW: number; fullH: number; x: number; y: number },
+  width: number,
+  height: number,
+  target: Vec3 = CAMERAS.seat.target,
+) {
+  const seat = CAMERAS.seat;
+  const { w, h } = master();
+  camera.aspect = w / h;
+  camera.fov = (2 * Math.atan(Math.tan(hfov(seat) / 2) / (w / h)) * 180) / Math.PI;
+  const big = Math.max(view.fullW, view.fullH);
+  camera.setViewOffset(
+    view.fullW,
+    view.fullH,
+    view.x + seat.shift[0] * big,
+    view.y - seat.shift[1] * big,
+    width,
+    height,
+  );
+  camera.position.set(...seat.eye);
+  camera.up.set(0, 1, 0);
+  camera.lookAt(...target);
+  camera.updateProjectionMatrix();
+  camera.updateMatrixWorld();
+}
+
+/** The seat at rest, the whole master: what the residual was captured through. */
+function seatViewProj(): THREE.Matrix4 {
+  const cam = new THREE.PerspectiveCamera(50, 1, 0.05, 20);
+  const { w, h } = master();
+  const [fullW, fullH] = [2048, (2048 * h) / w];
+  aimSeat(cam, { fullW, fullH, x: 0, y: 0 }, fullW, fullH);
+  return new THREE.Matrix4().multiplyMatrices(cam.projectionMatrix, cam.matrixWorldInverse);
+}
+
+const RESIDUAL = ['/scene/bake/residual-seat-day.webp', '/scene/bake/residual-seat-lamp.webp'];
+
+function Scene({
+  lamp,
+  onReady,
+  capture,
+}: {
+  lamp: boolean;
+  onReady: () => void;
+  capture: boolean;
+}) {
   const { scene } = useGLTF('/scene/scene.glb');
   const glossy = Object.entries(GLOSSY) as [Group, Glossy][];
   const urls = [
     ...GROUPS.flatMap((g) => [tex(g, 'day'), tex(g, 'lamp')]),
     ...PROBE,
     ...glossy.map(([, o]) => o.gloss),
+    // The capture for the residual renders without it (scripts/scene/measure/residual.mjs).
+    ...(capture ? [] : RESIDUAL),
   ];
   const textures = useTexture(urls);
   const invalidate = useThree((s) => s.invalidate);
@@ -44,11 +98,15 @@ function Scene({ lamp, onReady }: { lamp: boolean; onReady: () => void }) {
   const materials = useMemo(() => {
     const n = 2 * GROUPS.length;
     const probe = [textures[n]!, textures[n + 1]!] as [THREE.Texture, THREE.Texture];
+    const r = n + 2 + glossy.length;
+    const residual = capture
+      ? undefined
+      : { day: textures[r]!, lamp: textures[r + 1]!, viewProj: seatViewProj() };
     const baked = Object.fromEntries(
       GROUPS.map((g, i) => {
         const k = glossy.findIndex(([name]) => name === g);
         const opts = k < 0 ? {} : { ...glossy[k]![1], probe, gloss: textures[n + 2 + k]! };
-        return [g, bakedMaterial(textures[2 * i]!, textures[2 * i + 1]!, opts)];
+        return [g, bakedMaterial(textures[2 * i]!, textures[2 * i + 1]!, { ...opts, residual })];
       }),
     ) as Record<Group, THREE.ShaderMaterial>;
     const see = (o: typeof GLASS) =>
@@ -107,7 +165,7 @@ function Scene({ lamp, onReady }: { lamp: boolean; onReady: () => void }) {
  * turns the camera a few degrees, and the DOM overlays (hotspots, the name) move by the matching
  * screen distance through --gx/--gy on .desk-still.
  */
-function Rig() {
+function Rig({ capture }: { capture: boolean }) {
   const get = useThree((s) => s.get);
   const size = useThree((s) => s.size);
   const glance = useRef<Glance>({ yaw: 0, pitch: 0 });
@@ -116,37 +174,25 @@ function Rig() {
   const frame = useCallback(() => {
     const { camera: cam, size, invalidate } = get();
     const camera = cam as THREE.PerspectiveCamera & { manual?: boolean };
-    const seat = CAMERAS.seat;
-    const { w, h } = master();
     const [W, H] = [size.width, size.height];
     if (!W || !H) return;
-    const o = viewOffset(W / H, W, H, still ? panOf(still) : 0);
-    const fov = hfov(seat);
     camera.manual = true; // R3F leaves aspect and the projection to us
-    camera.aspect = w / h;
-    camera.fov = (2 * Math.atan(Math.tan(fov / 2) / (w / h)) * 180) / Math.PI;
-    // Blender's shift is a fraction of the larger side (the master's width): +x right, +y up.
-    const big = Math.max(o.fullW, o.fullH);
-    camera.setViewOffset(
-      o.fullW,
-      o.fullH,
-      o.x + seat.shift[0] * big,
-      o.y - seat.shift[1] * big,
-      W,
-      H,
-    );
+    if (capture) {
+      // The whole master, at rest: the canvas is the master's shape (residual.mjs sizes it).
+      aimSeat(camera, { fullW: W, fullH: H, x: 0, y: 0 }, W, H);
+      invalidate();
+      return;
+    }
+    const o = viewOffset(W / H, W, H, still ? panOf(still) : 0);
+    const seat = CAMERAS.seat;
     const g = glance.current;
-    camera.position.set(...seat.eye);
-    camera.up.set(0, 1, 0);
-    camera.lookAt(...glanceTarget(seat.eye, seat.target, g.yaw, g.pitch));
-    camera.updateProjectionMatrix();
-    camera.updateMatrixWorld();
+    aimSeat(camera, o, W, H, glanceTarget(seat.eye, seat.target, g.yaw, g.pitch));
     invalidate();
     // The overlays follow the turn: focal length in pixels of the full frame.
-    const [dx, dy] = glanceShift(g.yaw, g.pitch, o.fullW / 2 / Math.tan(fov / 2));
+    const [dx, dy] = glanceShift(g.yaw, g.pitch, o.fullW / 2 / Math.tan(hfov(seat) / 2));
     still?.style.setProperty('--gx', `${dx.toFixed(2)}px`);
     still?.style.setProperty('--gy', `${dy.toFixed(2)}px`);
-  }, [get, still]);
+  }, [get, still, capture]);
 
   // On mount and every resize; the portrait pan re-frames on the desk's scroll.
   useEffect(frame, [frame, size.width, size.height]);
@@ -172,24 +218,31 @@ function Rig() {
   return null;
 }
 
-export default function LiveScene(props: { lamp: boolean; onReady: () => void }) {
+export default function LiveScene(props: {
+  lamp: boolean;
+  onReady: () => void;
+  /** ?tier=2&capture=master: the whole master at rest, no residual, readable pixels. */
+  capture?: boolean;
+}) {
+  const capture = !!props.capture;
   return (
     <Canvas
       // Never a pointer target: the hotspots and the page own every pointer and touch.
       style={{ pointerEvents: 'none' }}
       frameloop="demand"
-      dpr={[1, 2]}
+      dpr={capture ? 1 : [1, 2]}
       gl={{
         antialias: true,
         toneMapping: THREE.NoToneMapping,
         outputColorSpace: THREE.SRGBColorSpace,
+        preserveDrawingBuffer: capture,
       }}
       camera={{ near: 0.05, far: 20 }}
     >
       <Suspense fallback={null}>
-        <Scene lamp={props.lamp} onReady={props.onReady} />
+        <Scene lamp={props.lamp} onReady={props.onReady} capture={capture} />
       </Suspense>
-      <Rig />
+      <Rig capture={capture} />
     </Canvas>
   );
 }

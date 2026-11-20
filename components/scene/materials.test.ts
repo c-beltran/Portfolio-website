@@ -35,3 +35,29 @@ describe('glassMaterial', () => {
     expect(m.uniforms).toHaveProperty('fade');
   });
 });
+
+describe('the residual (M3c: the live seat matches the still)', () => {
+  const t = () => new THREE.Texture();
+  it('adds the residual uniforms, weight 1 by default', () => {
+    const m = bakedMaterial(t(), t(), {
+      residual: { day: t(), lamp: t(), viewProj: new THREE.Matrix4() },
+    });
+    for (const k of ['residualDay', 'residualLamp', 'seatViewProj', 'residualWeight'])
+      expect(m.uniforms).toHaveProperty(k);
+    expect(m.uniforms.residualWeight!.value).toBe(1);
+    expect(m.fragmentShader).toContain('residual');
+  });
+
+  it('works with the probe too', () => {
+    const m = bakedMaterial(t(), t(), {
+      probe: [t(), t()],
+      residual: { day: t(), lamp: t(), viewProj: new THREE.Matrix4(), weight: 0.5 },
+    });
+    expect(m.uniforms.residualWeight!.value).toBe(0.5);
+    expect(m.uniforms).toHaveProperty('probeDay');
+  });
+
+  it('leaves the shader alone without it', () => {
+    expect(bakedMaterial(t(), t()).fragmentShader).not.toContain('residual');
+  });
+});

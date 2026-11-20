@@ -47,6 +47,12 @@ export function LiveLayer() {
   const [ready, setReady] = useState(false);
   const { theme } = useTheme();
   const ref = useRef<HTMLDivElement>(null);
+  // ?tier=2&capture=master: the residual's capture (scripts/scene/measure/residual.mjs).
+  const [capture] = useState(
+    () =>
+      typeof window !== 'undefined' &&
+      new URLSearchParams(location.search).get('capture') === 'master',
+  );
 
   useEffect(() => {
     if (forcedTier(location.search) !== 2 || !hasWebGL2()) return;
@@ -79,7 +85,7 @@ export function LiveLayer() {
   return (
     <div ref={ref} className="desk-still__live" data-ready={ready} data-lamp={theme === 'lamp'}>
       <Fallback onError={lost}>
-        <LiveScene lamp={theme === 'lamp'} onReady={onReady} />
+        <LiveScene lamp={theme === 'lamp'} onReady={onReady} capture={capture} />
       </Fallback>
     </div>
   );
