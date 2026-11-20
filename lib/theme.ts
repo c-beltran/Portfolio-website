@@ -20,7 +20,11 @@ export type TokenName =
   // Lamp mode's light: the room multiplies by dusk, except a pool of light under the lamp.
   | 'dusk'
   | 'pool'
-  | 'scrawl';
+  | 'scrawl'
+  // The monitor's right half (M3c): the rendered paper page under the HTML name, sampled from the
+  // seat stills (the paper is light in both modes, so the ink is dark in both).
+  | 'screenPaper'
+  | 'screenInk';
 
 export const THEME_STORAGE_KEY = 'desk-theme';
 
@@ -46,6 +50,8 @@ export const TOKENS: Record<ThemeName, Record<TokenName, string>> = {
     dusk: '#FFFFFF',
     pool: '#FFFFFF',
     scrawl: '#FFE9A8',
+    screenPaper: '#ABABA9',
+    screenInk: '#15191C',
   },
   lamp: {
     bg: '#14110D',
@@ -67,6 +73,8 @@ export const TOKENS: Record<ThemeName, Record<TokenName, string>> = {
     dusk: '#90939A',
     pool: '#FFE0A8',
     scrawl: '#FFE9A8',
+    screenPaper: '#D4D3D2',
+    screenInk: '#15191C',
   },
 };
 
@@ -83,6 +91,7 @@ export const TEXT_PAIRS: [fg: TokenName, bg: TokenName][] = [
   ['linkHover', 'bg'],
   ['linkHover', 'surface'],
   ['stickerInk', 'sticker'],
+  ['screenInk', 'screenPaper'],
 ];
 
 function luminance(hex: string): number {

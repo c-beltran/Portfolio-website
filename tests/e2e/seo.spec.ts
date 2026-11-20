@@ -23,9 +23,10 @@ test.describe('seo', () => {
     });
   }
 
-  test('sitemap lists the overview, the seven sections and /classic', () => {
+  test('sitemap lists the overview, every section and /classic', () => {
     const xml = readFileSync(join(OUT, 'sitemap.xml'), 'utf8');
-    expect(xml.match(/<loc>/g)).toHaveLength(9);
+    expect(xml.match(/<loc>/g)).toHaveLength(SECTION_SLUGS.length + 2);
+    expect(xml).toContain('<loc>https://cbeltran.com/cv</loc>');
     expect(xml).toContain('<loc>https://cbeltran.com/classic</loc>');
   });
 

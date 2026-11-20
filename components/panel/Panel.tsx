@@ -1,5 +1,6 @@
-import { renderFact, statsFootnote } from '@/content/facts';
-import { LINKS, RESUME_TODO, showResume, showResumeTodo } from '@/content/links';
+import Link from 'next/link';
+import { renderFact, statsFootnote, tenSecondFacts } from '@/content/facts';
+import { headerSummary, LINKS, RESUME_TODO, showResume, showResumeTodo } from '@/content/links';
 import type { SectionSlug } from '@/content/objects';
 import { DRAFT_MARK, PANELS, type PanelBlock } from '@/content/panels';
 import statsJson from '@/content/stats.json';
@@ -78,6 +79,27 @@ function Block({ block }: { block: PanelBlock }) {
             <a href={LINKS.github}>GitHub</a>
           </li>
         </ul>
+      );
+    case 'cv':
+      return (
+        <>
+          <p className="panel__prose">
+            {headerSummary()}
+            <Draft />
+          </p>
+          <p className="panel__facts">{tenSecondFacts().join(' · ')}</p>
+          <ul className="panel__links">
+            {showResume() && (
+              <li>
+                <a href={LINKS.resume}>Download résumé</a>
+              </li>
+            )}
+            {showResumeTodo() && <li>{RESUME_TODO}</li>}
+            <li>
+              <Link href="/classic">Prefer a plain page? Classic version</Link>
+            </li>
+          </ul>
+        </>
       );
     case 'todo':
       return <p className="panel__todo">{block.text}</p>;

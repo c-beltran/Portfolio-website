@@ -43,7 +43,8 @@ test.describe('still desk hotspots', () => {
     await gotoDesk(page, '/');
     await hotspot(page, 'kit').click();
     const after = await historyLength(page);
-    await hotspot(page, 'kit').click();
+    // On a phone the sheet now covers the kit (phase 2 brings it forward): click the element itself.
+    await hotspot(page, 'kit').evaluate((el) => (el as HTMLElement).click());
     expect(await historyLength(page)).toBe(after);
     expect(path(page)).toBe('/potaflow');
   });
@@ -155,7 +156,7 @@ test.describe('still desk hotspots', () => {
         return { left: s.left, top: s.top, moved: s.transform !== 'none', centred };
       }),
     );
-    expect(placements.length).toBe(8);
+    expect(placements.length).toBe(DESK_OBJECTS.length + 1); // the sections and the lamp
     for (const p of placements)
       expect(p).toEqual({ left: '0px', top: '0px', moved: true, centred: true });
   });

@@ -268,6 +268,57 @@ html:has(.desk-still) body {
   height: calc(var(--mh) * var(--u));
 }
 
+/*
+ * The master's box again, outside the aria-hidden layer: real HTML on the desk (the name on the
+ * monitor). Never a pointer target; the hotspots under it take the clicks.
+ */
+.desk-still__overlay {
+  position: absolute;
+  left: calc(50% - var(--mw) * var(--u) / 2);
+  bottom: 0;
+  width: calc(var(--mw) * var(--u));
+  height: calc(var(--mh) * var(--u));
+  pointer-events: none;
+}
+
+/*
+ * The name on the monitor's right half: a box of --nw × --nh safe heights at (--nx, --ny) on the
+ * master, bent onto the screen by the unitless --nm (content/scene/screenAffine.ts), on the
+ * rendered paper's colour so it reads as the screen and its contrast is measurable.
+ */
+.monitor-name {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: calc(var(--nw) * var(--u));
+  height: calc(var(--nh) * var(--u));
+  padding: calc(0.08 * var(--nh) * var(--u)) calc(0.03 * var(--nw) * var(--u));
+  overflow: hidden;
+  background: var(--screen-paper);
+  color: var(--screen-ink);
+  transform-origin: 0 0;
+  transform: translate(calc(var(--nx) * var(--u)), calc(var(--ny) * var(--u)))
+    matrix(var(--nm), 0, 0);
+}
+
+.monitor-name__name {
+  margin: 0;
+  font-family: var(--font-display), var(--font-inter), sans-serif;
+  font-weight: 900;
+  font-size: calc(0.48 * var(--nh) * var(--u));
+  line-height: 1;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+}
+
+.monitor-name__title {
+  margin: calc(0.08 * var(--nh) * var(--u)) 0 0;
+  font-size: calc(0.2 * var(--nh) * var(--u));
+  font-weight: 600;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
 /* The crop of the master this window shape loaded (percent of the master). */
 .desk-still__photo img {
   position: absolute;
@@ -383,6 +434,11 @@ html:has(.desk-still) body {
     transition:
       opacity 0.6s ease,
       display 0.6s allow-discrete;
+  }
+
+  /* The paper changes with the lamp render's cross-fade. */
+  .monitor-name {
+    transition: background-color 0.6s ease;
   }
 
   /* Only a switch fades; a visit that starts in lamp mode paints it at once. */

@@ -1,3 +1,4 @@
+import { DESK_OBJECTS } from '../../content/objects';
 import { master } from '../../content/scene/framing';
 import { expect, test, type Page } from '@playwright/test';
 import { gotoDesk, hotspot, panelTitle, path } from './desk';
@@ -112,7 +113,7 @@ test('?tier=2 falls back to the still when a scene asset fails to load', async (
   await page.waitForLoadState('networkidle');
   await page.waitForTimeout(1500);
   await expect(page.locator('.desk-still__photo--day img')).toBeVisible();
-  await expect(page.locator('button.hotspot')).toHaveCount(8);
+  await expect(page.locator('button.hotspot')).toHaveCount(DESK_OBJECTS.length + 1);
   await expect(page.locator('.desk-still canvas')).toHaveCount(0);
   await hotspot(page, 'kit').click();
   expect(path(page)).toBe('/potaflow');

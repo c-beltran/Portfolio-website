@@ -16,12 +16,19 @@ export type PanelBlock =
   | { kind: 'link'; href: null; label: string; todo: string }
   /** Résumé (when shown), LinkedIn and GitHub, from content/links.ts. */
   | { kind: 'links' }
+  /** The header's content, on the monitor's CV page: summary, ten-second facts, résumé, Classic. */
+  | { kind: 'cv' }
   | { kind: 'todo'; text: string };
 
 const n = (value: number) => value.toLocaleString('en-US');
 
 /** Panel copy, ported from the approved mock with the M0 decisions applied. */
 export const PANELS: Record<SectionSlug, PanelBlock[]> = {
+  cv: [
+    { kind: 'eyebrow', text: 'THE MONITOR · CV' },
+    { kind: 'title', text: 'The short version', draft: true },
+    { kind: 'cv' },
+  ],
   about: [
     { kind: 'eyebrow', text: 'THE PHOTO · ABOUT' },
     { kind: 'title', text: "Hi, I'm Carlos.", draft: true },

@@ -2,6 +2,7 @@ import type { FactId } from './facts';
 
 /** Section routes, in drawer order (spec §2). */
 export const SECTION_SLUGS = [
+  'cv',
   'about',
   'experience',
   'how-i-build',
@@ -14,7 +15,7 @@ export const SECTION_SLUGS = [
 export type SectionSlug = (typeof SECTION_SLUGS)[number];
 
 export type DeskObject = {
-  id: 'photo' | 'badge' | 'monitor' | 'kit' | 'phone' | 'notepad' | 'card';
+  id: 'cv' | 'photo' | 'badge' | 'monitor' | 'kit' | 'phone' | 'notepad' | 'card';
   slug: SectionSlug;
   label: string;
   ariaLabel: string;
@@ -24,6 +25,13 @@ export type DeskObject = {
 
 /** THE object registry: drawer, hotspots, scene, panels and routes all read it. */
 export const DESK_OBJECTS: readonly DeskObject[] = [
+  {
+    id: 'cv',
+    slug: 'cv',
+    label: 'CV',
+    ariaLabel: 'Monitor, right screen: Carlos Beltran, CV',
+    metaFactId: 'F01',
+  },
   {
     id: 'photo',
     slug: 'about',
@@ -42,7 +50,7 @@ export const DESK_OBJECTS: readonly DeskObject[] = [
     id: 'monitor',
     slug: 'how-i-build',
     label: 'How I build',
-    ariaLabel: 'Ultrawide monitor: How I build',
+    ariaLabel: 'Monitor, left screen: How I build',
     metaFactId: 'F11',
   },
   {

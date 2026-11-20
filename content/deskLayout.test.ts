@@ -13,6 +13,7 @@ import { master, PORTRAIT as FRAMING_PORTRAIT, visible } from './scene/framing';
 
 const BOUNDS = seat as SceneBounds;
 const ITEMS: DeskItemId[] = [
+  'cv',
   'photo',
   'badge',
   'monitor',
@@ -25,6 +26,8 @@ const ITEMS: DeskItemId[] = [
 /** Front object first: the smaller, nearer one stacks over the one behind it. */
 const IN_FRONT: [DeskItemId, DeskItemId][] = [
   ['lightbar', 'monitor'],
+  ['lightbar', 'cv'],
+  ['photo', 'cv'],
   ['badge', 'kit'],
 ];
 /** Pixels per safe height in a W×H window. */
@@ -63,7 +66,7 @@ describe('stacking', () => {
 });
 
 describe('the clickable items', () => {
-  it('are the seven section objects plus the light bar', () => {
+  it('are the eight section objects (the monitor is two) plus the light bar', () => {
     expect([...INTERACTIVE].sort()).toEqual([...ITEMS].sort());
   });
 });

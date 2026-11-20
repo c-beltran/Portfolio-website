@@ -98,6 +98,7 @@ describe('objects', () => {
 
   it('uses the Workspace objects, paired with their sections', () => {
     expect(DESK_OBJECTS.map((o) => [o.id, o.slug])).toEqual([
+      ['cv', 'cv'],
       ['photo', 'about'],
       ['badge', 'experience'],
       ['monitor', 'how-i-build'],
@@ -108,8 +109,9 @@ describe('objects', () => {
     ]);
   });
 
-  it('labels each object after the Workspace (spec §2)', () => {
-    expect(objectBySlug('how-i-build')?.ariaLabel).toBe('Ultrawide monitor: How I build');
+  it('labels each object after the Workspace (spec §2; the monitor is two, design 2026-11-19 §4)', () => {
+    expect(objectBySlug('how-i-build')?.ariaLabel).toBe('Monitor, left screen: How I build');
+    expect(objectBySlug('cv')?.ariaLabel).toBe('Monitor, right screen: Carlos Beltran, CV');
     expect(objectBySlug('potaflow')?.ariaLabel).toBe('Backflow test-kit case: Potaflow project');
   });
 

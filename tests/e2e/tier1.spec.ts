@@ -40,7 +40,7 @@ test.describe('WebGL off', () => {
   test('the desk, every object, the drawer and the panel still work', async ({ page }) => {
     await gotoDesk(page, '/');
     expect(await page.evaluate(() => 'WebGLRenderingContext' in window)).toBe(false);
-    await expect(page.locator('button.hotspot')).toHaveCount(8);
+    await expect(page.locator('button.hotspot')).toHaveCount(DESK_OBJECTS.length + 1);
     for (const o of DESK_OBJECTS) {
       await hotspot(page, o.id).click();
       expect(path(page)).toBe(`/${o.slug}`);

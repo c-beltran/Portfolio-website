@@ -17,8 +17,9 @@ const BOUNDS = seatBounds as SceneBounds;
 /** Portrait windows, which pan across the safe frame (framing.ts). */
 export { PORTRAIT } from './scene/framing';
 
-/** The clickable items: the seven section objects plus the light bar (the lamp toggle). */
+/** The clickable items: the eight section objects (the monitor is two) plus the light bar. */
 export const INTERACTIVE: readonly DeskItemId[] = [
+  'cv',
   'photo',
   'badge',
   'monitor',
@@ -31,10 +32,12 @@ export const INTERACTIVE: readonly DeskItemId[] = [
 
 /**
  * z-order where 44px targets overlap (content/scene/bounds.test.ts lists the overlaps): the
- * smaller, nearer object on top. Light bar over the monitor; badge over the kit case.
+ * smaller, nearer object on top. Light bar over both screen halves; the photo frame, which stands
+ * in front of the screen's corner, over the CV half; badge over the kit case.
  */
 export const HOTSPOT_STACK: Record<DeskItemId, number> = {
   monitor: 1,
+  cv: 1,
   kit: 2,
   photo: 2,
   phone: 2,

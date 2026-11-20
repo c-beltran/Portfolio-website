@@ -21,7 +21,10 @@ const SECTIONS: ClassicSection[] = [
   {
     heading: 'Experience',
     facts: ['F01', 'F02', 'F03', 'F04', 'F06', 'F07', 'F08', 'F12'],
-    desk: [{ slug: 'experience', label: 'Experience' }],
+    desk: [
+      { slug: 'cv', label: 'CV' },
+      { slug: 'experience', label: 'Experience' },
+    ],
   },
   {
     heading: 'How I build',

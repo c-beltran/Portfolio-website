@@ -13,6 +13,7 @@ import { sizesFor } from '@/content/scene/framingCss';
 import { useTheme } from '@/lib/useTheme';
 import { LiveLayer } from '@/components/scene/LiveLayer';
 import { Hotspot } from './Hotspot';
+import { MonitorName } from './MonitorName';
 import { CENTRE_SCRIPT, panOf, setPan } from './pan';
 
 type Props = {
@@ -171,6 +172,9 @@ export function DeskStill({ selected, onOpen, onClose }: Props) {
               />
             ))}
             <Hotspot item="lightbar" label="Lamp" pressed={theme === 'lamp'} onClick={toggle} />
+          </div>
+          <div className="desk-still__overlay">
+            <MonitorName />
           </div>
         </div>
       </div>

@@ -63,3 +63,11 @@ describe('THEME_SCRIPT', () => {
     expect(runScript({ stored: 'purple', dark: true })).toBe('lamp');
   });
 });
+
+describe('the name on the monitor (M3c)', () => {
+  it('is dark ink on the rendered screen paper, at 4.5:1 or better in both themes', () => {
+    expect(TEXT_PAIRS).toContainEqual(['screenInk', 'screenPaper']);
+    for (const t of ['day', 'lamp'] as const)
+      expect(contrastRatio(TOKENS[t].screenInk, TOKENS[t].screenPaper)).toBeGreaterThanOrEqual(4.5);
+  });
+});

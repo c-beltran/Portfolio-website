@@ -1,6 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import seat from '../../content/scene/bounds-seat.json' with { type: 'json' };
 import { viewOffset } from '../../content/scene/framing';
+import { DESK_OBJECTS } from '../../content/objects';
 import { desk, gotoDesk, hotspot } from './desk';
 
 /** The design's review windows (16:9 first), the plan's six (Task 4). */
@@ -12,7 +13,7 @@ const VIEWPORTS: [number, number][] = [
   [2560, 720],
   [844, 390],
 ];
-const ITEMS = ['photo', 'badge', 'monitor', 'kit', 'phone', 'notepad', 'card', 'lightbar'];
+const ITEMS = ['cv', 'photo', 'badge', 'monitor', 'kit', 'phone', 'notepad', 'card', 'lightbar'];
 const objects = seat.objects as Record<string, { x0: number; y0: number; x1: number; y1: number }>;
 
 /** The desk's pan (−1…1) from its horizontal scroll; 0 when it can't scroll. */
@@ -107,7 +108,7 @@ test.describe('the desk fills the window', () => {
     await expectHotspotsOnTheirObjects(page);
   });
 
-  test('the keyboard path: the first Tab shows the Sections list; eight buttons, Lamp last', async ({
+  test('the keyboard path: the first Tab shows the Sections list; every section, then Lamp', async ({
     page,
   }) => {
     await gotoDesk(page, '/');
@@ -122,7 +123,7 @@ test.describe('the desk fills the window', () => {
     expect(r.x + r.width).toBeLessThanOrEqual(1280);
     expect(r.y + r.height).toBeLessThanOrEqual(800);
     const buttons = nav.getByRole('button');
-    await expect(buttons).toHaveCount(8);
+    await expect(buttons).toHaveCount(DESK_OBJECTS.length + 1);
     await expect(buttons.last()).toHaveText('Lamp');
     await expect(buttons.last()).toHaveAttribute('aria-pressed', /true|false/);
   });
