@@ -37,6 +37,8 @@ test.describe('section routes', () => {
     ]) {
       await drawerButton(page, label!).press('Enter');
       await expect.poll(() => path(page)).toBe(`/${slug}`);
+      // Settled: opening moves focus to the panel title just after the route changes.
+      await expect(panelTitle(page)).toBeFocused();
     }
     expect(path(page)).toBe('/contact');
     for (const [expected, title] of [
@@ -172,6 +174,7 @@ test.describe('section routes', () => {
     await gotoDesk(page, '/');
     await drawerButton(page, 'Experience').press('Enter');
     await expect.poll(() => path(page)).toBe('/experience');
+    await expect(panelTitle(page)).toBeFocused();
     await drawerButton(page, 'Contact').press('Enter');
     await expect.poll(() => path(page)).toBe('/contact');
     await page.goBack();
