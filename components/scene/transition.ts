@@ -4,16 +4,11 @@ import { CAMERAS, type SceneCamera, type Vec3 } from '@/content/scene/cameras';
 export const MOVE_MS = 900;
 export const easeOutCubic = (t: number) => 1 - (1 - t) ** 3;
 
-export type Framing = 'desktop' | 'phone';
-export type View = 'overview' | 'monitor';
+/** The seat at rest (every window shape, design 2026-11-19 §3.2), or leaned in to the monitor. */
+export type View = 'rest' | 'monitor';
 
-/** The resting camera for a view in a framing (the phone's overview is its own camera). */
-export function cameraFor(view: View, framing: Framing): SceneCamera {
-  return view === 'monitor'
-    ? CAMERAS.monitor
-    : framing === 'phone'
-      ? CAMERAS.phone
-      : CAMERAS.overview;
+export function cameraFor(view: View): SceneCamera {
+  return view === 'monitor' ? CAMERAS.monitor : CAMERAS.seat;
 }
 
 export const hfov = (c: SceneCamera) => 2 * Math.atan(c.sensorWidth / 2 / c.lens);

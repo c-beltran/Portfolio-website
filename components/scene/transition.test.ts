@@ -4,7 +4,7 @@ import { blend, cameraFor, hfov } from './transition';
 
 describe('the shared camera transition', () => {
   it('starts on the first camera and ends on the second', () => {
-    const a = CAMERAS.overview;
+    const a = CAMERAS.seat;
     const b = CAMERAS.monitor;
     expect(blend(a, b, 0).eye).toEqual(a.eye);
     expect(blend(a, b, 0).target).toEqual(a.target);
@@ -12,11 +12,12 @@ describe('the shared camera transition', () => {
     expect(blend(a, b, 1).target).toEqual(b.target);
   });
 
-  it('gives the overview its horizontal field of view', () => {
-    expect(hfov(CAMERAS.overview)).toBeCloseTo(2 * Math.atan(18 / 35), 9);
+  it('gives the seat its horizontal field of view across the master', () => {
+    expect(hfov(CAMERAS.seat)).toBeCloseTo(2 * Math.atan(18 / CAMERAS.seat.lens), 9);
   });
 
-  it('uses the phone camera for the overview on a phone', () => {
-    expect(cameraFor('overview', 'phone')).toBe(CAMERAS.phone);
+  it('rests at the seat, on every window shape (design 2026-11-19 §3.2)', () => {
+    expect(cameraFor('rest')).toBe(CAMERAS.seat);
+    expect(cameraFor('monitor')).toBe(CAMERAS.monitor);
   });
 });

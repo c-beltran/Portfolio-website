@@ -164,7 +164,6 @@ export function DeskStill({ selected, onOpen, onClose }: Props) {
           >
             <DeskPhoto mode="day" />
             <DeskPhoto mode="lamp" />
-            <LiveLayer />
             {DESK_OBJECTS.map((o) => (
               <Hotspot
                 key={o.id}
@@ -177,6 +176,7 @@ export function DeskStill({ selected, onOpen, onClose }: Props) {
             ))}
             <Hotspot item="lightbar" label="Lamp" pressed={theme === 'lamp'} onClick={toggle} />
           </div>
+          <LiveLayer />
           <div className="desk-still__overlay">
             <MonitorName />
           </div>

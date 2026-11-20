@@ -1,11 +1,15 @@
 'use client';
 
-import { CameraControls, useGLTF, useTexture } from '@react-three/drei';
+import { useGLTF, useTexture } from '@react-three/drei';
 import { Canvas, useThree } from '@react-three/fiber';
-import { Suspense, useEffect, useMemo, useRef } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { bakedMaterial, glassMaterial } from './materials';
-import { blend, cameraFor, easeOutCubic, MOVE_MS, type Framing, type View } from './transition';
+import { CAMERAS } from '@/content/scene/cameras';
+import { master, viewOffset } from '@/content/scene/framing';
+import { panOf } from '@/components/desk/pan';
+import { glanceShift, glanceTarget, useGlance, type Glance } from './glance';
+import { hfov } from './transition';
 
 const GROUPS = ['room', 'desk', 'monitor', 'props', 'screen', 'sky'] as const;
 type Group = (typeof GROUPS)[number];
@@ -96,94 +100,79 @@ function Scene({ lamp, onReady }: { lamp: boolean; onReady: () => void }) {
   return <primitive object={scene} />;
 }
 
-/** Drives the camera along the shared transition (lerpLookAt with the clips' ease-out). */
-function Rig({
-  view,
-  framing,
-  onMove,
-}: {
-  view: View;
-  framing: Framing;
-  onMove: (moving: boolean) => void;
-}) {
-  const controls = useRef<CameraControls>(null);
+/**
+ * The live seat (design 2026-11-19 §3): the seat camera framing the window exactly as the Tier 1
+ * still does. The full frustum is the seat's master render; setViewOffset cuts the window out of
+ * it with framing.ts viewOffset (the portrait pan included) plus Blender's lens shift. The glance
+ * turns the camera a few degrees, and the DOM overlays (hotspots, the name) move by the matching
+ * screen distance through --gx/--gy on .desk-still.
+ */
+function Rig() {
   const get = useThree((s) => s.get);
-  const size = useThree((s) => s.size); // re-applies the rest pose on resize
-  const last = useRef<View>(view);
+  const size = useThree((s) => s.size);
+  const glance = useRef<Glance>({ yaw: 0, pitch: 0 });
+  const still = useMemo(() => document.querySelector<HTMLElement>('.desk-still'), []);
 
-  const apply = (pose: ReturnType<typeof blend>) => {
-    const c = controls.current;
-    if (!c) return;
+  const frame = useCallback(() => {
     const { camera: cam, size, invalidate } = get();
-    const camera = cam as THREE.PerspectiveCamera;
-    c.setLookAt(...pose.eye, ...pose.target, false);
-    const aspect = size.width / size.height;
-    camera.fov = (2 * Math.atan(Math.tan(pose.hfov / 2) / aspect) * 180) / Math.PI;
-    // Blender lens shift is a fraction of the larger side; three's view offset moves the frame.
-    const big = Math.max(size.width, size.height);
+    const camera = cam as THREE.PerspectiveCamera & { manual?: boolean };
+    const seat = CAMERAS.seat;
+    const { w, h } = master();
+    const [W, H] = [size.width, size.height];
+    if (!W || !H) return;
+    const o = viewOffset(W / H, W, H, still ? panOf(still) : 0);
+    const fov = hfov(seat);
+    camera.manual = true; // R3F leaves aspect and the projection to us
+    camera.aspect = w / h;
+    camera.fov = (2 * Math.atan(Math.tan(fov / 2) / (w / h)) * 180) / Math.PI;
+    // Blender's shift is a fraction of the larger side (the master's width): +x right, +y up.
+    const big = Math.max(o.fullW, o.fullH);
     camera.setViewOffset(
-      size.width,
-      size.height,
-      -pose.shift[0] * big,
-      pose.shift[1] * -big,
-      size.width,
-      size.height,
+      o.fullW,
+      o.fullH,
+      o.x + seat.shift[0] * big,
+      o.y - seat.shift[1] * big,
+      W,
+      H,
     );
+    const g = glance.current;
+    camera.position.set(...seat.eye);
+    camera.up.set(0, 1, 0);
+    camera.lookAt(...glanceTarget(seat.eye, seat.target, g.yaw, g.pitch));
     camera.updateProjectionMatrix();
+    camera.updateMatrixWorld();
     invalidate();
-  };
+    // The overlays follow the turn: focal length in pixels of the full frame.
+    const [dx, dy] = glanceShift(g.yaw, g.pitch, o.fullW / 2 / Math.tan(fov / 2));
+    still?.style.setProperty('--gx', `${dx.toFixed(2)}px`);
+    still?.style.setProperty('--gy', `${dy.toFixed(2)}px`);
+  }, [get, still]);
 
-  // Rest pose on mount and on resize or framing change.
+  // On mount and every resize; the portrait pan re-frames on the desk's scroll.
+  useEffect(frame, [frame, size.width, size.height]);
   useEffect(() => {
-    apply(blend(cameraFor(last.current, framing), cameraFor(last.current, framing), 0));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [framing, size.width, size.height]);
-
-  useEffect(() => {
-    if (view === last.current) return;
-    const a = cameraFor(last.current, framing);
-    const b = cameraFor(view, framing);
-    last.current = view;
-    const start = performance.now();
-    let id = 0;
-    onMove(true);
-    const step = () => {
-      const t = Math.min(1, (performance.now() - start) / MOVE_MS);
-      apply(blend(a, b, easeOutCubic(t)));
-      if (t < 1) id = requestAnimationFrame(step);
-      else onMove(false);
+    if (!still) return;
+    still.addEventListener('scroll', frame, { passive: true });
+    return () => {
+      still.removeEventListener('scroll', frame);
+      still.style.removeProperty('--gx');
+      still.style.removeProperty('--gy');
     };
-    id = requestAnimationFrame(step);
-    return () => cancelAnimationFrame(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [view]);
+  }, [still, frame]);
 
-  const detached = useMemo(() => document.createElement('div'), []);
-  const NONE = 0; // CameraControls.ACTION.NONE: the camera is directed, never orbited (spec §4)
-  return (
-    <CameraControls
-      ref={controls}
-      makeDefault
-      // Connected to a detached element and disabled: camera-controls never sets touch-action or
-      // listens on the page, so scroll and pinch-zoom over the desk stay the page's. setLookAt
-      // and update still drive the camera.
-      domElement={detached}
-      enabled={false}
-      mouseButtons={{ left: NONE, middle: NONE, right: NONE, wheel: NONE }}
-      touches={{ one: NONE, two: NONE, three: NONE }}
-    />
+  useGlance(
+    useCallback(
+      (g: Glance) => {
+        glance.current = g;
+        frame();
+      },
+      [frame],
+    ),
   );
+  return null;
 }
 
-const noop = () => {};
-
-export default function LiveScene(props: {
-  view: View;
-  framing: Framing;
-  lamp: boolean;
-  onReady: () => void;
-  onMove?: (moving: boolean) => void;
-}) {
+export default function LiveScene(props: { lamp: boolean; onReady: () => void }) {
   return (
     <Canvas
       // Never a pointer target: the hotspots and the page own every pointer and touch.
@@ -200,7 +189,7 @@ export default function LiveScene(props: {
       <Suspense fallback={null}>
         <Scene lamp={props.lamp} onReady={props.onReady} />
       </Suspense>
-      <Rig view={props.view} framing={props.framing} onMove={props.onMove ?? noop} />
+      <Rig />
     </Canvas>
   );
 }

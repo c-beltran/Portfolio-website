@@ -1,5 +1,4 @@
 import { DESK_OBJECTS } from '../../content/objects';
-import { master } from '../../content/scene/framing';
 import { expect, test, type Page } from './fixtures';
 import { gotoDesk, hotspot, panelTitle, path } from './desk';
 
@@ -54,20 +53,105 @@ test('?tier=2 leaves the hotspots clickable', async ({ page }) => {
   await expect(panelTitle(page)).toBeVisible();
 });
 
-// Until the live seat (M3c Task 7) frames the window with viewOffset, the canvas covers the seat
-// master, so its shape is the master's at every window shape.
-test('?tier=2 keeps the canvas on the seat master when the window turns into a phone and back', async ({
+test('?tier=2: the canvas is the window, through a resize into a phone and back', async ({
   page,
 }) => {
-  const masterAspect = master().w / master().h;
-  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.setViewportSize({ width: 1920, height: 1080 });
   await gotoDesk(page, '/?tier=2');
   await waitLive(page);
-  await expect.poll(() => canvasAspect(page)).toBeCloseTo(masterAspect, 2);
+  const box = async () => (await canvas(page).boundingBox())!;
+  expect(await box()).toMatchObject({ x: 0, y: 0, width: 1920, height: 1080 });
   await page.setViewportSize({ width: 390, height: 844 });
-  await expect.poll(() => canvasAspect(page)).toBeCloseTo(masterAspect, 2);
+  await expect.poll(() => canvasAspect(page)).toBeCloseTo(390 / 844, 2);
   await page.setViewportSize({ width: 1280, height: 800 });
-  await expect.poll(() => canvasAspect(page)).toBeCloseTo(masterAspect, 2);
+  await expect.poll(() => canvasAspect(page)).toBeCloseTo(1280 / 800, 2);
+});
+
+/** The glance's overlay shift (design 2026-11-19 §3.1), written on .desk-still, read on the layer. */
+const gx = (page: Page) =>
+  page
+    .locator('.desk-still__layer')
+    .evaluate((el) => parseFloat(getComputedStyle(el).getPropertyValue('--gx') || '0'));
+
+test.describe('?tier=2: your head follows the cursor', () => {
+  test.skip(({ isMobile }) => isMobile, 'mouse');
+
+  test('the cursor at the right edge turns the view right, and the hotspots go with it', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1920, height: 1080 });
+    await gotoDesk(page, '/?tier=2');
+    await waitLive(page);
+    await page.mouse.move(960, 540);
+    await expect.poll(() => gx(page)).toBeCloseTo(0, 0);
+    const before = (await hotspot(page, 'kit').boundingBox())!.x;
+    const g0 = await gx(page);
+    await page.mouse.move(1915, 540);
+    // Headless WebGL (software rendering, trace capture) runs a frame or two a second here, so the
+    // damping that settles in about a second on a GPU takes longer: allow for it.
+    await expect.poll(() => gx(page), { timeout: 15_000 }).toBeLessThan(-5);
+    // The glance and the kit's place read together, from one frame, once it has settled.
+    const read = () =>
+      page.evaluate(() => ({
+        g: parseFloat(
+          getComputedStyle(document.querySelector('.desk-still__layer')!).getPropertyValue(
+            '--gx',
+          ) || '0',
+        ),
+        x: document.querySelector('.hotspot[data-item="kit"]')!.getBoundingClientRect().x,
+      }));
+    let last = await read();
+    await expect
+      .poll(
+        async () => {
+          const now = await read();
+          const settled = Math.abs(now.g - last.g) < 0.05;
+          last = now;
+          return settled;
+        },
+        { timeout: 20_000 },
+      )
+      .toBe(true);
+    expect(Math.abs(last.x - before - (last.g - g0))).toBeLessThanOrEqual(2);
+  });
+
+  test('with reduced motion there is no glance', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await gotoDesk(page, '/?tier=2');
+    await waitLive(page);
+    await page.mouse.move(5, 5);
+    await page.mouse.move(1270, 790);
+    await page.waitForTimeout(600);
+    expect(await gx(page)).toBe(0);
+  });
+});
+
+test('?tier=2: touch never turns the view', async ({ page, isMobile }) => {
+  test.skip(!isMobile, 'touch');
+  await gotoDesk(page, '/?tier=2');
+  await waitLive(page);
+  await page.touchscreen.tap(20, 300);
+  await page.locator('.desk-still').dispatchEvent('touchstart');
+  await page.locator('.desk-still').dispatchEvent('touchmove');
+  await page.waitForTimeout(600);
+  expect(await gx(page)).toBe(0);
+});
+
+test('?tier=2 in a portrait window: the live view follows the swipe', async ({
+  page,
+  isMobile,
+}) => {
+  test.skip(isMobile, 'one window size is enough');
+  await page.setViewportSize({ width: 390, height: 844 });
+  await gotoDesk(page, '/?tier=2');
+  await waitLive(page);
+  const centred = await canvas(page).screenshot();
+  await page
+    .locator('.desk-still')
+    .evaluate((el) => el.scrollTo({ left: el.scrollWidth, behavior: 'instant' }));
+  await expect.poll(async () => (await canvas(page).screenshot()).equals(centred)).toBe(false);
+  // The canvas stays on the window while the desk scrolls under it.
+  expect(await canvas(page).boundingBox()).toMatchObject({ x: 0, y: 0, width: 390, height: 844 });
 });
 
 test.describe('?tier=2 without WebGL', () => {

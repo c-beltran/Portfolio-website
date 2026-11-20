@@ -1,29 +1,12 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import {
-  Component,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-  useSyncExternalStore,
-  type ReactNode,
-} from 'react';
-import { PORTRAIT } from '@/content/deskLayout';
+import { Component, useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { forcedTier } from '@/lib/tier';
 import { useTheme } from '@/lib/useTheme';
-import type { Framing } from './transition';
 
 // Client-only, and only fetched once LiveLayer decides to mount it (spec §4).
 const LiveScene = dynamic(() => import('./LiveScene'), { ssr: false });
-
-function subscribe(onChange: () => void) {
-  const mq = matchMedia(PORTRAIT);
-  mq.addEventListener('change', onChange);
-  return () => mq.removeEventListener('change', onChange);
-}
-const framing = (): Framing => (matchMedia(PORTRAIT).matches ? 'phone' : 'desktop');
 
 /**
  * Any failure inside the scene (no context after all, a missing GLB or texture, a shader error)
@@ -54,7 +37,8 @@ const hasWebGL2 = () => {
 };
 
 /**
- * The live scene over the still and under the hotspots (M3b preview, `?tier=2`). It mounts on
+ * The live seat over the still and under the hotspots (`?tier=2`), the size of the window: in a
+ * portrait window it stays put while the desk scrolls under it (globals.css). It mounts on
  * browser idle, fades in once its first frame is ready, and steps aside on context loss, so the
  * still is always there underneath. It never takes a pointer event.
  */
@@ -62,7 +46,6 @@ export function LiveLayer() {
   const [on, setOn] = useState(false);
   const [ready, setReady] = useState(false);
   const { theme } = useTheme();
-  const view = useSyncExternalStore(subscribe, framing, () => 'desktop' as Framing);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -96,7 +79,7 @@ export function LiveLayer() {
   return (
     <div ref={ref} className="desk-still__live" data-ready={ready} data-lamp={theme === 'lamp'}>
       <Fallback onError={lost}>
-        <LiveScene view="overview" framing={view} lamp={theme === 'lamp'} onReady={onReady} />
+        <LiveScene lamp={theme === 'lamp'} onReady={onReady} />
       </Fallback>
     </div>
   );
