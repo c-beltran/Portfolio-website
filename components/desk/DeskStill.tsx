@@ -63,16 +63,25 @@ function DeskPhoto({ mode }: { mode: 'day' | 'lamp' }) {
             type={`image/${ext}`}
             srcSet={srcSet(c, mode, ext)}
             sizes={sizes(c)}
+            // Each crop's own shape, so the hidden lamp image is judged by the crop it will show.
+            width={px(c.rect, SAFE_PX[0]!)[0]}
+            height={px(c.rect, SAFE_PX[0]!)[1]}
           />
         )),
       )}
-      <source type="image/avif" srcSet={srcSet(DEFAULT, mode, 'avif')} sizes={sizes(DEFAULT)} />
+      <source
+        type="image/avif"
+        srcSet={srcSet(DEFAULT, mode, 'avif')}
+        sizes={sizes(DEFAULT)}
+        width={w}
+        height={h}
+      />
       <img
         src={`/stills/seat-b0-${mode}-${w}.webp`}
         srcSet={srcSet(DEFAULT, mode, 'webp')}
         sizes={sizes(DEFAULT)}
-        width={w}
-        height={h}
+        // No width/height: globals.css sizes it to its crop (so nothing shifts), and a hidden lamp
+        // image would otherwise be judged by band 0's shape.
         alt=""
         // Day is the LCP. The lamp render is display: none until lamp mode, and lazy, so day
         // visitors never download it.

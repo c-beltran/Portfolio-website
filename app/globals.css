@@ -523,7 +523,12 @@ html:has(.desk-still) body {
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
 }
 
+/*
+ * The system's own font: the hint reads as the device's prompt, and it never waits on (or swaps
+ * to) the site's web fonts, so the late swap can't make it the page's largest paint.
+ */
 .turn-hint__card p {
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   margin: 10px 0 0;
   font-size: 17px;
   font-weight: 600;
