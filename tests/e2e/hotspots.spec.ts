@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 import { INTERACTIVE, LAYOUT } from '../../content/deskLayout';
 import { master, viewOffset } from '../../content/scene/framing';
 import { DESK_OBJECTS } from '../../content/objects';

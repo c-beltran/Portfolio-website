@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from './fixtures';
 import seat from '../../content/scene/bounds-seat.json' with { type: 'json' };
 import { viewOffset } from '../../content/scene/framing';
 import { DESK_OBJECTS } from '../../content/objects';

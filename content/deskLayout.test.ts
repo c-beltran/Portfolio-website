@@ -3,10 +3,12 @@ import {
   HOTSPOT_STACK,
   hotspotVars,
   INTERACTIVE,
+  labelFocusCss,
   LAYOUT,
   PORTRAIT,
   type DeskItemId,
 } from './deskLayout';
+import { DESK_OBJECTS } from './objects';
 import { collidingPairs, type SceneBounds } from './scene/bounds';
 import seat from './scene/bounds-seat.json';
 import { master, PORTRAIT as FRAMING_PORTRAIT, visible } from './scene/framing';
@@ -86,5 +88,19 @@ describe('hotspotVars', () => {
     expect(num('w')).toBeCloseTo(b.w, 2);
     expect(num('h')).toBeCloseTo(b.h, 2);
     expect(v['--z']).toBe(String(HOTSPOT_STACK[id]));
+  });
+});
+
+describe('labelFocusCss', () => {
+  it("shows an object's label while its Sections button has keyboard focus (and the lamp's)", () => {
+    const css = labelFocusCss();
+    for (const o of DESK_OBJECTS)
+      expect(css).toContain(
+        `.desk:has(.drawer__button[data-slug='${o.slug}']:focus) .hotspot[data-slug='${o.slug}'] .sticker`,
+      );
+    expect(css).toContain(
+      `.desk:has(.drawer__button--lamp:focus) .hotspot[data-item='lightbar'] .sticker`,
+    );
+    expect(css).toMatch(/\{\s*opacity: 1;\s*\}$/);
   });
 });

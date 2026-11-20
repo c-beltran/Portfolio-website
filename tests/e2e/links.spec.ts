@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 
 /**
  * Every same-origin link on these pages resolves (no dead résumé button, no broken routes). The

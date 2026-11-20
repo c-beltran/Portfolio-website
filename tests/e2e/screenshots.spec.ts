@@ -1,4 +1,4 @@
-import { test } from '@playwright/test';
+import { test } from './fixtures';
 
 /** Review screenshots for the milestone report. Run only in CI's screenshot step (@screens). */
 for (const theme of ['day', 'lamp'] as const) {

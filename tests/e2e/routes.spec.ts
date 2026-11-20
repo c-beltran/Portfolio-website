@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from './fixtures';
 import { DESK_OBJECTS } from '../../content/objects';
 import { titleFor } from '../../lib/deskRoutes';
 

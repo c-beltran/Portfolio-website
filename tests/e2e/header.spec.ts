@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 import { CAREER_START, yearsSince } from '../../lib/dates';
 
 /** e2e runs against out/; set the same NEXT_PUBLIC_VERCEL_ENV the build used. */

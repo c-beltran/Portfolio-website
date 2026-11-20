@@ -1,6 +1,6 @@
 import { DESK_OBJECTS } from '../../content/objects';
 import { master } from '../../content/scene/framing';
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from './fixtures';
 import { gotoDesk, hotspot, panelTitle, path } from './desk';
 
 /** The live scene (spec §4): product code under /scene, the M3b lab gone. */

@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 import { DESK_OBJECTS } from '../../content/objects';
 import { clickFelt, desk, drawerButton, gotoDesk, hotspot, panelTitle, path } from './desk';
 

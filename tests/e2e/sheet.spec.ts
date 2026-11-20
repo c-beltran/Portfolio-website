@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from './fixtures';
 import { desk, gotoDesk, hotspot, panelTitle, path } from './desk';
 
 const panel = (page: Page) => page.locator('section.panel');

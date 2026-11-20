@@ -15,6 +15,7 @@ import { LiveLayer } from '@/components/scene/LiveLayer';
 import { Hotspot } from './Hotspot';
 import { MonitorName } from './MonitorName';
 import { CENTRE_SCRIPT, panOf, setPan } from './pan';
+import { useLabels } from './useLabels';
 
 type Props = {
   selected: SectionSlug | null;
@@ -123,7 +124,9 @@ function useKeptPan(ref: RefObject<HTMLDivElement | null>) {
 export function DeskStill({ selected, onOpen, onClose }: Props) {
   const { theme, toggle } = useTheme();
   const still = useRef<HTMLDivElement>(null);
+  const layer = useRef<HTMLDivElement>(null);
   useKeptPan(still);
+  useLabels(layer, selected);
 
   // Once the page is idle, fetch the lamp render (lazy until now, to keep it off the LCP path),
   // so the first switch to lamp mode cross-fades at once.
@@ -152,6 +155,7 @@ export function DeskStill({ selected, onOpen, onClose }: Props) {
         <p className="visually-hidden">{deskDescription()}</p>
         <div className="desk-stage">
           <div
+            ref={layer}
             className="desk-still__layer"
             aria-hidden="true"
             onClick={onLayerClick}

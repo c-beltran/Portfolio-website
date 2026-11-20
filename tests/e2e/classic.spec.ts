@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 import { FACT_IDS } from '../../content/factIds';
 import { SECTION_SLUGS } from '../../content/objects';
 

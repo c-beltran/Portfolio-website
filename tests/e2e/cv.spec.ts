@@ -1,5 +1,5 @@
 import AxeBuilder from '@axe-core/playwright';
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 import { titleFor } from '../../lib/deskRoutes';
 import { gotoDesk, hotspot, panelTitle, path } from './desk';
 

@@ -1,4 +1,4 @@
-import type { DeskObject } from './objects';
+import { DESK_OBJECTS, type DeskObject } from './objects';
 import type { SceneBounds } from './scene/bounds';
 import seatBounds from './scene/bounds-seat.json' with { type: 'json' };
 
@@ -74,4 +74,19 @@ export function hotspotVars(id: DeskItemId): Record<`--${string}`, string> {
     '--h': num(b.h),
     '--z': String(HOTSPOT_STACK[id]),
   };
+}
+
+/**
+ * Labels for the keyboard (design §3.3): an object's tape label shows while its Sections button has
+ * focus, under the same rule that shows the Sections card (not after a pointer or touch).
+ * Generated from the objects, so it works without JavaScript.
+ */
+export function labelFocusCss(): string {
+  const on = ":root:not([data-input='pointer'])";
+  const rules = DESK_OBJECTS.map(
+    (o) =>
+      `${on} .desk:has(.drawer__button[data-slug='${o.slug}']:focus) .hotspot[data-slug='${o.slug}'] .sticker`,
+  );
+  rules.push(`${on} .desk:has(.drawer__button--lamp:focus) .hotspot[data-item='lightbar'] .sticker`);
+  return `${rules.join(',\n')} {\n  opacity: 1;\n}`;
 }

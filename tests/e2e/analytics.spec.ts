@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from './fixtures';
 
 /** Page views the Vercel Analytics component queued (the local server has no beacon endpoint). */
 const pageviews = (page: Page) =>

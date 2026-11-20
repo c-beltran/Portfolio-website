@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 
 for (const route of ['/', '/potaflow', '/classic']) {
   test(`${route} loads with no failed requests`, async ({ page }) => {

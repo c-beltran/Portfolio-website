@@ -391,8 +391,14 @@ html:has(.desk-still) body {
   transform-origin: 50% 50%;
 }
 
-/* The tape label: one size on every object, from the scale (about 1% of the safe frame's width). */
+/*
+ * The tape label: one size on every object, from the scale (about 1% of the safe frame's width).
+ * Hidden at rest; it appears where you look (design §3.3, components/desk/useLabels.ts): near the
+ * pointer, on hover, on the open object, during the touch intro, and for keyboard focus in the
+ * Sections list (labelFocusCss, inlined in <head>).
+ */
 .sticker {
+  opacity: 0;
   position: absolute;
   left: 50%;
   bottom: 4px;
@@ -408,9 +414,19 @@ html:has(.desk-still) body {
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
 }
 
+.hotspot[data-near] .sticker,
+.hotspot[data-slug][aria-pressed='true'] .sticker,
+.desk-still__layer[data-intro] .sticker {
+  opacity: 1;
+}
+
 @media (hover: hover) {
   .hotspot:hover {
     box-shadow: inset 0 0 0 2px var(--sticker);
+  }
+
+  .hotspot:hover .sticker {
+    opacity: 1;
   }
 }
 
@@ -456,8 +472,116 @@ html:has(.desk-still) body {
 
   .sticker {
     transition:
+      opacity 0.2s ease,
       box-shadow 0.35s ease,
       transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+}
+
+/*
+ * ---- Turn your phone sideways (design §3.5, components/desk/TurnHint.tsx). Only on an upright
+ * touch screen (PORTRAIT, content/scene/framing.ts) and only until html[data-hint-seen]: one 4 s
+ * animation, fade in 0.3 s, hold, fade out 0.6 s, ending hidden. ----
+ */
+.turn-hint {
+  display: none;
+}
+
+@media (pointer: coarse) and (max-aspect-ratio: 6/5) {
+  :root:not([data-hint-seen]) .turn-hint {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    background: rgba(12, 10, 8, 0.62);
+    animation: turn-hint 4s ease both;
+  }
+
+  :root:not([data-hint-seen]) .turn-hint[data-closing] {
+    animation: turn-hint-out 0.3s ease forwards;
+  }
+}
+
+.turn-hint__card {
+  max-width: 300px;
+  padding: 22px 22px 20px;
+  border-radius: 18px;
+  background: var(--surface);
+  color: var(--ink);
+  text-align: center;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+}
+
+.turn-hint__card p {
+  margin: 10px 0 0;
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.turn-hint__phone {
+  display: block;
+  margin: 0 auto;
+  animation: turn-hint-phone 1.6s ease-in-out 0.4s both;
+}
+
+@keyframes turn-hint {
+  0% {
+    opacity: 0;
+    visibility: visible;
+  }
+  7.5%,
+  85% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+@keyframes turn-hint-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes turn-hint-phone {
+  0%,
+  20% {
+    transform: rotate(0deg);
+  }
+  60%,
+  100% {
+    transform: rotate(-90deg);
+  }
+}
+
+/* Reduced motion: no fade and no turning; it shows, then goes. */
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-hint-seen]) .turn-hint {
+    animation: turn-hint-still 4s step-end both;
+  }
+
+  .turn-hint__phone {
+    animation: none;
+    transform: rotate(-90deg);
+  }
+}
+
+@keyframes turn-hint-still {
+  0% {
+    opacity: 1;
+    visibility: visible;
+  }
+  100% {
+    opacity: 0;
+    visibility: hidden;
   }
 }
 

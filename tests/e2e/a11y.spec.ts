@@ -1,5 +1,5 @@
 import AxeBuilder from '@axe-core/playwright';
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 import { SECTION_SLUGS } from '../../content/objects';
 
 const ROUTES = ['/', ...SECTION_SLUGS.map((s) => `/${s}`), '/classic', '/nope'];
