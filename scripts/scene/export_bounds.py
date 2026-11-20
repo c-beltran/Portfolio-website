@@ -15,14 +15,25 @@ badge and phone.
 
 import argparse
 import json
+import os
 import sys
 
 import bpy
 from bpy_extras.object_utils import world_to_camera_view
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import framing  # noqa: E402
+
 OBJECTS = ["obj_monitor", "obj_kit", "obj_phone", "obj_badge", "obj_photo", "obj_notepad", "obj_card", "obj_lightbar"]
 # Camera and still resolution per view (matching render.py).
-VIEWS = {"overview": ("cam_overview", 2560, 1440), "phone": ("cam_phone", 1080, 1080)}
+VIEWS = {
+    "overview": ("cam_overview", 2560, 1440),
+    "phone": ("cam_phone", 1080, 1080),
+    # The seat: boxes normalised to the master (framing.py).
+    "seat": (framing.CAMERA, *framing.resolution()),
+}
+# --check-safe: every object inside the safe frame, inset by this share of its size on each side.
+SAFE_INSET = 0.02
 MIN_TARGET = 44
 MAX_WIDTH = 4000
 
@@ -32,6 +43,7 @@ def args():
     p = argparse.ArgumentParser()
     p.add_argument("--camera", choices=list(VIEWS), default="overview")
     p.add_argument("--out", required=True)
+    p.add_argument("--check-safe", action="store_true", help="fail unless every object is inside the safe frame")
     return p.parse_args(argv)
 
 
@@ -94,6 +106,22 @@ def min_free_width(boxes, aspect):
     return free
 
 
+def check_safe(boxes):
+    """Exit non-zero unless every box lies inside the safe frame, inset by SAFE_INSET."""
+    _, _, safe = framing.master()
+    dx = (safe["x1"] - safe["x0"]) * SAFE_INSET
+    dy = (safe["y1"] - safe["y0"]) * SAFE_INSET
+    lo_x, lo_y, hi_x, hi_y = safe["x0"] + dx, safe["y0"] + dy, safe["x1"] - dx, safe["y1"] - dy
+    bad = [k for k, b in boxes.items() if b["x0"] < lo_x or b["y0"] < lo_y or b["x1"] > hi_x or b["y1"] > hi_y]
+    to_safe = lambda v, lo, hi: (v - lo) / (hi - lo)
+    for k, b in boxes.items():
+        print(f"  {k:14s} in safe frame: x {to_safe(b['x0'], safe['x0'], safe['x1']):+.3f}..{to_safe(b['x1'], safe['x0'], safe['x1']):+.3f}"
+              f"  y {to_safe(b['y0'], safe['y0'], safe['y1']):+.3f}..{to_safe(b['y1'], safe['y0'], safe['y1']):+.3f}")
+    if bad:
+        raise SystemExit(f"outside the safe frame (inset {SAFE_INSET:.0%}): {', '.join(bad)}")
+    print("all objects inside the safe frame")
+
+
 def main():
     a = args()
     scene = bpy.context.scene
@@ -109,6 +137,10 @@ def main():
         json.dump(data, f, indent=2)
         f.write("\n")
     print(f"wrote {a.out}; minCollisionFreeWidth = {width}")
+    if a.check_safe:
+        if a.camera != "seat":
+            raise SystemExit("--check-safe applies to the seat camera only")
+        check_safe(boxes)
     for w in ((320, 360, 390, 430) if a.camera == "phone" else (500, 720, 1024, 1440)):
         print(f"  at {w}px: {colliding(boxes, w, aspect) or 'no overlaps'}")
     if width is None:

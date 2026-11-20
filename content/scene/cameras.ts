@@ -15,7 +15,7 @@ export type SceneCamera = {
   shift: [number, number];
 };
 
-export const CAMERAS = data as Record<'overview' | 'phone' | 'monitor', SceneCamera>;
+export const CAMERAS = data as Record<'overview' | 'phone' | 'monitor' | 'seat', SceneCamera>;
 
 /** three.js PerspectiveCamera.fov (vertical, degrees) for a frame of this width / height. */
 export function verticalFov(cam: SceneCamera, aspect: number): number {

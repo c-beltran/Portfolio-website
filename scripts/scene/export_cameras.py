@@ -14,7 +14,7 @@ import sys
 import bpy
 from mathutils import Vector
 
-CAMERAS = {"overview": "cam_overview", "phone": "cam_phone", "monitor": "cam_monitor"}
+CAMERAS = {"overview": "cam_overview", "phone": "cam_phone", "monitor": "cam_monitor", "seat": "cam_seat"}
 # The target is a point on the view axis this far ahead (the scene's targets are 1-1.5 m away).
 TARGET_DISTANCE = 1.0
 

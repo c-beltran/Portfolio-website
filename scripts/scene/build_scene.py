@@ -391,7 +391,27 @@ def build_cameras(coll):
         half_fov = math.atan(36 / 2 / 35)
         back = ((hi.x - lo.x) / 0.8) / 2 / math.tan(half_fov)
         cam("cam_monitor", Vector((centre.x, lo.y - back, centre.z)), centre, 35, 36)
+    build_seat_cameras(cam)
     bpy.context.scene.camera = overview
+
+
+# The seat (design 2026-11-19 §3), approved by Carlos on 2026-11-20: his eye in his chair, 0.52 m
+# back from the desk edge, in front of the keyboard. The camera renders the master (framing.py); its
+# axis is the safe frame's centre, so the safe frame lands on the master's bottom edge. Portrait
+# windows pan across the same master, so there is no portrait camera.
+SEAT_EYE = Vector((-0.03, -0.85, 1.30))
+SEAT_PITCH = 22.5  # degrees down
+SEAT_SAFE_HFOV = 73.5  # degrees, across the safe frame
+
+
+def build_seat_cameras(cam):
+    import framing
+
+    p = math.radians(SEAT_PITCH)
+    target = SEAT_EYE + Vector((0, math.cos(p), -math.sin(p)))
+    sensor, lens, sx, sy = framing.camera_for(math.radians(SEAT_SAFE_HFOV))
+    o = cam(framing.CAMERA, SEAT_EYE, target, lens, sensor)
+    o.data.shift_x, o.data.shift_y = sx, sy
 
 
 # ---------------------------------------------------------------- materials and lights

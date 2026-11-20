@@ -194,14 +194,15 @@ def _save(name, px):
 
 
 def editor_image(w=3440, h=1440, seed=7):
-    """Editor with a file tree and code-coloured line blocks on the left, a light document on
-    the right: the shape of the reference screen, with no readable text."""
+    """Editor with a file tree and code-coloured line blocks on the left half; the right half is
+    a blank paper page, where the site lays Carlos's name in HTML (design 2026-11-19 §4.2: the
+    monitor's right half is his CV screen). No readable text in the image."""
     rng = np.random.default_rng(seed)
     px = np.zeros((h, w, 4))
     px[..., 3] = 1
     hexc = lambda s: np.array(srgb(s))
     px[..., :3] = hexc("#1E1F22")
-    split = int(w * 0.62)
+    split = w // 2
     px[:, :int(w * 0.11), :3] = hexc("#2B2D30")  # file tree
     px[:, split:, :3] = hexc("#F3F3F1")  # document pane
     px[: int(h * 0.035), :, :3] = hexc("#2B2D30")  # title bar
@@ -221,11 +222,6 @@ def editor_image(w=3440, h=1440, seed=7):
                 break
             px[y : y + line_h, x : x + tw, :3] = palette[int(rng.integers(0, len(palette)))]
             x += tw + int(w * 0.006)
-        # document: grey prose lines, darker headings
-        if rng.random() > 0.12:
-            dx = split + int(w * 0.03)
-            dw = int(rng.integers(int(w * 0.15), int(w * 0.33)))
-            px[y : y + line_h, dx : dx + dw, :3] = hexc("#2F3337") if rng.random() < 0.12 else hexc("#A9ABAE")
         y += gap
     return _save("screen_monitor", px)
 
