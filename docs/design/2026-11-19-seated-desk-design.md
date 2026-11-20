@@ -60,17 +60,29 @@ The page is no longer a desk shown inside a page. The browser window _is_ the vi
 **The camera checkpoint (my call).** Carlos chose C from a crop of today's overview render: scaled 1.32× about a point 50% across and 78% down. The mockups are kept in `docs/private/design/seated/mockups/`.
 
 - That crop gives the feel, not exact camera numbers.
-- So phase 1 starts with a look test: one Cycles render from `cam_seat` and one from `cam_seat_phone`, day mode. Carlos approves them before anything that depends on the cameras (stills, bounds, residual).
+- So phase 1 starts with a look test: Cycles renders from the seat, day mode. Carlos approves them before anything that depends on the cameras (stills, bounds, residual).
 - This follows spec §9, where the phone framing is Carlos's to approve.
+- **Result (Carlos, 2026-11-20):** "the 16:9 view for most monitors is best not everyone has ultrawide."
+  - The wide seat stands as rendered: eye 0.52 m back from the desk edge at seated height, pitched 22.5° down.
+  - 16:9 is the reference view. It is tuned and reviewed first.
+  - **(my call)** Ultrawide windows keep the overscan (3.2), but nothing is tuned for them. It costs a 16:9 visitor nothing, because each band's still only downloads at its own window shapes.
+  - For phones Carlos chose C, straight ahead with a sideways swipe (3.2), and asked for the turn-sideways hint (3.5).
 
 ### 3.2 Screen shapes (my call)
 
 The framing is chosen by the window's aspect ratio (width ÷ height), not by its pixel width.
 
-- **Portrait or near-square windows (aspect below 1.2)** use the portrait seat camera `cam_seat_phone`. This covers phones, portrait tablets and narrow desktop windows.
-  - The camera is slightly further back and wider, so all seven objects and the light bar stay in frame and reachable.
+- **Portrait or near-square windows (aspect up to 1.2) look straight ahead from the same seat. (Carlos, 2026-11-20: option C.)** This covers phones, portrait tablets and narrow desktop windows.
+  - Why: the desk is about 1.15 m wide and 0.8 m deep. A portrait window can't hold all of it and still be filled with desk. With every object in view, the desk filled only the lower third of a phone.
+  - The view is the wide seat's safe frame at full window height: the light bar at the top, the desk edge at the bottom, centred on the keyboard and monitor.
+  - A sideways swipe turns the view left (laptop, notepad) or right (mug, card), as far as the safe frame's edges.
+  - **(my call)** The swipe is the page's own horizontal scroll over the still. It works without JavaScript and has native momentum, and the hotspots move with the picture. A trackpad or Shift+wheel scrolls it in a narrow desktop window.
+    - A one-line inline script centres the view before first paint. Without JavaScript the view starts at the left edge.
+  - In Tier 2 the live view follows the same scroll (`setViewOffset` reads it), so live and still match at every position.
+  - The swipe is a scroll, not the glance. Touch still never drives the glance (3.1).
+  - There is one seat camera, `cam_seat`, and one master render. The portrait camera `cam_seat_phone` is dropped.
   - The `PORTRAIT` query in `content/deskLayout.ts` changes from `(max-width: 719px) and (orientation: portrait)` to `(max-aspect-ratio: 6/5)`. The panel layout (object on top, panel below) follows the same query.
-- **Every wider window (1.2 and up)** uses `cam_seat`. The still and the live view are cropped to the window ("cover"), anchored so the monitor stays centred and the desk edge stays at the bottom.
+- **Every wider window (above 1.2)** uses `cam_seat` with the whole desk in view. The still and the live view are cropped to the window ("cover"), anchored so the monitor stays centred and the desk edge stays at the bottom.
   - The master still is rendered with overscan: wide enough to fill 32:9 and tall enough to fill 1.2:1, with extra wall above and desk to the sides.
   - Any window in that range crops into real rendered pixels and never cuts past the outermost interactive object (the notepad on the left, the mug and coaster on the right).
   - Landscape phones (about 2.2:1 in Safari) are in that range.
@@ -81,6 +93,7 @@ The framing is chosen by the window's aspect ratio (width ÷ height), not by its
 
 - At rest the desk is clean. A tape label fades in as the cursor comes near an object, the way your eye settles on something.
 - **On touch screens**, all labels show for a moment on arrival (about 2 s), then fade. **(my call)** They come back for a moment after about 8 s with no touch, until the visitor first opens something.
+  - When the turn-sideways hint (3.5) shows, the label intro starts as the hint fades.
 - **On keyboard focus**, the focused object's label shows.
 - This replaces spec §2 "Discoverability (amended)", which had labels always visible on a first visit.
 
@@ -91,6 +104,22 @@ The framing is chosen by the window's aspect ratio (width ÷ height), not by its
   - There is no glance in Tier 1.
 - **Tier 2** is the live scene. It takes over with no visual jump, as today, and adds the glance and the 3D "comes to you" moments.
 - **Tier 0** (`/classic`) is unchanged.
+
+### 3.5 Turn your phone sideways (Carlos, 2026-11-20)
+
+Carlos: "we should detect if user is on a mobile device and have an indicator to use landscape mode to view this better. for example they visit and load the website in the first 3-5 secods we grayout the site and have an indicator to use landscape mode for better experience then goes away."
+
+- On arrival on a touch screen held upright, the desk grays out. A card in the middle shows a phone turning sideways, with "Turn your phone sideways to see the whole desk, or swipe to look around." This is placeholder copy.
+- It fades away by itself after about 4 s.
+- **(my call)** The details:
+  - "Mobile device" is detected with the browser's own media queries: a touch pointer (`pointer: coarse`) and a window up to 1.2 wide (`PORTRAIT`). There is no user-agent sniffing.
+    - A narrow desktop window with a mouse never sees the hint, and neither does a phone already held sideways.
+  - It shows once per visit, remembered for the browser tab's session.
+  - It shows only on the desk itself. A direct load of a section route, which opens with its panel, skips it.
+  - A tap anywhere dismisses it early. That tap only dismisses the hint and never opens what's underneath.
+  - It is CSS, so it works in Tier 1 without JavaScript. It doesn't delay the still, which paints underneath, and it moves nothing, so there is no layout shift.
+  - With reduced motion there is no fade and no turning animation. It simply shows and hides.
+  - It is hidden from screen readers (`aria-hidden`). It is advice about the picture, and everything is equally reachable upright.
 
 ## 4. When the visitor clicks an object
 
@@ -155,7 +184,7 @@ The framing is chosen by the window's aspect ratio (width ÷ height), not by its
 
 **Cameras**
 
-- New Blender cameras `cam_seat` (wide) and `cam_seat_phone` (portrait) are added to the `.blend` and to `content/scene/cameras`.
+- One new Blender camera, `cam_seat`, is added to the `.blend` and to `content/scene/cameras`. Portrait windows look through it too (3.2).
 - Each object gets an "opened" pose, which is a pose for the object, not for the camera. The monitor keeps a camera lean-in (`cam_monitor`, re-aimed from the seat).
 
 **Animation**
@@ -202,7 +231,8 @@ The framing is chosen by the window's aspect ratio (width ÷ height), not by its
    - Your name and title on the monitor's right half at rest (4.2), with `/cv` built behind it.
    - The residual match at the seat.
    - LCP measured.
-   - Review: screenshots at desktop, ultrawide and phone, day and lamp, plus a short screen recording of the glance.
+   - The turn-sideways hint (3.5).
+   - Review: screenshots at desktop (16:9 first), ultrawide and phone (centred and swiped to each side), day and lamp, the hint, plus a short screen recording of the glance.
 2. **Coming forward.**
    - The shared open and close moment (4.1) with the dim, the panel beside it, routes and focus.
    - Built first on the kit case (lid, gauge, screwdriver, generic certificate) and the phone (rotate and placeholder clip).
@@ -233,3 +263,4 @@ The framing is chosen by the window's aspect ratio (width ÷ height), not by its
   - Lighthouse CI switches to devtools throttling (`throttlingMethod: "devtools"` in `lighthouserc.json`). The thresholds stay unchanged: LCP ≤ 2.0 s and Performance ≥ 90.
   - This is done in phase 1, with the LCP before and after reported in phase 1's review.
   - The approval covers this one change. Any other change to the gates still needs Carlos's OK.
+- **Q-C: the phone framing (spec §9). Decided (Carlos, 2026-11-20):** option C, straight ahead with a sideways swipe, plus the turn-sideways hint (see 3.2 and 3.5). The wide seat was approved with 16:9 as the reference view (3.1).
