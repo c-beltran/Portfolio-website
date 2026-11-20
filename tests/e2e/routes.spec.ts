@@ -19,7 +19,7 @@ test.describe('section routes', () => {
   for (const obj of DESK_OBJECTS) {
     test(`opening ${obj.label} sets the route, title, panel and focus`, async ({ page }) => {
       await gotoDesk(page, '/');
-      await drawerButton(page, obj.label).click();
+      await drawerButton(page, obj.label).press('Enter');
       expect(path(page)).toBe(`/${obj.slug}`);
       await expect(page).toHaveTitle(titleFor(obj.slug));
       await expect(panelTitle(page)).toBeVisible();
@@ -30,8 +30,13 @@ test.describe('section routes', () => {
 
   test('Back walks through opened sections in order, then to the overview', async ({ page }) => {
     await gotoDesk(page, '/');
-    for (const label of ['Experience', 'Potaflow', 'Contact']) {
-      await drawerButton(page, label).click();
+    for (const [label, slug] of [
+      ['Experience', 'experience'],
+      ['Potaflow', 'potaflow'],
+      ['Contact', 'contact'],
+    ]) {
+      await drawerButton(page, label!).press('Enter');
+      await expect.poll(() => path(page)).toBe(`/${slug}`);
     }
     expect(path(page)).toBe('/contact');
     for (const [expected, title] of [
@@ -56,8 +61,8 @@ test.describe('section routes', () => {
     const start = await historyLength(page);
     await page.keyboard.press('Escape');
     expect(await historyLength(page)).toBe(start);
-    await drawerButton(page, 'Potaflow').click();
-    await drawerButton(page, 'Potaflow').click();
+    await drawerButton(page, 'Potaflow').press('Enter');
+    await drawerButton(page, 'Potaflow').press('Enter');
     expect(await historyLength(page)).toBe(start + 1);
   });
 
@@ -65,7 +70,7 @@ test.describe('section routes', () => {
     page,
   }) => {
     await gotoDesk(page, '/');
-    await drawerButton(page, 'Power Walk').click();
+    await drawerButton(page, 'Power Walk').press('Enter');
     await page.keyboard.press('Escape');
     await expect.poll(() => path(page)).toBe('/');
     await expect(panelTitle(page)).toHaveCount(0);
@@ -98,24 +103,21 @@ test.describe('section routes', () => {
     );
   });
 
-  test('keyboard order: header, then the drawer, then the panel', async ({ page }) => {
+  test('keyboard order: the Sections list first (every section, then Lamp), then the panel', async ({
+    page,
+  }) => {
     await gotoDesk(page, '/');
     const names: string[] = [];
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < DESK_OBJECTS.length + 1; i++) {
       await page.keyboard.press('Tab');
       names.push(
         await page.evaluate(() => {
           const el = document.activeElement as HTMLElement | null;
-          return `${el?.closest('header') ? 'header' : el?.closest('nav') ? 'drawer' : 'other'}:${el?.textContent?.trim()}`;
+          return `${el?.closest('nav') ? 'drawer' : 'other'}:${el?.textContent?.trim()}`;
         }),
       );
     }
-    const firstDrawer = names.findIndex((n) => n.startsWith('drawer:'));
-    expect(firstDrawer).toBeGreaterThan(0);
-    expect(names.slice(0, firstDrawer).every((n) => n.startsWith('header:'))).toBe(true);
-    expect(names.slice(firstDrawer, firstDrawer + DESK_OBJECTS.length)).toEqual(
-      DESK_OBJECTS.map((o) => `drawer:${o.label}`),
-    );
+    expect(names).toEqual([...DESK_OBJECTS.map((o) => `drawer:${o.label}`), 'drawer:Lamp']);
     await drawerButton(page, 'Contact').focus();
     await page.keyboard.press('Enter');
     await expect(panelTitle(page)).toBeFocused();
@@ -123,11 +125,8 @@ test.describe('section routes', () => {
 
   test('leaving the desk and pressing Back restores the panel for that URL', async ({ page }) => {
     await gotoDesk(page, '/');
-    await drawerButton(page, 'Potaflow').click();
-    await page
-      .getByRole('banner')
-      .getByRole('link', { name: /Classic version/ })
-      .click();
+    await drawerButton(page, 'Potaflow').press('Enter');
+    await page.goto('/classic');
     await expect(page).toHaveURL(/\/classic$/);
     await page.goBack();
     expect(path(page)).toBe('/potaflow');
@@ -141,10 +140,7 @@ test.describe('section routes', () => {
   }) => {
     await gotoDesk(page, '/potaflow');
     await page.getByRole('button', { name: 'Back to desk' }).click();
-    await page
-      .getByRole('banner')
-      .getByRole('link', { name: /Classic version/ })
-      .click();
+    await page.goto('/classic');
     await expect(page).toHaveURL(/\/classic$/);
     await page.goBack();
     expect(path(page)).toBe('/');
@@ -164,7 +160,7 @@ test.describe('section routes', () => {
     page,
   }) => {
     await gotoDesk(page, '/');
-    await drawerButton(page, 'About').click();
+    await drawerButton(page, 'About').press('Enter');
     await expect(panelTitle(page)).toBeFocused();
     await page.goBack();
     await expect(drawerButton(page, 'About')).toBeFocused();
@@ -174,8 +170,10 @@ test.describe('section routes', () => {
     page,
   }) => {
     await gotoDesk(page, '/');
-    await drawerButton(page, 'Experience').click();
-    await drawerButton(page, 'Contact').click();
+    await drawerButton(page, 'Experience').press('Enter');
+    await expect.poll(() => path(page)).toBe('/experience');
+    await drawerButton(page, 'Contact').press('Enter');
+    await expect.poll(() => path(page)).toBe('/contact');
     await page.goBack();
     await expect(panelTitle(page)).toContainText('Same desk');
     await page.keyboard.press('Escape');
@@ -195,11 +193,13 @@ test.describe('section routes', () => {
     expect(await historyLength(page)).toBe(start + 1);
   });
 
-  test('Tab moves from the drawer into the open panel', async ({ page }) => {
+  test('Tab moves from the end of the Sections list (Lamp) into the open panel', async ({
+    page,
+  }) => {
     await gotoDesk(page, '/');
-    await drawerButton(page, 'Contact').click();
+    await drawerButton(page, 'Contact').press('Enter');
     await expect(panelTitle(page)).toBeFocused();
-    await drawerButton(page, 'Contact').focus();
+    await drawerButton(page, 'Lamp').focus();
     await page.keyboard.press('Tab');
     const inPanel = await page.evaluate(() => !!document.activeElement?.closest('section.panel'));
     expect(inPanel).toBe(true);

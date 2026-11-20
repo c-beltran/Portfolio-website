@@ -16,7 +16,7 @@ test('opening a section, going Back and visiting /classic each send a page view'
   await page
     .getByRole('navigation', { name: 'Sections' })
     .getByRole('button', { name: 'Potaflow' })
-    .click();
+    .press('Enter');
   await expect.poll(async () => (await pageviews(page)).at(-1)).toBe('/potaflow');
   await page.goBack();
   await expect.poll(async () => (await pageviews(page)).at(-1)).toBe('/');

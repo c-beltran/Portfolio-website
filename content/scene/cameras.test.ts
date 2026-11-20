@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import bounds from './bounds.json';
+import bounds from './bounds-seat.json';
 import { CAMERAS, verticalFov } from './cameras';
 import { master } from './framing';
 
@@ -18,7 +18,10 @@ describe('cameras.json', () => {
     expect(Math.tan(hfov / 2)).toBeCloseTo((Math.tan(((73.5 / 2) * Math.PI) / 180) * w) / 1.6, 3);
     expect(seat.shift[0]).toBe(0);
     expect(seat.shift[1]).toBeCloseTo((h - 1) / (2 * w), 4);
-    expect(verticalFov(seat, w / h)).toBeCloseTo(deg(2 * Math.atan(seat.sensorWidth / (w / h) / 2 / seat.lens)), 6);
+    expect(verticalFov(seat, w / h)).toBeCloseTo(
+      deg(2 * Math.atan(seat.sensorWidth / (w / h) / 2 / seat.lens)),
+      6,
+    );
   });
 
   it('gives three.js the vertical field of view of the Blender lens (horizontal sensor fit)', () => {
@@ -33,13 +36,12 @@ describe('cameras.json', () => {
     for (const [name, c] of Object.entries(CAMERAS)) expect(c.eye[1], name).toBeGreaterThan(0.75);
   });
 
-  it('aims the monitor camera at the screen seen from the overview', () => {
-    const m = bounds.objects.obj_monitor;
+  it('aims the monitor camera at the screen (its two halves, seen from the seat)', () => {
+    const [l, r] = [bounds.objects.obj_monitor, bounds.objects.obj_cv];
     const t = CAMERAS.monitor.target;
-    // The screen's centre is near the middle of its projected box; the target sits within it in x.
     expect(t[0]).toBeGreaterThan(-0.5);
     expect(t[0]).toBeLessThan(0.5);
-    expect((m.x0 + m.x1) / 2).toBeGreaterThan(0.4);
-    expect(CAMERAS.monitor.eye[2]).toBeLessThan(CAMERAS.overview.eye[2]); // closer to the screen
+    expect((l.x0 + r.x1) / 2).toBeCloseTo(0.5, 1); // the screen is centred in the seat's view
+    expect(CAMERAS.monitor.eye[2]).toBeLessThan(CAMERAS.seat.eye[2]); // closer to the screen
   });
 });

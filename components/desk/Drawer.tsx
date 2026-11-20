@@ -1,15 +1,37 @@
+import { useEffect } from 'react';
 import { DESK_OBJECTS, type SectionSlug } from '@/content/objects';
+import { useTheme } from '@/lib/useTheme';
 
 type Props = {
   selected: SectionSlug | null;
   onOpen: (slug: SectionSlug) => void;
 };
 
-/** Every desk object mirrored as a real button (spec §3.4). */
+/**
+ * Every desk object mirrored as a real button, plus the lamp (spec §3.4; design 2026-11-19 §5.4).
+ * The keyboard and screen-reader path: out of sight until something in it has focus, then a card
+ * at the top left. The hotspots stay out of the tab order.
+ */
 export function Drawer({ selected, onOpen }: Props) {
+  const { theme, toggle } = useTheme();
+
+  // The last input: the card shows for keyboard focus only (globals.css, the Sections list).
+  useEffect(() => {
+    const root = document.documentElement;
+    const pointer = () => (root.dataset.input = 'pointer');
+    const keyboard = (e: KeyboardEvent) => {
+      if (!e.metaKey && !e.ctrlKey && !e.altKey) root.dataset.input = 'keyboard';
+    };
+    addEventListener('pointerdown', pointer, true);
+    addEventListener('keydown', keyboard, true);
+    return () => {
+      removeEventListener('pointerdown', pointer, true);
+      removeEventListener('keydown', keyboard, true);
+    };
+  }, []);
   return (
     <nav aria-label="Sections" className="drawer">
-      <p className="drawer__label">Or open a drawer:</p>
+      <p className="drawer__label">Sections</p>
       <ul className="drawer__list">
         {DESK_OBJECTS.map((o) => (
           <li key={o.slug}>
@@ -24,6 +46,16 @@ export function Drawer({ selected, onOpen }: Props) {
             </button>
           </li>
         ))}
+        <li>
+          <button
+            type="button"
+            className="drawer__button drawer__button--lamp"
+            aria-pressed={theme === 'lamp'}
+            onClick={toggle}
+          >
+            Lamp
+          </button>
+        </li>
       </ul>
     </nav>
   );

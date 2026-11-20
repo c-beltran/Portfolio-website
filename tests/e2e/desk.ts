@@ -11,7 +11,15 @@ export const drawerButton = (page: Page, label: string) =>
   page
     .getByRole('navigation', { name: 'Sections' })
     .getByRole('button', { name: label, exact: true });
-export const headerLamp = (page: Page) => page.locator('.site-header .lamp-toggle');
+/** The lamp's keyboard path: the Sections list's last button (shown when focused). */
+export const drawerLamp = (page: Page) => drawerButton(page, 'Lamp');
+
+/** The desk's pan (−1…1) from its horizontal scroll; 0 when it can't scroll (wide windows). */
+export const panOf = (page: Page) =>
+  desk(page).evaluate((el) => {
+    const max = el.scrollWidth - el.clientWidth;
+    return max > 0 ? (el.scrollLeft / max) * 2 - 1 : 0;
+  });
 
 /** Load a desk route and wait until React has hydrated (listeners attached). */
 export async function gotoDesk(page: Page, url: string) {
@@ -21,21 +29,23 @@ export async function gotoDesk(page: Page, url: string) {
 }
 
 /**
- * Click bare felt: the desk's left edge (clear of every object in both layouts), halfway down
- * the part of the desk that isn't under the phone sheet. Uses the mouse so nothing scrolls first.
+ * Click bare desk: a point in the window on the still but on no object and outside the panel
+ * (the top corners first, where the wall is). Uses the mouse so nothing scrolls first.
  */
 export async function clickFelt(page: Page) {
-  // Like a person would: bring the desk to the top of the screen, above any open sheet.
-  await layer(page).evaluate((el) => el.scrollIntoView({ block: 'start', behavior: 'instant' }));
-  const box = await layer(page).boundingBox();
-  if (!box) throw new Error('desk layer not rendered');
-  const sheetTop = await page.evaluate(() => {
-    const el = document.querySelector('section.panel');
-    if (!el || getComputedStyle(el).position !== 'fixed') return innerHeight;
-    return el.getBoundingClientRect().top;
+  const pt = await page.evaluate(() => {
+    const [W, H] = [innerWidth, innerHeight];
+    for (const [x, y] of [
+      [8, 10],
+      [W - 8, 10],
+      [W / 2, 10],
+      [8, H * 0.4],
+    ] as const) {
+      const el = document.elementFromPoint(x, y);
+      if (el?.closest('.desk-still__layer') && !el.closest('button.hotspot')) return [x, y];
+    }
+    return null;
   });
-  const top = Math.max(box.y, 0);
-  const bottom = Math.min(box.y + box.height, sheetTop);
-  if (bottom - top < 4) throw new Error('no visible felt above the sheet');
-  await page.mouse.click(box.x + box.width * 0.005, (top + bottom) / 2);
+  if (!pt) throw new Error('no bare desk in view');
+  await page.mouse.click(pt[0]!, pt[1]!);
 }

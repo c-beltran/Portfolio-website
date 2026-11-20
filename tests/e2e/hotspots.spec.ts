@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
-import { DESK_ASPECT, INTERACTIVE, LAYOUT, MIN_RENDER_WIDTH } from '../../content/deskLayout';
+import { INTERACTIVE, LAYOUT } from '../../content/deskLayout';
+import { master, viewOffset } from '../../content/scene/framing';
 import { DESK_OBJECTS } from '../../content/objects';
 import { titleFor } from '../../lib/deskRoutes';
 import {
@@ -7,10 +8,10 @@ import {
   desk,
   drawerButton,
   gotoDesk,
-  headerLamp,
+  drawerLamp,
   historyLength,
   hotspot,
-  layer,
+  panOf,
   panelTitle,
   path,
 } from './desk';
@@ -66,11 +67,12 @@ test.describe('still desk hotspots', () => {
     expect(after).not.toBe(before);
     const pressed = String(after === 'lamp');
     await expect(hotspot(page, 'lightbar')).toHaveAttribute('aria-pressed', pressed);
-    await expect(headerLamp(page)).toHaveAttribute('aria-pressed', pressed);
+    await expect(drawerLamp(page)).toHaveAttribute('aria-pressed', pressed);
     expect(path(page)).toBe('/potaflow');
     await expect(panelTitle(page)).toContainText('Potaflow');
     expect(await historyLength(page)).toBe(start);
-    await headerLamp(page).click();
+    await drawerLamp(page).focus();
+    await page.keyboard.press('Enter');
     await expect(hotspot(page, 'lightbar')).toHaveAttribute(
       'aria-pressed',
       String(after !== 'lamp'),
@@ -105,15 +107,12 @@ test.describe('still desk hotspots', () => {
     await expect.poll(() => path(page)).toBe('/');
   });
 
-  test('the desk box keeps the layout data aspect ratio', async ({ page }) => {
+  test('the desk layer is the seat master, at its aspect', async ({ page }) => {
     await gotoDesk(page, '/');
     const ratio = await page
       .locator('.desk-still__layer')
       .evaluate((el) => el.getBoundingClientRect().width / el.getBoundingClientRect().height);
-    const portrait = await page.evaluate(
-      () => matchMedia('(max-width: 719px) and (orientation: portrait)').matches,
-    );
-    expect(ratio).toBeCloseTo(DESK_ASPECT[portrait ? 'phone' : 'wide'], 2);
+    expect(ratio).toBeCloseTo(master().w / master().h, 2);
   });
 
   test('tapping any label hits its own object', async ({ page }) => {
@@ -121,7 +120,7 @@ test.describe('still desk hotspots', () => {
     const misses = await page.evaluate(() =>
       [...document.querySelectorAll<HTMLElement>('button.hotspot .sticker')].flatMap((label) => {
         const own = label.closest<HTMLElement>('button.hotspot')!.dataset.item;
-        label.scrollIntoView({ block: 'center', behavior: 'instant' });
+        label.scrollIntoView({ block: 'center', inline: 'center', behavior: 'instant' });
         const r = label.getBoundingClientRect();
         return [0.2, 0.5, 0.8].flatMap((fx) => {
           const hit = document
@@ -134,9 +133,8 @@ test.describe('still desk hotspots', () => {
     expect(misses).toEqual([]);
   });
 
-  test('hotspots stay out of the Tab order: header → drawer', async ({ page }) => {
+  test('hotspots stay out of the Tab order: the first Tab reaches the drawer', async ({ page }) => {
     await gotoDesk(page, '/');
-    await headerLamp(page).focus();
     await page.keyboard.press('Tab');
     await expect(drawerButton(page, DESK_OBJECTS[0]!.label)).toBeFocused();
     for (const b of await page.locator('button.hotspot').all()) {
@@ -203,25 +201,27 @@ test.describe('still desk hotspots', () => {
   });
 });
 
-// Spec §3.1 / M3b B3: every object is clickable at its own place in the render, at the narrowest
-// desk each layout renders (wide 500px in a 568×320 landscape phone; phone 272px at 320×568).
-for (const [name, viewport] of [
-  ['wide', { width: 568, height: 320 }],
-  ['phone', { width: 320, height: 568 }],
-] as const) {
-  test.describe(`clicking the centre of each object's projected box (${name})`, () => {
+// Spec §3.1 / M3b B3: every object is clickable at its own place in the render, in the smallest
+// windows: a 568×320 landscape phone and a 320×480 portrait one (Review Focus 4). An object off to
+// the side of a portrait window is scrolled to first, as a visitor would swipe to it.
+for (const viewport of [
+  { width: 568, height: 320 },
+  { width: 320, height: 480 },
+]) {
+  test.describe(`clicking the centre of each object's projected box (${viewport.width}×${viewport.height})`, () => {
     test.use({ viewport });
     for (const id of INTERACTIVE) {
       test(`opens ${id}`, async ({ page }) => {
         await gotoDesk(page, '/');
-        const l = layer(page);
-        await l.evaluate((el) => el.scrollIntoView({ block: 'start', behavior: 'instant' }));
-        const r = (await l.boundingBox())!;
-        expect(Math.round(r.width)).toBe(MIN_RENDER_WIDTH[name]);
-        const b = LAYOUT[name][id];
+        await hotspot(page, id).evaluate((el) =>
+          el.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'instant' }),
+        );
+        const { width: W, height: H } = viewport;
+        const o = viewOffset(W / H, W, H, await panOf(page));
+        const b = LAYOUT[id];
         await page.mouse.click(
-          r.x + (r.width * (b.x + b.w / 2)) / 100,
-          r.y + (r.height * (b.y + b.h / 2)) / 100,
+          ((b.x + b.w / 2) / 100) * o.fullW - o.x,
+          ((b.y + b.h / 2) / 100) * o.fullH - o.y,
         );
         if (id === 'lightbar') {
           await expect(hotspot(page, id)).toHaveAttribute('aria-pressed', 'true');

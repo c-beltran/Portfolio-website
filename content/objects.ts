@@ -81,5 +81,5 @@ export function objectBySlug(slug: string): DeskObject | undefined {
 
 /** The still desk's text alternative (spec §5): read by assistive tech in place of the art. */
 export function deskDescription(): string {
-  return `Carlos's workspace: ${DESK_OBJECTS.map((o) => o.ariaLabel).join('; ')}. Use the Sections buttons below to open each one.`;
+  return `Carlos's workspace: ${DESK_OBJECTS.map((o) => o.ariaLabel).join('; ')}. Use the Sections list (Tab) to open each one.`;
 }

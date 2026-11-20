@@ -1,3 +1,4 @@
+import { master } from '../../content/scene/framing';
 import { expect, test, type Page } from '@playwright/test';
 import { gotoDesk, hotspot, panelTitle, path } from './desk';
 
@@ -52,15 +53,20 @@ test('?tier=2 leaves the hotspots clickable', async ({ page }) => {
   await expect(panelTitle(page)).toBeVisible();
 });
 
-test('?tier=2 re-frames when the window turns into a phone and back', async ({ page }) => {
+// Until the live seat (M3c Task 7) frames the window with viewOffset, the canvas covers the seat
+// master, so its shape is the master's at every window shape.
+test('?tier=2 keeps the canvas on the seat master when the window turns into a phone and back', async ({
+  page,
+}) => {
+  const masterAspect = master().w / master().h;
   await page.setViewportSize({ width: 1280, height: 800 });
   await gotoDesk(page, '/?tier=2');
   await waitLive(page);
-  await expect.poll(() => canvasAspect(page)).toBeCloseTo(16 / 9, 2);
+  await expect.poll(() => canvasAspect(page)).toBeCloseTo(masterAspect, 2);
   await page.setViewportSize({ width: 390, height: 844 });
-  await expect.poll(() => canvasAspect(page)).toBeCloseTo(1, 2);
+  await expect.poll(() => canvasAspect(page)).toBeCloseTo(masterAspect, 2);
   await page.setViewportSize({ width: 1280, height: 800 });
-  await expect.poll(() => canvasAspect(page)).toBeCloseTo(16 / 9, 2);
+  await expect.poll(() => canvasAspect(page)).toBeCloseTo(masterAspect, 2);
 });
 
 test.describe('?tier=2 without WebGL', () => {
@@ -118,8 +124,8 @@ test('?tier=2 leaves bare desk to the page: no pointer target, scroll and zoom i
   await gotoDesk(page, '/?tier=2');
   await waitLive(page);
   const hit = await page.locator('.desk-still__layer').evaluate((layer) => {
-    const r = layer.getBoundingClientRect();
-    const el = document.elementFromPoint(r.left + r.width * 0.005, r.top + r.height * 0.5)!;
+    // Bare wall at the window's left edge, halfway down.
+    const el = document.elementFromPoint(8, innerHeight * 0.5)!;
     const touch = [...layer.querySelectorAll('.desk-still__live, .desk-still__live *')].map(
       (e) => getComputedStyle(e).touchAction,
     );

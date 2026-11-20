@@ -31,7 +31,7 @@ test.describe('theme', () => {
     await page.goto('/');
     const lamp = page.getByRole('button', { name: 'Lamp' });
     await expect(lamp).toHaveAttribute('aria-pressed', 'false');
-    await lamp.click();
+    await lamp.press('Enter'); // the Sections list's Lamp: the keyboard path on the desk
     await expect(lamp).toHaveAttribute('aria-pressed', 'true');
     expect(await theme(page)).toBe('lamp');
     await page.reload();
@@ -57,7 +57,7 @@ test.describe('theme', () => {
     page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
     await page.goto('/');
     expect(await theme(page)).toBe('lamp');
-    await page.getByRole('button', { name: 'Lamp' }).click();
+    await page.getByRole('button', { name: 'Lamp' }).press('Enter');
     expect(await theme(page)).toBe('day');
     expect(errors).toEqual([]);
     await ctx.close();
@@ -65,7 +65,9 @@ test.describe('theme', () => {
 
   test('the lamp toggle is at least 44px in both dimensions', async ({ page }) => {
     await page.goto('/');
-    const box = await page.getByRole('button', { name: 'Lamp' }).boundingBox();
+    const lamp = page.getByRole('button', { name: 'Lamp' });
+    await lamp.focus(); // the Sections list shows when something in it has focus
+    const box = await lamp.boundingBox();
     expect(box!.width).toBeGreaterThanOrEqual(44);
     expect(box!.height).toBeGreaterThanOrEqual(44);
   });

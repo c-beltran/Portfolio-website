@@ -1,5 +1,6 @@
 """
-Projects each interactive object through the overview camera and writes content/scene/bounds.json
+Projects each interactive object through a camera and writes its hotspot bounds (the site uses the
+seat's, content/scene/bounds-seat.json)
 (M3a Task 4): normalized 0–1 boxes, y down, plus minCollisionFreeWidth (see content/scene/bounds.ts,
 which re-derives it in the unit test).
 

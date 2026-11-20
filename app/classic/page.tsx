@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { Header } from '@/components/header/Header';
 import type { Metadata } from 'next';
 import { renderFact, statsFootnote } from '@/content/facts';
 import type { FactId } from '@/content/factIds';
@@ -56,42 +57,45 @@ function DeskLinks({ desk }: { desk: ClassicSection['desk'] }) {
 /** Tier 0: every fact as plain, semantic HTML. What search engines and screen readers rely on. */
 export default function ClassicPage() {
   return (
-    <main className="classic">
-      {SECTIONS.map((section) => (
-        <section key={section.heading} aria-labelledby={`classic-${section.heading}`}>
-          <h2 id={`classic-${section.heading}`}>{section.heading}</h2>
+    <>
+      <Header />
+      <main className="classic">
+        {SECTIONS.map((section) => (
+          <section key={section.heading} aria-labelledby={`classic-${section.heading}`}>
+            <h2 id={`classic-${section.heading}`}>{section.heading}</h2>
+            <ul>
+              {section.facts.map((id) => (
+                <li key={id} data-fact-id={id}>
+                  {renderFact(id)}
+                </li>
+              ))}
+            </ul>
+            <DeskLinks desk={section.desk} />
+          </section>
+        ))}
+        <section aria-labelledby="classic-contact">
+          <h2 id="classic-contact">Contact</h2>
           <ul>
-            {section.facts.map((id) => (
-              <li key={id} data-fact-id={id}>
-                {renderFact(id)}
+            {showResume() && (
+              <li>
+                <a href={LINKS.resume}>Download résumé</a>
               </li>
-            ))}
-          </ul>
-          <DeskLinks desk={section.desk} />
-        </section>
-      ))}
-      <section aria-labelledby="classic-contact">
-        <h2 id="classic-contact">Contact</h2>
-        <ul>
-          {showResume() && (
+            )}
+            {showResumeTodo() && <li>{RESUME_TODO}</li>}
             <li>
-              <a href={LINKS.resume}>Download résumé</a>
+              <a href={LINKS.linkedin}>LinkedIn</a>
             </li>
-          )}
-          {showResumeTodo() && <li>{RESUME_TODO}</li>}
-          <li>
-            <a href={LINKS.linkedin}>LinkedIn</a>
-          </li>
-          <li>
-            <a href={LINKS.github}>GitHub</a>
-          </li>
-        </ul>
-        <p>[TODO: Q14 confirm the LinkedIn and GitHub handles are current]</p>
-        <DeskLinks desk={[{ slug: 'contact', label: 'Contact' }]} />
-      </section>
-      <p className="classic__footnote">
-        <small>{statsFootnote()}</small>
-      </p>
-    </main>
+            <li>
+              <a href={LINKS.github}>GitHub</a>
+            </li>
+          </ul>
+          <p>[TODO: Q14 confirm the LinkedIn and GitHub handles are current]</p>
+          <DeskLinks desk={[{ slug: 'contact', label: 'Contact' }]} />
+        </section>
+        <p className="classic__footnote">
+          <small>{statsFootnote()}</small>
+        </p>
+      </main>
+    </>
   );
 }

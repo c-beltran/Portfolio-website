@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { DESK_OBJECTS } from '../../content/objects';
-import { desk, drawerButton, gotoDesk, hotspot, panelTitle, path } from './desk';
+import { clickFelt, desk, drawerButton, gotoDesk, hotspot, panelTitle, path } from './desk';
 
 /** Spec §8 gates that apply from M2 on: the still desk is a complete site by itself. */
 
@@ -45,8 +45,12 @@ test.describe('WebGL off', () => {
       await hotspot(page, o.id).click();
       expect(path(page)).toBe(`/${o.slug}`);
       await expect(panelTitle(page)).toBeVisible();
+      // The panel card covers the right of a wide window (phase 2 brings the object forward
+      // beside it); close it on bare desk before reaching for the next object.
+      await clickFelt(page);
+      await expect.poll(() => path(page)).toBe('/');
     }
-    await drawerButton(page, 'Contact').click();
+    await drawerButton(page, 'Contact').press('Enter');
     await expect(drawerButton(page, 'Contact')).toHaveAttribute('aria-pressed', 'true');
   });
 
@@ -62,7 +66,6 @@ test.describe('WebGL off', () => {
 test.describe('keyboard only', () => {
   test('a drawer button opens its section; Esc returns focus to it', async ({ page }) => {
     await gotoDesk(page, '/');
-    await page.locator('.site-header .lamp-toggle').focus();
     await page.keyboard.press('Tab');
     await page.keyboard.press('Tab');
     await expect(drawerButton(page, DESK_OBJECTS[1]!.label)).toBeFocused();

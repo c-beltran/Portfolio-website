@@ -165,8 +165,11 @@ Carlos: "we should detect if user is on a mobile device and have an indicator to
 2. **§2, discoverability.** Labels appear as described in 3.3.
 3. **§2, click behavior.** Section 4 replaces the "Click behavior" column and the "HTML panel beside the scene" paragraph.
 4. **§3.4, the drawer.** **(my call)** A visible drawer row under the desk contradicts the full-screen seat.
-   - The hotspots become the primary buttons, in tab order, each showing its label on focus.
-   - A "Skip to sections" link appears on first Tab, revealing the same buttons as a list.
+   - **As built (phase 1, my call, 2026-11-20):** the drawer stays as the keyboard and screen-reader path, the "Sections" list, out of sight until something in it has keyboard focus. Then it shows as a card at the top left.
+     - The first Tab reaches it on every window shape. It lists every section, then a "Lamp" button (`aria-pressed`), since the header's lamp toggle left the desk.
+     - The hotspots stay out of the tab order, inside the `aria-hidden` desk, as before. Focusing a section in the list shows that object's label (3.3) and, in portrait, scrolls the desk to it.
+     - After a pointer or touch, focus that a close returns to the list stays invisible, so the card never appears under a finger. Without JavaScript, it shows on any focus.
+     - This replaces the earlier idea of hotspots in the tab order behind a "Skip to sections" link. The drawer keeps the tested open, close and focus behaviour, and the desk stays one picture for assistive tech.
    - Every other accessibility rule stands: focus moves into the panel and back, `aria-live`, 4.5:1 contrast, 44 px targets.
 5. **§6, Tier 1 still.** The still comes from the new seated cameras (3.2), not the overview camera.
    - **(my call)** Each object also gets a Cycles render in its opened pose, so Tier 1 visitors see the same art when they click.

@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 import { Analytics } from '@vercel/analytics/next';
 import { IBM_Plex_Mono, Inter, Schibsted_Grotesk } from 'next/font/google';
-import { Header } from '@/components/header/Header';
 import { titleFor } from '@/lib/deskRoutes';
+import { framingCss } from '@/content/scene/framingCss';
 import { THEME_SCRIPT, themeCss } from '@/lib/theme';
 import './globals.css';
 
@@ -39,13 +39,13 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
         <style dangerouslySetInnerHTML={{ __html: themeCss() }} />
+        {/* The seat framing (design 2026-11-19 §3.2): CSS only, so Tier 1 needs no script. */}
+        <style dangerouslySetInnerHTML={{ __html: framingCss() }} />
       </head>
       {/* Extensions (ColorZilla, Grammarly…) add attributes to <body> before React hydrates. */}
       <body suppressHydrationWarning>
-        <div className="page">
-          <Header />
-          {children}
-        </div>
+        {/* The desk fills the window with no header (design §3.1); /classic and 404 bring their own. */}
+        <div className="page">{children}</div>
         <Analytics />
       </body>
     </html>

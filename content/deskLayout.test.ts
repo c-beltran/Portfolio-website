@@ -1,23 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import {
-  DESK_ASPECT,
   HOTSPOT_STACK,
   hotspotVars,
   INTERACTIVE,
   LAYOUT,
-  MIN_RENDER_WIDTH,
+  PORTRAIT,
   type DeskItemId,
-  type LayoutName,
 } from './deskLayout';
 import { collidingPairs, type SceneBounds } from './scene/bounds';
-import wideBounds from './scene/bounds.json';
-import phoneBounds from './scene/bounds-phone.json';
+import seat from './scene/bounds-seat.json';
+import { master, PORTRAIT as FRAMING_PORTRAIT, visible } from './scene/framing';
 
-const LAYOUTS: LayoutName[] = ['wide', 'phone'];
-const BOUNDS: Record<LayoutName, SceneBounds> = {
-  wide: wideBounds as SceneBounds,
-  phone: phoneBounds as SceneBounds,
-};
+const BOUNDS = seat as SceneBounds;
 const ITEMS: DeskItemId[] = [
   'photo',
   'badge',
@@ -32,32 +26,33 @@ const ITEMS: DeskItemId[] = [
 const IN_FRONT: [DeskItemId, DeskItemId][] = [
   ['lightbar', 'monitor'],
   ['badge', 'kit'],
-  ['kit', 'monitor'],
-  ['photo', 'monitor'],
 ];
+/** Pixels per safe height in a W×H window. */
+const uFor = (W: number, H: number) => H / ((visible(W / H).y1 - visible(W / H).y0) * master().h);
 
-describe.each(LAYOUTS)('%s layout', (name) => {
-  it.each(ITEMS)('puts %s on its projected box', (id) => {
-    const b = BOUNDS[name].objects[`obj_${id}`]!;
-    const box = LAYOUT[name][id];
+describe('the seat layout', () => {
+  it.each(ITEMS)('puts %s on its projected box (percent of the master)', (id) => {
+    const b = BOUNDS.objects[`obj_${id}`]!;
+    const box = LAYOUT[id];
     expect(box.x).toBeCloseTo(b.x0 * 100, 2);
     expect(box.y).toBeCloseTo(b.y0 * 100, 2);
     expect(box.w).toBeCloseTo((b.x1 - b.x0) * 100, 2);
     expect(box.h).toBeCloseTo((b.y1 - b.y0) * 100, 2);
   });
 
-  it('has the still aspect', () => {
-    expect(DESK_ASPECT[name]).toBeCloseTo(1 / BOUNDS[name].aspect, 6);
-  });
-
-  it('stacks the front object over the back one in every overlap', () => {
-    const boxes = Object.fromEntries(ITEMS.map((id) => [id, BOUNDS[name].objects[`obj_${id}`]!]));
-    for (let w = MIN_RENDER_WIDTH[name]; w <= 2560; w += 4) {
-      for (const [a, b] of collidingPairs(boxes, w, BOUNDS[name].aspect)) {
+  it('stacks the front object over the back one in every overlap, narrowest window to 4K', () => {
+    const boxes = Object.fromEntries(ITEMS.map((id) => [id, BOUNDS.objects[`obj_${id}`]!]));
+    const [lo, hi] = [master().w * uFor(500, 416), master().w * uFor(3840, 2160)];
+    for (let w = Math.floor(lo); w <= hi; w += 4) {
+      for (const [a, b] of collidingPairs(boxes, w, BOUNDS.aspect)) {
         const pair = IN_FRONT.find(([f, k]) => (f === a && k === b) || (f === b && k === a));
         expect(pair, `${a}×${b} at ${w}px has no stacking rule`).toBeDefined();
       }
     }
+  });
+
+  it('uses the framing model’s portrait query', () => {
+    expect(PORTRAIT).toBe(FRAMING_PORTRAIT);
   });
 });
 
@@ -76,25 +71,17 @@ describe('the clickable items', () => {
 describe('hotspotVars', () => {
   it('places with transform variables only, never left or top', () => {
     const vars = hotspotVars('kit');
-    expect(Object.keys(vars).some((k) => /left|top/.test(k))).toBe(false);
-    expect(Object.keys(vars).sort()).toEqual(
-      [...['cx', 'cy', 'w', 'h'].flatMap((k) => [`--${k}`, `--p-${k}`]), '--z'].sort(),
-    );
+    expect(Object.keys(vars).sort()).toEqual(['--cx', '--cy', '--h', '--w', '--z']);
   });
 
-  it.each(ITEMS)('centres %s on its box in both layouts', (id) => {
+  it.each(ITEMS)('centres %s on its box', (id) => {
     const v = hotspotVars(id);
-    for (const [n, pre] of [
-      ['wide', '--'],
-      ['phone', '--p-'],
-    ] as const) {
-      const b = LAYOUT[n][id];
-      const num = (k: string) => parseFloat(v[`${pre}${k}` as `--${string}`]!);
-      expect(num('cx')).toBeCloseTo(b.x + b.w / 2, 2);
-      expect(num('cy')).toBeCloseTo(b.y + b.h / 2, 2);
-      expect(num('w')).toBeCloseTo(b.w, 2);
-      expect(num('h')).toBeCloseTo(b.h, 2);
-    }
+    const b = LAYOUT[id];
+    const num = (k: string) => parseFloat(v[`--${k}` as `--${string}`]!);
+    expect(num('cx')).toBeCloseTo(b.x + b.w / 2, 2);
+    expect(num('cy')).toBeCloseTo(b.y + b.h / 2, 2);
+    expect(num('w')).toBeCloseTo(b.w, 2);
+    expect(num('h')).toBeCloseTo(b.h, 2);
     expect(v['--z']).toBe(String(HOTSPOT_STACK[id]));
   });
 });

@@ -3,17 +3,26 @@ import { desk, gotoDesk, hotspot, panelTitle, path } from './desk';
 
 const panel = (page: Page) => page.locator('section.panel');
 
-/** True when the element's box is fully above the open sheet and inside the viewport. */
-async function visibleAboveSheet(page: Page, item: string) {
-  const el = await hotspot(page, item).boundingBox();
-  const sheet = await panel(page).boundingBox();
-  return !!el && !!sheet && el.y >= 0 && el.y + el.height <= sheet.y + 1;
+/**
+ * Where the open panel sits (design 2026-11-19 §3.2): a card at the right of wide windows, a
+ * bottom sheet in portrait ones. In phase 1 it may cover the opened object; phase 2 brings the
+ * object forward beside it.
+ */
+async function panelPlace(page: Page): Promise<'card' | 'sheet' | 'other'> {
+  const { W, H } = await page.evaluate(() => ({ W: innerWidth, H: innerHeight }));
+  const b = (await panel(page).boundingBox())!;
+  const fixed = (await panel(page).evaluate((el) => getComputedStyle(el).position)) === 'fixed';
+  if (!fixed) return 'other';
+  if (Math.abs(b.y + b.height - H) <= 1 && Math.abs(b.width - W) <= 1) return 'sheet';
+  if (Math.abs(b.x + b.width - (W - 16)) <= 1 && b.y >= 15 && b.width >= 320 && b.width <= 460)
+    return 'card';
+  return 'other';
 }
 
 test.describe('phone bottom sheet', () => {
   test.skip(({ isMobile }) => !isMobile, 'phone layout only');
 
-  test('opens fixed to the bottom, with the object visible above it', async ({ page }) => {
+  test('opens fixed to the bottom', async ({ page }) => {
     await gotoDesk(page, '/');
     await hotspot(page, 'kit').click();
     expect(path(page)).toBe('/potaflow');
@@ -25,7 +34,7 @@ test.describe('phone bottom sheet', () => {
       })
       .toBeGreaterThanOrEqual(vh - 1);
     expect(await panel(page).evaluate((el) => getComputedStyle(el).position)).toBe('fixed');
-    await expect.poll(() => visibleAboveSheet(page, 'kit')).toBe(true);
+    await expect.poll(() => panelPlace(page)).toBe('sheet');
   });
 
   test('keyboard focus is never hidden under the open sheet', async ({ page }) => {
@@ -77,13 +86,18 @@ test.describe('phone bottom sheet', () => {
     await expect(back).toBeInViewport();
   });
 
-  test('an object visible above the sheet switches sections', async ({ page }) => {
+  test('an object above the open sheet switches sections', async ({ page }) => {
     await gotoDesk(page, '/');
     await hotspot(page, 'kit').click();
-    await expect.poll(() => visibleAboveSheet(page, 'photo')).toBe(true);
-    await hotspot(page, 'photo').click();
-    expect(path(page)).toBe('/about');
-    await expect(panelTitle(page)).toContainText("Hi, I'm Carlos.");
+    await expect.poll(() => panelPlace(page)).toBe('sheet');
+    // The monitor stands above the sheet's top edge in the straight-ahead view.
+    const [m, sheet] = [
+      await hotspot(page, 'monitor').boundingBox(),
+      await panel(page).boundingBox(),
+    ];
+    expect(m!.y + m!.height / 2).toBeLessThan(sheet!.y);
+    await hotspot(page, 'monitor').click();
+    expect(path(page)).toBe('/how-i-build');
   });
 
   test('a direct load paints the sheet already open, with no slide-in', async ({ page }) => {
@@ -181,18 +195,16 @@ test.describe('landscape phones and small tablets', () => {
     [844, 390],
     [800, 600],
   ] as const) {
-    test(`at ${w}×${h} an opened object stays visible above the sheet`, async ({ page }) => {
+    test(`at ${w}×${h} the panel opens as a card at the right`, async ({ page }) => {
       await page.setViewportSize({ width: w, height: h });
       await gotoDesk(page, '/');
       for (const b of await page.locator('button.hotspot').all()) {
         const box = (await b.boundingBox())!;
         expect(Math.min(box.width, box.height)).toBeGreaterThanOrEqual(44);
       }
-      for (const item of ['kit', 'monitor', 'card']) {
-        await hotspot(page, item).click();
-        expect(await panel(page).evaluate((el) => getComputedStyle(el).position)).toBe('fixed');
-        await expect.poll(() => visibleAboveSheet(page, item), { message: item }).toBe(true);
-      }
+      await hotspot(page, 'kit').click();
+      expect(path(page)).toBe('/potaflow');
+      await expect.poll(() => panelPlace(page)).toBe('card');
     });
   }
 });
@@ -200,28 +212,26 @@ test.describe('landscape phones and small tablets', () => {
 test.describe('wide layout', () => {
   test.skip(({ isMobile }) => isMobile, 'desktop layout only');
 
-  test('the panel sits beside the desk', async ({ page }) => {
+  test('the panel is a card at the right of the window', async ({ page }) => {
     await gotoDesk(page, '/potaflow');
+    await expect.poll(() => panelPlace(page)).toBe('card');
     const d = (await desk(page).boundingBox())!;
-    const p = (await panel(page).boundingBox())!;
-    expect(p.x).toBeGreaterThan(d.x + d.width - 1);
-    expect(p.y).toBeLessThan(d.y + d.height);
+    expect([d.x, d.y, d.width, d.height]).toEqual([0, 0, 1280, 800]);
   });
 
-  test('two columns from 1024px', async ({ page }) => {
+  test('a card at 1024×768 too', async ({ page }) => {
     await page.setViewportSize({ width: 1024, height: 768 });
     await gotoDesk(page, '/potaflow');
-    const d = (await desk(page).boundingBox())!;
-    const p = (await panel(page).boundingBox())!;
-    expect(p.x).toBeGreaterThan(d.x + d.width - 1);
+    await expect.poll(() => panelPlace(page)).toBe('card');
   });
 
-  test('below 1024px the panel is a sheet, not pushed under the desk', async ({ page }) => {
-    await page.setViewportSize({ width: 900, height: 700 });
+  test('portrait windows get the bottom sheet, wide ones the card', async ({ page }) => {
+    await page.setViewportSize({ width: 700, height: 900 });
     await gotoDesk(page, '/');
     await hotspot(page, 'kit').click();
-    expect(await panel(page).evaluate((el) => getComputedStyle(el).position)).toBe('fixed');
-    await expect.poll(() => visibleAboveSheet(page, 'kit')).toBe(true);
+    await expect.poll(() => panelPlace(page)).toBe('sheet');
+    await page.setViewportSize({ width: 900, height: 700 });
+    await expect.poll(() => panelPlace(page)).toBe('card');
   });
 
   test('the empty panel invites a pick', async ({ page }) => {
