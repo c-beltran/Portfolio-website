@@ -226,6 +226,68 @@ def editor_image(w=3440, h=1440, seed=7):
     return _save("screen_monitor", px)
 
 
+def gauge_face_image(size=512):
+    """The kit gauge's dial: tick marks and a rim on warm white, from movers.dial_ticks. No
+    numerals, no brand (design 2026-11-19 §4.2)."""
+    import movers as MV
+
+    px = np.zeros((size, size, 4))
+    px[..., 3] = 1
+    px[..., :3] = np.array(srgb("#E9E6DF"))
+    ink = np.array(srgb("#2A2A2C"))
+    yy, xx = np.mgrid[0:size, 0:size]
+    u = (xx + 0.5) / size * 2 - 1
+    v = 1 - (yy + 0.5) / size * 2  # +v up, as the disc's UVs
+    r = np.hypot(u, v)
+    px[(r > 0.955) & (r < 0.985), :3] = ink  # rim line
+    for i, ((x0, y0), (x1, y1)) in enumerate(MV.dial_ticks()):
+        half = 0.016 if i % 5 == 0 else 0.009
+        dx, dy = x1 - x0, y1 - y0
+        t = np.clip(((u - x0) * dx + (v - y0) * dy) / (dx * dx + dy * dy), 0, 1)
+        d = np.hypot(u - (x0 + t * dx), v - (y0 + t * dy))
+        px[d < half, :3] = ink
+    px[r > 1.0, :3] = np.array(srgb("#A8864F"))  # outside the dial: the brass bezel
+    return _save("kit_gauge_face", px)
+
+
+def certificate_image(w=768, h=512):
+    """A generic certificate: plain grey shapes on paper, from movers.certificate_marks. Nothing can
+    be read: no name, licence number or logo (design 2026-11-19 §4.2)."""
+    import movers as MV
+
+    paper = np.array(srgb("#ECEAE4"))
+    px = np.zeros((h, w, 4))
+    px[..., 3] = 1
+    px[..., :3] = paper
+    yy, xx = np.mgrid[0:h, 0:w]
+    x, y = (xx + 0.5) / w, (yy + 0.5) / h  # 0–1, y down
+    for m in MV.certificate_marks():
+        ink = np.array(srgb("#" + ("%02X" % round(m["grey"] * 255)) * 3))
+        if m["kind"] == "rect":
+            inside = (x >= m["x0"]) & (x <= m["x1"]) & (y >= m["y0"]) & (y <= m["y1"])
+            if m.get("outline"):
+                b = 2.5 / h
+                inner = (x >= m["x0"] + b * h / w) & (x <= m["x1"] - b * h / w) & (y >= m["y0"] + b) & (y <= m["y1"] - b)
+                inside &= ~inner
+            px[inside, :3] = ink
+        else:  # a ring, its radii in sheet heights
+            d = np.hypot((x - m["cx"]) * w / h, y - m["cy"])
+            px[(d >= m["r0"]) & (d <= m["r1"]), :3] = ink
+    return _save("kit_certificate", px)
+
+
+def printed(name, img, rough=0.6):
+    """A matte surface printed with an image on its UVs."""
+    m = new_material(name)
+    nt = m.node_tree
+    b = bsdf_of(m)
+    tex = nt.nodes.new("ShaderNodeTexImage")
+    tex.image = img
+    nt.links.new(tex.outputs["Color"], b.inputs["Base Color"])
+    b.inputs["Roughness"].default_value = rough
+    return m
+
+
 def laptop_image(w=1600, h=1000, seed=3):
     """A dark web page with a colourful banner, like the reference laptop, with no text or logos."""
     rng = np.random.default_rng(seed)

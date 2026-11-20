@@ -18,7 +18,7 @@ import sys
 from pathlib import Path
 
 import bpy
-from mathutils import Vector
+from mathutils import Matrix, Vector
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
@@ -171,18 +171,211 @@ def build_simple_objects(coll):
     prt.parent = frame  # local frame: the box's centre, metres (its scale was applied)
     prt.location = (0, -0.0095, 0)
     prt.rotation_euler = (math.radians(90), 0, 0)
-    # Backflow test-kit case (hard case with handle) beside the laptop, on the desk.
-    case = box("obj_kit", (0.26, 0.18, 0.085), (-0.33, 0.3, DESK_TOP), coll, rot=(0, 0, -14), bevel=0.012)
-    handle = box("deco_kit_handle", (0.1, 0.022, 0.018), (-0.33, 0.3, DESK_TOP + 0.085), coll, rot=(0, 0, -14), bevel=0.006)
-    set_parent(handle, case)
-    for i, dx in enumerate((-0.075, 0.075)):  # two latches on the front face
-        lx = -0.33 + dx * math.cos(math.radians(-14)) + 0.091 * math.sin(math.radians(-14))
-        ly = 0.3 + dx * math.sin(math.radians(-14)) - 0.091 * math.cos(math.radians(-14))
-        latch = box(f"deco_kit_latch_{i}", (0.028, 0.008, 0.022), (lx, ly, DESK_TOP + 0.045), coll, rot=(0, 0, -14), bevel=0.002)
-        set_parent(latch, case)
+    case = build_kit(coll)  # the backflow test-kit case beside the laptop, on the desk
     # Walnut wrist rest in front of the keyboard (from the reference photo).
     box("deco_wrist_rest", (0.33, 0.075, 0.018), (-0.03, -0.205, t), coll, bevel=0.006)
     return {"pad": pad, "case": case}
+
+
+def apply_modifiers(o):
+    """Fold an object's modifiers into its own mesh, so a boolean can cut a bevelled shape."""
+    bpy.context.view_layer.update()
+    deps = bpy.context.evaluated_depsgraph_get()
+    me = bpy.data.meshes.new_from_object(o.evaluated_get(deps), preserve_all_data_layers=True, depsgraph=deps)
+    old = o.data
+    o.modifiers.clear()
+    o.data = me
+    if old.users == 0:
+        bpy.data.meshes.remove(old)
+
+
+def cut(o, cutters):
+    """Boolean-subtract the cutters from o (both already placed), then drop the cutters."""
+    for c in cutters:
+        m = o.modifiers.new(f"cut_{c.name}", "BOOLEAN")
+        m.operation, m.object, m.solver = "DIFFERENCE", c, "EXACT"
+    apply_modifiers(o)
+    for c in cutters:
+        bpy.data.objects.remove(c, do_unlink=True)
+
+
+def disc(name, r, loc, coll, verts=64):
+    """A flat disc facing +Z with UVs mapping the unit square onto it (for a dial image)."""
+    pts = [(r * math.cos(2 * math.pi * i / verts), r * math.sin(2 * math.pi * i / verts), 0.0) for i in range(verts)]
+    me = bpy.data.meshes.new(name)
+    me.from_pydata(pts, [], [list(range(verts))])
+    uv = me.uv_layers.new(name="UVMap")
+    for loop in me.loops:
+        x, y, _ = pts[loop.vertex_index]
+        uv.data[loop.index].uv = (0.5 + x / (2 * r), 0.5 + y / (2 * r))
+    o = bpy.data.objects.new(name, me)
+    coll.objects.link(o)
+    o.location = loc
+    return o
+
+
+def reparent(o, par):
+    """Move o under a new parent without moving it in the world (set_parent assumes no parent yet)."""
+    bpy.context.view_layer.update()
+    mw = o.matrix_world.copy()
+    o.parent = par
+    o.matrix_parent_inverse.identity()
+    o.matrix_world = mw
+
+
+def under(o, par):
+    """Parent with the child's transform read in the parent's frame (no parent inverse)."""
+    o.parent = par
+    o.matrix_parent_inverse.identity()
+    return o
+
+
+def build_kit(coll):
+    """The backflow test-kit case as a mover (design 2026-11-19 §4.2): a pivot at the case's centre
+    with today's rest pose; a base holding foam, a gauge, a screwdriver and a generic certificate;
+    and a lid hinged on the base's back top edge. Every part is placed in the case's own frame
+    (movers.py); the clip kit_open is keyed in key_clips()."""
+    import movers as MV
+
+    w, d, h = MV.KIT_SIZE
+    base_size, base_z, lid_size, _, hinge = MV.split_case(MV.KIT_SIZE, MV.LID_H)
+    L = MV.kit_layout()
+    kit = bpy.data.objects.new("obj_kit", None)
+    coll.objects.link(kit)
+    kit.location = MV.KIT_REST["location"]
+    kit.rotation_euler = (0, 0, math.radians(MV.KIT_REST["rot_z_deg"]))
+
+    def at(b):  # a layout box's base centre, as box() and cylinder() take it
+        x, y, z = b["centre"]
+        return (x, y, z - b["size"][2] / 2)
+
+    # The base: a bevelled shell with a tray cut into it, origin at the case's centre.
+    base = under(box("kit_base", base_size, (0, 0, 0), coll, bevel=MV.KIT_BEVEL), kit)
+    base.data.transform(Matrix.Translation((0, 0, base_z)))
+    base.location = (0, 0, 0)
+    tray = under(box("cut_tray", L["tray"]["size"], at(L["tray"]), coll, bevel=0.004), kit)
+    cut(base, [tray])
+    for i, dx in enumerate((-0.075, 0.075)):  # two latches on the front face, across the seam
+        under(box(f"kit_latch_{i}", (0.028, 0.008, 0.022), (dx, -d / 2 - 0.001, -h / 2 + 0.045), coll, bevel=0.002), base)
+
+    C = L["contents"]
+    foam = under(box("kit_foam", L["foam"]["size"], at(L["foam"]), coll, bevel=0), base)
+    g, sd, sh = C["gauge"], C["screwdriver"], C["shaft"]
+    pockets = [
+        under(cylinder("cut_gauge", g["r"] + 0.002, g["size"][2] + 0.02, (g["centre"][0], g["centre"][1], g["centre"][2] - g["size"][2] / 2 - 0.002), coll, bevel=0), base)
+    ]
+    for b, name in ((sd, "cut_handle"), (sh, "cut_shaft")):
+        r, ln = b["r"] + 0.0015, b["size"][0] + 0.002
+        c = cylinder(name, r, ln, (b["centre"][0], b["centre"][1], b["centre"][2] - ln / 2), coll, rot=(0, 90, b["rot_z_deg"]), bevel=0)
+        pockets.append(under(c, base))
+    cut(foam, pockets)
+
+    gauge = under(cylinder("kit_gauge", g["r"], g["size"][2], at(g), coll, verts=64, bevel=0.0015), base)
+    face = disc("kit_gauge_face", C["gauge_face"]["r"], C["gauge_face"]["centre"], coll)
+    nd = C["needle"]
+    needle = box("kit_needle", nd["size"], at(nd), coll, rot=(0, 0, nd["rot_z_deg"]), bevel=0)
+    for o in (face, needle):
+        under(o, base)
+        reparent(o, gauge)
+    handle = cylinder("kit_screwdriver", sd["r"], sd["size"][0], (sd["centre"][0], sd["centre"][1], sd["centre"][2] - sd["size"][0] / 2), coll, rot=(0, 90, sd["rot_z_deg"]), verts=24, bevel=0.002)
+    under(handle, base)
+    shaft = cylinder("kit_screwdriver_shaft", sh["r"], sh["size"][0], (sh["centre"][0], sh["centre"][1], sh["centre"][2] - sh["size"][0] / 2), coll, rot=(0, 90, sh["rot_z_deg"]), verts=16, bevel=0)
+    under(shaft, base)
+    reparent(shaft, handle)
+    ct = C["certificate"]
+    under(plane("kit_certificate", ct["size"][:2], ct["centre"], coll, rot=(0, 0, ct["rot_z_deg"])), base)
+
+    # The lid: origin on the hinge, so kit_open is one rotation about its local X.
+    lid = under(box("kit_lid", lid_size, (0, 0, 0), coll, bevel=MV.KIT_BEVEL), kit)
+    lid.data.transform(Matrix.Translation((0, -d / 2, MV.LID_H / 2)))
+    lid.location = hinge
+    under(box("kit_handle", (0.1, 0.022, 0.018), (0, -d / 2, MV.LID_H), coll, bevel=0.006), lid)
+    pad = L["pad"]
+    under(box("kit_lid_pad", pad["size"], at(pad), coll, bevel=0.001), lid)
+    return kit
+
+
+def make_phone_mover(coll):
+    """The phone as a mover: obj_phone, an Empty at its bounding-box centre turned with it (local
+    +Y along its length, +Z out of its screen); phone_spin under it, which phone_turn turns a
+    quarter about the screen; the imported model as phone_body; and phone_screen, a quad just over
+    the glass for the clip (UV 0–1, U along the length). Cycles never draws the quad."""
+    body = bpy.data.objects.get("obj_phone") or bpy.data.objects.get("proxy_phone")
+    if not body:
+        return None
+    body.name = "phone_body"
+    yaw = math.radians(COMPLEX["phone"]["rot"][2])
+    to_local = Matrix.Rotation(-yaw, 4, "Z")
+    meshes = [o for o in [body, *body.children_recursive] if o.type == "MESH"]
+    bpy.context.view_layer.update()
+
+    def local_pts(objs):
+        return [to_local @ (o.matrix_world @ v.co) for o in objs for v in o.data.vertices]
+
+    pts = local_pts(meshes)
+    lo = Vector([min(p[i] for p in pts) for i in range(3)])
+    hi = Vector([max(p[i] for p in pts) for i in range(3)])
+    centre = Matrix.Rotation(yaw, 4, "Z") @ ((lo + hi) / 2)
+    pivot = bpy.data.objects.new("obj_phone", None)
+    coll.objects.link(pivot)
+    pivot.location = centre
+    pivot.rotation_euler = (0, 0, yaw)
+    spin = under(bpy.data.objects.new("phone_spin", None), pivot)
+    coll.objects.link(spin)
+    set_parent(body, spin)
+
+    def with_material(prefix):
+        return [o for o in meshes if any(m and m.name.startswith(prefix) for m in o.data.materials)]
+
+    centre_l = (lo + hi) / 2
+    display = with_material("Lock_Screen")
+    if display:
+        dp = [p - centre_l for p in local_pts(display)]
+        top = max(p.z for p in [q - centre_l for q in local_pts(display + with_material("Glass"))])
+        x0, x1 = min(p.x for p in dp), max(p.x for p in dp)
+        y0, y1 = min(p.y for p in dp), max(p.y for p in dp)
+    else:  # a proxy block: its top face, inset
+        x0, x1, y0, y1 = lo.x - centre_l.x + 0.003, hi.x - centre_l.x - 0.003, lo.y - centre_l.y + 0.003, hi.y - centre_l.y - 0.003
+        top = hi.z - centre_l.z
+    z = top + 0.0005
+    quad = [(x0, y0, z), (x1, y0, z), (x1, y1, z), (x0, y1, z)]
+    me = bpy.data.meshes.new("phone_screen")
+    me.from_pydata(quad, [], [[0, 1, 2, 3]])
+    uv = me.uv_layers.new(name="UVMap")
+    for loop in me.loops:
+        x, y, _ = quad[loop.vertex_index]
+        # landscape after the turn: U runs down the length (the top goes left), V across it
+        uv.data[loop.index].uv = ((y1 - y) / (y1 - y0), (x - x0) / (x1 - x0))
+    screen = under(bpy.data.objects.new("phone_screen", me), spin)
+    coll.objects.link(screen)
+    screen.hide_render = True
+    return pivot
+
+
+def key_clips():
+    """Key the movers' clips at 60 fps from frame 0, each frame from movers.py's easing (linear
+    between keys, so any sampler reads the same curve), and leave the scene at rest on frame 0."""
+    import movers as MV
+
+    scene = bpy.context.scene
+    scene.render.fps = MV.FPS
+    scene.frame_start = 0
+    bpy.context.preferences.edit.keyframe_new_interpolation_type = "LINEAR"
+    get = bpy.data.objects.get
+    for clip, owner, seconds, index, value in (
+        ("kit_open", "kit_lid", MV.KIT_OPEN_S, 0, MV.lid_rotation_x),
+        ("phone_turn", "phone_spin", MV.PHONE_TURN_S, 2, lambda t: math.radians(MV.turn_angle(t))),
+    ):
+        o = get(owner)
+        if not o:
+            continue
+        n = MV.frames(seconds)
+        for f in range(n + 1):
+            o.rotation_euler[index] = value(f / n)
+            o.keyframe_insert("rotation_euler", index=index, frame=f)
+        o.animation_data.action.name = clip
+    scene.frame_end = MV.frames(MV.KIT_OPEN_S)
+    scene.frame_set(0)
 
 
 # ---------------------------------------------------------------- complex objects (imported glTF, or a proxy)
@@ -420,6 +613,9 @@ def apply_materials():
     import materials as M
 
     C, h = M.principled, M.srgb
+    case = C("kit_case", h("#2B3038"), 0.5, spread=0.12)
+    foam = C("kit_foam", h("#2E3136"), 0.95, spread=0.03)
+    steel = C("latch_steel", h("#B8BBBF"), 0.3, metal=1.0)
     by_prefix = {
         "room_floor": C("floor", h("#8E8781"), 0.55),
         "room_": M.plaster(C("wall", h("#ECEBE8"), 0.85, spread=0.04)),
@@ -434,8 +630,18 @@ def apply_materials():
         "deco_lanyard": C("lanyard", h("#23314F"), 0.8),
         "obj_photo": C("photo_frame", h("#18181A"), 0.45),
         "deco_photo_print": M.photo_print("photo_print"),
-        "obj_kit": C("kit_case", h("#2B3038"), 0.5, spread=0.12),
-        "deco_kit_handle": C("kit_handle", h("#141416"), 0.4),
+        "kit_lid_pad": foam,
+        "kit_foam": foam,
+        "kit_base": case,
+        "kit_lid": case,
+        "kit_handle": C("kit_handle", h("#141416"), 0.4),
+        "kit_latch_": steel,
+        "kit_gauge_face": M.printed("gauge_face", M.gauge_face_image(), 0.35),
+        "kit_gauge": C("gauge_brass", h("#A8864F"), 0.35, metal=1.0),
+        "kit_needle": C("needle_red", h("#B3261E"), 0.4),
+        "kit_screwdriver_shaft": steel,
+        "kit_screwdriver": C("screwdriver_handle", h("#C8372D"), 0.45),
+        "kit_certificate": M.printed("cert_paper", M.certificate_image(), 0.8),
         "deco_laptop_stand": C("aluminium", h("#B9BCC1"), 0.3, metal=1.0),
         "deco_wrist_rest": M.walnut("walnut"),
         "obj_lightbar": C("lightbar", h("#2E2F33"), 0.35, metal=0.8),
@@ -443,7 +649,6 @@ def apply_materials():
         "deco_coaster_": C("cork", h("#9C7651"), 0.85, spread=0.08),
         "deco_book_0": C("book_cover_a", h("#2E3B33"), 0.7),
         "deco_book_1": C("book_cover_b", h("#C8B79A"), 0.75),
-        "deco_kit_latch_": C("latch_steel", h("#B8BBBF"), 0.3, metal=1.0),
         "deco_cable_": C("cable", h("#141416"), 0.5),
     }
     imported_roots = set(NAMES.values()) | {f"deco_{k}" for k in COMPLEX}
@@ -477,6 +682,10 @@ def apply_materials():
         dark_glass = C("phone_glass", h("#050506"), 0.05, coat=1.0)
         M.remap(get("obj_phone"), {"Lock_Screen": dark_glass, "Glass": dark_glass, "Camera_Lens": dark_glass,
                                    "Color": C("phone_body", h("#2C2D31"), 0.3, metal=0.7)}, default=black)
+        screen = get("phone_screen")
+        if screen:  # the clip's quad: dark glass where it shows at all (Cycles never draws it)
+            screen.data.materials.clear()
+            screen.data.materials.append(dark_glass)
     if get("deco_mug"):
         M.remap(get("deco_mug"), {"material": C("ceramic", h("#E9E1D3"), 0.25, coat=0.5)})
     if get("deco_glass"):
@@ -518,6 +727,7 @@ def main():
     assets = load_assets()
     for key in COMPLEX:
         import_or_proxy(key, objs, assets, a.allow_proxy)
+    make_phone_mover(objs)
     build_laptop_stand(objs)
     add_water("glass", objs, 0.55)
     set_dressing(objs)
@@ -525,6 +735,7 @@ def main():
     build_cameras(cams)
     apply_materials()
     build_lights()
+    key_clips()
     Path(a.out).parent.mkdir(parents=True, exist_ok=True)
     bpy.ops.wm.save_as_mainfile(filepath=a.out)
     print(f"saved {a.out}")
