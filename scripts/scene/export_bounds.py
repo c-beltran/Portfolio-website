@@ -4,7 +4,11 @@ Projects each interactive object through the overview camera and writes content/
 which re-derives it in the unit test).
 
     Blender -b ~/Portfolio-assets/blend/workspace.blend --python scripts/scene/export_bounds.py -- \
-        --camera overview|phone --out content/scene/bounds.json   (bounds-phone.json for the phone)
+        --camera overview|phone|seat --out content/scene/bounds.json   (bounds-phone.json, bounds-seat.json)
+
+The seat's boxes are normalised to its master (framing.py), and its monitor is split at the screen
+image's midline into obj_monitor (left, How I build) and obj_cv (right, the CV page), with the right
+half's corners in quads.screen_right. --check-safe fails unless every box is inside the safe frame.
 
 A report, not a gate: objects are never moved to make hotspots fit. The box is each object's
 projected hull (its meshes and its children's), clipped to the frame; occlusion is not removed.
@@ -20,6 +24,8 @@ import sys
 
 import bpy
 from bpy_extras.object_utils import world_to_camera_view
+from mathutils import Vector
+from mathutils.geometry import barycentric_transform, intersect_point_tri_2d
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import framing  # noqa: E402
@@ -72,6 +78,80 @@ def project(scene, cam, o, depsgraph):
         raise SystemExit(f"{o.name}: nothing in front of the camera")
     c = lambda v: round(min(1.0, max(0.0, v)), 5)
     return {"x0": c(min(xs)), "y0": c(min(ys)), "x1": c(max(xs)), "y1": c(max(ys))}
+
+
+def to_frame(scene, cam, p):
+    """A world point in the frame, normalised, y down."""
+    q = world_to_camera_view(scene, cam, p)
+    return q.x, 1 - q.y
+
+
+def screen_triangles(o, depsgraph):
+    """The monitor screen's triangles as (uv triangle, world triangle), plus its UV extent."""
+    tris, us, vs = [], [], []
+    for m in meshes(o):
+        ev = m.evaluated_get(depsgraph)
+        me = ev.to_mesh()
+        mw = ev.matrix_world
+        me.calc_loop_triangles()
+        uvl = me.uv_layers.active.data
+        for t in me.loop_triangles:
+            mat = me.materials[t.material_index]
+            if not (mat and mat.get("screen")):
+                continue
+            uv = tuple(uvl[li].uv.copy() for li in t.loops)
+            tris.append((uv, tuple(mw @ me.vertices[vi].co for vi in t.vertices)))
+            us += [c.x for c in uv]
+            vs += [c.y for c in uv]
+        ev.to_mesh_clear()
+    return tris, (min(us), max(us)), (min(vs), max(vs))
+
+
+def screen_point(tris, u, v):
+    """The world point on the screen showing image coordinate (u, v) (v up)."""
+    p = Vector((u, v))
+    for (a, b, c), (A, B, C) in tris:
+        if intersect_point_tri_2d(p, a, b, c):
+            return barycentric_transform(p.to_3d(), a.to_3d(), b.to_3d(), c.to_3d(), A, B, C)
+    raise SystemExit(f"monitor screen: no face shows uv ({u:.4f}, {v:.4f})")
+
+
+def monitor_halves(scene, cam, o, depsgraph):
+    """The screen split at the image's midline (materials.py: the right half is the CV page):
+    boxes for the left half (obj_monitor) and the right (obj_cv), and the right half's corners
+    (top-left, top-right, bottom-right, bottom-left), normalised to the frame."""
+    tris, (u0, u1), (v0, v1) = screen_triangles(o, depsgraph)
+    # The UV outline isn't a perfect rectangle: inset until the corners and midline ends are on it.
+    covered = lambda u, v: any(intersect_point_tri_2d(Vector((u, v)), *t[0]) for t in tris)
+    for eps in (1e-4, 5e-4, 1e-3, 2e-3, 5e-3, 1e-2, 2e-2):
+        a, b, lo, hi = u0 + eps, u1 - eps, v0 + eps, v1 - eps
+        if all(covered(u, v) for u in (a, 0.5, b) for v in (lo, hi)):
+            break
+    else:
+        raise SystemExit("monitor screen: its UVs don't cover a rectangle")
+    print(f"  monitor screen: UV rectangle inset by {eps}")
+    u0, u1, v0, v1 = a, b, lo, hi
+    c = lambda x: round(min(1.0, max(0.0, x)), 5)
+
+    def box(ua, ub, n=24):
+        pts = [to_frame(scene, cam, screen_point(tris, ua + (ub - ua) * i / n, v0 + (v1 - v0) * j / n))
+               for i in range(n + 1) for j in range(n + 1)]
+        return {"x0": c(min(x for x, _ in pts)), "y0": c(min(y for _, y in pts)),
+                "x1": c(max(x for x, _ in pts)), "y1": c(max(y for _, y in pts))}
+
+    # Which UV edge is the screen's top: the licensed model's v runs either way.
+    y_at = lambda v: to_frame(scene, cam, screen_point(tris, 0.5, v))[1]
+    top, bottom = (v1, v0) if y_at(v1) < y_at(v0) else (v0, v1)
+    corners = [(0.5, top), (u1, top), (u1, bottom), (0.5, bottom)]
+    quad = [[c(x), c(y)] for x, y in (to_frame(scene, cam, screen_point(tris, u, v)) for u, v in corners)]
+    if not quad[0][0] < quad[1][0]:
+        raise SystemExit(f"monitor screen: the image runs right to left in the frame: {quad}")
+    # The curved screen's midline leans a little in the frame: the halves meet at its mean x, so
+    # the two hotspots share an edge instead of overlapping by a sliver.
+    left, right = box(u0, 0.5), box(0.5, u1)
+    mid = c((quad[0][0] + quad[3][0]) / 2)
+    left["x1"], right["x0"] = mid, mid
+    return left, right, quad
 
 
 def grow(lo, hi):
@@ -131,8 +211,15 @@ def main():
     depsgraph = bpy.context.evaluated_depsgraph_get()
     aspect = scene.render.resolution_y / scene.render.resolution_x
     boxes = {name: project(scene, cam, bpy.data.objects[name], depsgraph) for name in OBJECTS}
+    quads = None
+    if a.camera == "seat":
+        # The seat's monitor is two hotspots: How I build (left) and the CV page (right, design 4.2).
+        boxes["obj_monitor"], boxes["obj_cv"], right = monitor_halves(scene, cam, bpy.data.objects["obj_monitor"], depsgraph)
+        quads = {"screen_right": right}
     width = min_free_width(boxes, aspect)
     data = {"camera": cam.name, "aspect": aspect, "objects": boxes, "minCollisionFreeWidth": width}
+    if quads:
+        data["quads"] = quads
     with open(a.out, "w") as f:
         json.dump(data, f, indent=2)
         f.write("\n")
@@ -141,7 +228,10 @@ def main():
         if a.camera != "seat":
             raise SystemExit("--check-safe applies to the seat camera only")
         check_safe(boxes)
-    for w in ((320, 360, 390, 430) if a.camera == "phone" else (500, 720, 1024, 1440)):
+    # Report widths: for the seat, master widths at the narrowest wide window (500×416), a 320×480
+    # portrait window and a 1080p one.
+    report = {"phone": (320, 360, 390, 430), "seat": (1111, 1707, 3840)}.get(a.camera, (500, 720, 1024, 1440))
+    for w in report:
         print(f"  at {w}px: {colliding(boxes, w, aspect) or 'no overlaps'}")
     if width is None:
         print(f"  overlapping at every width: {colliding(boxes, MAX_WIDTH, aspect)}")
