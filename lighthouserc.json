@@ -8,7 +8,10 @@
         "http://localhost:4173/potaflow",
         "http://localhost:4173/classic"
       ],
-      "numberOfRuns": 3
+      "numberOfRuns": 3,
+      "settings": {
+        "throttlingMethod": "devtools"
+      }
     },
     "assert": {
       "assertions": {
