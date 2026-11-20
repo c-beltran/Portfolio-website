@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   band,
   bandCount,
+  bandFor,
   bandMedia,
   isPortrait,
   master,
@@ -136,6 +137,15 @@ describe('band', () => {
       const [a0, a1] = [b[i]!, b[i + 1]!];
       for (const a of [a0, (a0 + a1) / 2, a1]) expect(contains(band(i), visible(a))).toBe(true);
     }
+  });
+});
+
+describe('bandFor', () => {
+  it('is the wide band a window of this aspect loads (the last one beyond 32:9)', () => {
+    expect(bandFor(1.3)).toBe(0);
+    expect(bandFor(8 / 5)).toBe(1);
+    expect(bandFor(2.2)).toBe(2);
+    expect(bandFor(5)).toBe(2);
   });
 });
 

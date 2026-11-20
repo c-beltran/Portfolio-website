@@ -74,6 +74,14 @@ export function band(i: number): Rect {
 
 export const bandCount = () => data.bands.length - 1;
 
+/** The wide band a window of this aspect loads (bandMedia's queries), the last one beyond it. */
+export function bandFor(aspect: number): number {
+  const b = data.bands.map(ratio);
+  let i = 0;
+  for (let k = 1; k < b.length - 1; k++) if (aspect >= b[k]!) i = k;
+  return i;
+}
+
 /** A band's own media query; the first band is the default for every wide window. */
 export function bandMedia(i: number): string {
   return i === 0 ? '' : `(min-aspect-ratio: ${data.bands[i]})`;

@@ -55,6 +55,21 @@ test.describe('with a mouse', () => {
     await expect.poll(() => shown(page)).toEqual(['kit']);
   });
 
+  test('opened with the mouse and closed with Esc: the Sections card stays hidden', async ({
+    page,
+  }) => {
+    await gotoDesk(page, '/');
+    await hotspot(page, 'kit').click();
+    await expect.poll(() => page.evaluate(() => location.pathname)).toBe('/potaflow');
+    await page.keyboard.press('Escape');
+    await expect.poll(() => page.evaluate(() => location.pathname)).toBe('/');
+    const nav = page.getByRole('navigation', { name: 'Sections' });
+    await expect(nav.getByRole('button', { name: 'Potaflow' })).toBeFocused();
+    expect((await nav.boundingBox())!.width).toBeLessThanOrEqual(1);
+    await page.keyboard.press('Tab'); // and a real keyboard step shows it
+    await expect.poll(async () => (await nav.boundingBox())!.width).toBeGreaterThan(100);
+  });
+
   test("keyboard focus on a section shows that object's label", async ({ page }) => {
     await gotoDesk(page, '/');
     await tabTo(page, 'Potaflow');

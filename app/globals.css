@@ -52,6 +52,9 @@ button {
   max-width: 1240px;
   margin: 0 auto;
   padding: 0 clamp(16px, 4vw, 48px) 96px;
+  /* viewport-fit=cover: keep /classic's text out of a landscape notch. */
+  padding-left: max(clamp(16px, 4vw, 48px), env(safe-area-inset-left));
+  padding-right: max(clamp(16px, 4vw, 48px), env(safe-area-inset-right));
 }
 
 .site-header {
@@ -231,6 +234,8 @@ html:has(.desk-still),
 html:has(.desk-still) body {
   overflow: hidden;
   overscroll-behavior: none;
+  /* What shows in a notch's safe area or past the desk's edges: the room's dark, not the page. */
+  background: #15110d;
 }
 
 /* The size container every framing variable resolves against; portrait windows scroll it sideways. */
@@ -293,7 +298,8 @@ html:has(.desk-still) body {
   width: calc(var(--nw) * var(--u));
   height: calc(var(--nh) * var(--u));
   padding: calc(0.08 * var(--nh) * var(--u)) calc(0.03 * var(--nw) * var(--u));
-  overflow: hidden;
+  /* On small screens the title's floor can run past the box: it lands on the same rendered paper. */
+  overflow: visible;
   background: var(--screen-paper);
   color: var(--screen-ink);
   transform-origin: 0 0;
@@ -316,7 +322,8 @@ html:has(.desk-still) body {
 
 .monitor-name__title {
   margin: calc(0.08 * var(--nh) * var(--u)) 0 0;
-  font-size: calc(0.2 * var(--nh) * var(--u));
+  /* Readable on a landscape phone too (it would be ~6px there). */
+  font-size: max(9px, calc(0.2 * var(--nh) * var(--u)));
   font-weight: 600;
   line-height: 1.1;
   white-space: nowrap;
@@ -528,7 +535,12 @@ html:has(.desk-still) body {
  * to) the site's web fonts, so the late swap can't make it the page's largest paint.
  */
 .turn-hint__card p {
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    sans-serif;
   margin: 10px 0 0;
   font-size: 17px;
   font-weight: 600;
@@ -618,8 +630,8 @@ html:has(.desk-still) body {
 
 :root:not([data-input='pointer']) .drawer:focus-within {
   position: fixed;
-  top: 16px;
-  left: 16px;
+  top: calc(16px + env(safe-area-inset-top));
+  left: calc(16px + env(safe-area-inset-left));
   z-index: 30;
   max-width: min(440px, calc(100vw - 32px));
   max-height: calc(100dvh - 32px);
@@ -644,9 +656,9 @@ html:has(.desk-still) body {
   --pad: clamp(22px, 3vw, 32px);
   position: fixed;
   z-index: 20;
-  top: 16px;
-  right: 16px;
-  bottom: 16px;
+  top: calc(16px + env(safe-area-inset-top));
+  right: calc(16px + env(safe-area-inset-right));
+  bottom: calc(16px + env(safe-area-inset-bottom));
   width: clamp(320px, 34vw, 460px);
   overflow-y: auto;
   overscroll-behavior: contain;
@@ -685,6 +697,8 @@ html:has(.desk-still) body {
     max-height: 60dvh;
     border-bottom: 0;
     border-radius: 18px 18px 0 0;
+    padding-left: calc(var(--pad) + env(safe-area-inset-left));
+    padding-right: calc(var(--pad) + env(safe-area-inset-right));
     padding-bottom: calc(var(--pad) + env(safe-area-inset-bottom));
     box-shadow: 0 -12px 32px rgba(0, 0, 0, 0.25);
   }

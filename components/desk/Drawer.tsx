@@ -20,7 +20,9 @@ export function Drawer({ selected, onOpen }: Props) {
     const root = document.documentElement;
     const pointer = () => (root.dataset.input = 'pointer');
     const keyboard = (e: KeyboardEvent) => {
-      if (!e.metaKey && !e.ctrlKey && !e.altKey) root.dataset.input = 'keyboard';
+      // Esc closes what a click opened: it doesn't make the visitor a keyboard user.
+      if (e.key === 'Escape' || e.metaKey || e.ctrlKey || e.altKey) return;
+      root.dataset.input = 'keyboard';
     };
     addEventListener('pointerdown', pointer, true);
     addEventListener('keydown', keyboard, true);

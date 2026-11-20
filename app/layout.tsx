@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
 import { Analytics } from '@vercel/analytics/next';
 import { IBM_Plex_Mono, Inter, Schibsted_Grotesk } from 'next/font/google';
@@ -25,6 +25,13 @@ const mono = IBM_Plex_Mono({
   variable: '--font-mono',
   preload: false,
 });
+
+/** Edge to edge on notched phones held sideways (the turn-sideways hint sends them there). */
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
+};
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://cbeltran.com'),

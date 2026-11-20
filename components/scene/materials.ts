@@ -62,8 +62,8 @@ const RESIDUAL_GLSL = [
   'vec3 residual(vec3 base, vec3 world) {',
   '  vec4 clip = seatViewProj * vec4(world, 1.0);',
   '  if (clip.w <= 0.0) return base;',
-  '  vec2 uv = clip.xy / clip.w * 0.5 + 0.5;',
-  '  if (any(lessThan(uv, vec2(0.0))) || any(greaterThan(uv, vec2(1.0)))) return base;',
+  // Past the master (the glance looks a little beyond it), the edge's residual carries on.
+  '  vec2 uv = clamp(clip.xy / clip.w * 0.5 + 0.5, 0.0, 1.0);',
   '  vec3 d = (mix(texture2D(residualDay, uv).rgb, texture2D(residualLamp, uv).rgb, fade) - 0.5) * 2.0;',
   '  return toLinear(clamp(toSRGB(max(base, 0.0)) + d * residualWeight, 0.0, 1.0));',
   '}',

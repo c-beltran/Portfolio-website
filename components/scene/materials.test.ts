@@ -57,6 +57,14 @@ describe('the residual (M3c: the live seat matches the still)', () => {
     expect(m.uniforms).toHaveProperty('probeDay');
   });
 
+  it('clamps to the master edge instead of stopping there (no seam when the glance looks past it)', () => {
+    const m = bakedMaterial(t(), t(), {
+      residual: { day: t(), lamp: t(), viewProj: new THREE.Matrix4() },
+    });
+    expect(m.fragmentShader).toContain('clamp(clip.xy / clip.w * 0.5 + 0.5, 0.0, 1.0)');
+    expect(m.fragmentShader).not.toContain('greaterThan(uv');
+  });
+
   it('leaves the shader alone without it', () => {
     expect(bakedMaterial(t(), t()).fragmentShader).not.toContain('residual');
   });

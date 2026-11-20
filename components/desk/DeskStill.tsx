@@ -4,11 +4,15 @@ import { deskDescription, DESK_OBJECTS, type SectionSlug } from '@/content/objec
 import {
   band,
   bandCount,
+  bandFor,
   bandMedia,
+  isPortrait,
   master,
   portraitStrip,
+  ratio,
   type Rect,
 } from '@/content/scene/framing';
+import framing from '@/content/scene/framing.json';
 import { sizesFor } from '@/content/scene/framingCss';
 import { useTheme } from '@/lib/useTheme';
 import { LiveLayer } from '@/components/scene/LiveLayer';
@@ -51,8 +55,25 @@ const sizes = (c: Crop) => sizesFor((c.rect.x1 - c.rect.x0) * M.w, c.portrait);
  * The approved Cycles render from the seat: the crop of the master this window shape shows
  * (framingCss places it), AVIF with a WebP fallback.
  */
+/** Which crop a still's URL is (seat-<crop>-<mode>-<width>). */
+const cropOf = (src: string) => /\/seat-(p|b\d+)-/.exec(src)?.[1];
+
 function DeskPhoto({ mode }: { mode: 'day' | 'lamp' }) {
   const [w, h] = px(DEFAULT.rect, SAFE_PX[0]!);
+  const img = useRef<HTMLImageElement>(null);
+  // The image keeps the crop it is (framingCss: img[data-crop]) until the next one has loaded, so
+  // a rotation or resize never stretches the old still into the new crop's box.
+  useEffect(() => {
+    const el = img.current;
+    if (!el) return;
+    const mark = () => {
+      const c = cropOf(el.currentSrc);
+      if (c) el.dataset.crop = c;
+    };
+    if (el.complete) mark();
+    el.addEventListener('load', mark);
+    return () => el.removeEventListener('load', mark);
+  }, []);
   return (
     <picture className={`desk-still__photo desk-still__photo--${mode}`}>
       {CROPS.flatMap((c) =>
@@ -77,6 +98,7 @@ function DeskPhoto({ mode }: { mode: 'day' | 'lamp' }) {
         height={h}
       />
       <img
+        ref={img}
         src={`/stills/seat-b0-${mode}-${w}.webp`}
         srcSet={srcSet(DEFAULT, mode, 'webp')}
         sizes={sizes(DEFAULT)}
@@ -90,6 +112,38 @@ function DeskPhoto({ mode }: { mode: 'day' | 'lamp' }) {
       />
     </picture>
   );
+}
+
+/**
+ * The still a touch device would need if it turned now (portrait ↔ landscape): its URL by the same
+ * maths the <picture> uses, so the swap is instant after a turn (AVIF; every current phone has it).
+ */
+function turnedStill(mode: 'day' | 'lamp'): string {
+  const [W, H] = [innerHeight, innerWidth];
+  const a = W / H;
+  const c = isPortrait(a) ? CROPS[0]! : (CROPS.find((k) => k.name === `b${bandFor(a)}`) ?? DEFAULT);
+  const s = ratio(framing.safeAspect);
+  const u = isPortrait(a) ? H : Math.max(Math.min(W / s, H), W / M.w, H / M.h);
+  const need = (c.rect.x1 - c.rect.x0) * M.w * u * devicePixelRatio;
+  const widths = SAFE_PX.map((safe) => px(c.rect, safe)[0]);
+  const width = widths.find((x) => x >= need) ?? widths[widths.length - 1]!;
+  return `/stills/seat-${c.name}-${mode}-${width}.avif`;
+}
+
+/** A narrow window pans with an ordinary (vertical) mouse wheel too, not only Shift+wheel. */
+function useWheelPan(ref: RefObject<HTMLDivElement | null>) {
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const onWheel = (e: WheelEvent) => {
+      if (e.ctrlKey || el.scrollWidth <= el.clientWidth) return; // pinch-zoom, or nothing to pan
+      if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return; // already sideways (trackpads)
+      e.preventDefault();
+      el.scrollLeft += e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? el.clientWidth : 1);
+    };
+    el.addEventListener('wheel', onWheel, { passive: false });
+    return () => el.removeEventListener('wheel', onWheel);
+  }, [ref]);
 }
 
 /** Keeps the portrait pan where it was through size changes (toolbars, rotation, resizing). */
@@ -135,15 +189,22 @@ export function DeskStill({ selected, onOpen, onClose }: Props) {
   const still = useRef<HTMLDivElement>(null);
   const layer = useRef<HTMLDivElement>(null);
   useKeptPan(still);
+  useWheelPan(still);
   useLabels(layer, selected);
 
   // Once the page is idle, fetch the lamp render (lazy until now, to keep it off the LCP path),
   // so the first switch to lamp mode cross-fades at once.
   useEffect(() => {
-    const warm = () =>
+    const warm = () => {
       document
         .querySelectorAll<HTMLImageElement>('.desk-still__photo--lamp img')
         .forEach((img) => (img.loading = 'eager'));
+      // A touch device may turn (the hint asks it to): have that still ready.
+      if (matchMedia('(pointer: coarse)').matches)
+        new Image().src = turnedStill(
+          document.documentElement.dataset.theme === 'lamp' ? 'lamp' : 'day',
+        );
+    };
     const idle = () =>
       'requestIdleCallback' in window ? requestIdleCallback(warm) : setTimeout(warm, 200);
     if (document.readyState === 'complete') idle();

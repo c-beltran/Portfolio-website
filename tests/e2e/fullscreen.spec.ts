@@ -1,6 +1,6 @@
 import { expect, test, type Page } from './fixtures';
 import seat from '../../content/scene/bounds-seat.json' with { type: 'json' };
-import { viewOffset } from '../../content/scene/framing';
+import { master, portraitStrip, viewOffset } from '../../content/scene/framing';
 import { DESK_OBJECTS } from '../../content/objects';
 import { desk, gotoDesk, hotspot } from './desk';
 
@@ -106,6 +106,62 @@ test.describe('the desk fills the window', () => {
     await page.setViewportSize({ width: 968, height: 800 }); // 1.21
     await expect.poll(src).toContain('/stills/seat-b0-day-');
     await expectHotspotsOnTheirObjects(page);
+  });
+
+  test('while a new crop downloads, the old still keeps its own shape (no stretch)', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 952, height: 800 }); // portrait strip
+    await gotoDesk(page, '/');
+    const img = page.locator('.desk-still__photo--day img');
+    await expect
+      .poll(() => img.evaluate((i) => (i as HTMLImageElement).currentSrc))
+      .toContain('seat-p-day-');
+    await expect.poll(() => img.evaluate((i) => (i as HTMLImageElement).complete)).toBe(true);
+    let release = () => {};
+    const held = new Promise<void>((r) => (release = r));
+    await page.route('**/stills/seat-b0-**', async (route) => {
+      await held;
+      await route.continue();
+    });
+    await page.setViewportSize({ width: 968, height: 800 }); // band 0
+    await page.waitForTimeout(400);
+    // The box keeps the portrait strip's shape (16:10), not band 0's (6:5), while b0 is pending
+    // (the browser may report no natural size in between, so compare with the strip itself).
+    const box = await img.evaluate(
+      (i) => i.getBoundingClientRect().width / i.getBoundingClientRect().height,
+    );
+    const strip = portraitStrip();
+    const m = master();
+    expect(box).toBeCloseTo(((strip.x1 - strip.x0) * m.w) / ((strip.y1 - strip.y0) * m.h), 2);
+    release();
+    await expect
+      .poll(() => img.evaluate((i) => (i as HTMLImageElement).currentSrc))
+      .toContain('seat-b0-day-');
+    await expectHotspotsOnTheirObjects(page);
+  });
+
+  test('a narrow window pans with an ordinary mouse wheel', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await gotoDesk(page, '/');
+    const before = await panOf(page);
+    await page.mouse.move(200, 400);
+    await page.mouse.wheel(0, 400);
+    await expect.poll(() => panOf(page)).toBeGreaterThan(before + 0.1);
+  });
+
+  test('edge to edge on notched phones: viewport-fit=cover, and a dark page behind the desk', async ({
+    page,
+  }) => {
+    await gotoDesk(page, '/');
+    await expect(page.locator('meta[name="viewport"]')).toHaveAttribute(
+      'content',
+      /viewport-fit=cover/,
+    );
+    const bg = await page.evaluate(
+      () => getComputedStyle(document.documentElement).backgroundColor,
+    );
+    expect(bg).toBe('rgb(21, 17, 13)');
   });
 
   test('the keyboard path: the first Tab shows the Sections list; every section, then Lamp', async ({

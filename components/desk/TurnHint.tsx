@@ -15,6 +15,18 @@ export function TurnHint() {
   // Leaving the desk (a section opens) counts as seen: it's an arrival hint.
   useEffect(() => () => markHintSeen(), []);
 
+  // Turning the phone sideways (as it asks) hides it mid-animation: that ends it too, so the touch
+  // labels follow and it doesn't replay when the phone turns back. (React has no animationcancel.)
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const onCancel = (e: AnimationEvent) => {
+      if (e.target === el && !closing.current) markHintSeen();
+    };
+    el.addEventListener('animationcancel', onCancel);
+    return () => el.removeEventListener('animationcancel', onCancel);
+  }, []);
+
   const onPointerDown = (e: PointerEvent) => {
     e.preventDefault();
     e.stopPropagation();

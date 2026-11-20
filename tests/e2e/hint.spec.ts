@@ -34,6 +34,21 @@ test.describe('on an upright phone', () => {
     await expect(hint(page)).toBeHidden();
   });
 
+  test('turning the phone sideways, as it asks, ends it: the labels show, and it never replays', async ({
+    page,
+  }) => {
+    await gotoDesk(page, '/');
+    await page.waitForTimeout(1000);
+    await expect(hint(page)).toBeVisible();
+    await page.setViewportSize({ width: 844, height: 390 });
+    await expect(page.locator('.desk-still__layer')).toHaveAttribute('data-intro', 'true', {
+      timeout: 2000,
+    });
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.waitForTimeout(300);
+    await expect(hint(page)).toBeHidden();
+  });
+
   test('not on a section route', async ({ page }) => {
     await gotoDesk(page, '/potaflow');
     await page.waitForTimeout(500);

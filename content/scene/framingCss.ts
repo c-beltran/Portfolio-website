@@ -44,6 +44,11 @@ export function framingCss(): string {
     `@media ${PORTRAIT} { :root .desk-still { --u: 100cqh; --stage-w: calc(${s} * 100cqh); ` +
       `overflow-x: auto; ${crop(portraitStrip())} } }`,
   );
+  // The loaded image keeps its own crop until the new one arrives (DeskStill sets data-crop on
+  // load), so a rotation or resize never stretches the old still into the new crop's box.
+  for (let i = 0; i < bandCount(); i++)
+    rules.push(`.desk-still__photo img[data-crop='b${i}'] { ${crop(band(i))} }`);
+  rules.push(`.desk-still__photo img[data-crop='p'] { ${crop(portraitStrip())} }`);
   return rules.join('\n');
 }
 

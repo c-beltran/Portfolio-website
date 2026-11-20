@@ -33,6 +33,27 @@ test.describe('the name on the monitor', () => {
   }
 });
 
+test.describe('the title under the name stays readable on small screens', () => {
+  test.skip(({ isMobile }) => isMobile, 'window sizes set here');
+  for (const [W, H] of [
+    [844, 390],
+    [320, 480],
+  ] as const) {
+    test(`${W}×${H}`, async ({ page }) => {
+      await page.setViewportSize({ width: W, height: H });
+      await gotoDesk(page, '/');
+      const title = page.locator('.monitor-name__title');
+      expect(
+        await title.evaluate((el) => parseFloat(getComputedStyle(el).fontSize)),
+      ).toBeGreaterThanOrEqual(9);
+      const t = (await title.boundingBox())!;
+      const cv = (await hotspot(page, 'cv').boundingBox())!;
+      expect(t.y + t.height).toBeLessThanOrEqual(cv.y + cv.height);
+      expect(t.x + t.width).toBeLessThanOrEqual(cv.x + cv.width);
+    });
+  }
+});
+
 for (const theme of ['day', 'lamp'] as const) {
   test(`axe passes on / and /cv in ${theme}`, async ({ page }) => {
     await page.addInitScript((t) => localStorage.setItem('desk-theme', t), theme);
