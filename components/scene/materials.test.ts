@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { describe, expect, it } from 'vitest';
-import { bakedMaterial, glassMaterial } from './materials';
+import { bakedMaterial, glassMaterial, setOpenedBake } from './materials';
 
 const tex = () => new THREE.Texture();
 
@@ -93,9 +93,32 @@ describe('coming forward (phase 2): the dim and the opened bake', () => {
     const m = bakedMaterial(t(), t(), { dim: true, opened: true });
     // the opened bake mixes in by openMix after the day/lamp fade; the dim scales by DIM_LEVEL
     expect(m.fragmentShader).toContain(
-      'base = mix(base, mix(texture2D(openDay, vUv), texture2D(openLamp, vUv), fade), openMix);',
+      'vec4 opened = mix(texture2D(openDay, vUv), texture2D(openLamp, vUv), fade);',
     );
-    expect(m.fragmentShader).toContain('base.rgb *= 1.0 - 0.55 * dim;');
+    expect(m.fragmentShader).toContain('base = mix(base, opened, openMix);');
+    // in sRGB, as CSS brightness() scales the Tier 1 still: the two dims look the same
+    expect(m.fragmentShader).toContain(
+      'base.rgb = sRGBTransferEOTF(vec4(sRGBTransferOETF(base).rgb * (1.0 - 0.55 * dim), 1.0)).rgb;',
+    );
+  });
+
+  it('decodes a video from sRGB in the shader (three uploads video textures linear)', () => {
+    const m = bakedMaterial(t(), t(), { opened: true });
+    expect(m.uniforms.openDecode!.value).toBe(0);
+    const video = Object.assign(t(), { isVideoTexture: true });
+    setOpenedBake(m, video, video);
+    expect(m.uniforms.openDecode!.value).toBe(1);
+    expect(m.fragmentShader).toContain('if (openDecode > 0.5) opened = sRGBTransferEOTF(opened);');
+    setOpenedBake(m, t(), t());
+    expect(m.uniforms.openDecode!.value).toBe(0);
+  });
+
+  it('dims the drinking glass and its water too (they are static)', () => {
+    const g = glassMaterial([t(), t()], new THREE.Color('#000'), 0.2);
+    expect(g.uniforms.dim!.value).toBe(0);
+    expect(g.fragmentShader).toContain(
+      'gl_FragColor.rgb = sRGBTransferEOTF(vec4(sRGBTransferOETF(gl_FragColor).rgb * (1.0 - 0.55 * dim), 1.0)).rgb;',
+    );
   });
 
   it('leaves the shader alone without them', () => {

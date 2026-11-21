@@ -929,3 +929,10 @@ html:has(.desk-still) body {
     animation-name: panel-in-from-below;
   }
 }
+
+/* The live preview (?tier=2) draws the object itself: the Tier 1 render and clip step aside (the
+   video keeps playing; the live phone's screen shows it). The slot keeps its box for the fit. */
+.desk:has(.desk-still__live[data-ready='true']) .opened__art canvas,
+.desk:has(.desk-still__live[data-ready='true']) .phone-clip {
+  visibility: hidden;
+}

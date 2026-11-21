@@ -58,13 +58,21 @@ const clamp1 = (x: number) => Math.max(-1, Math.min(1, x));
 /**
  * The damped glance from the mouse or pen (never touch), or on Android from the device's tilt
  * (where it needs no permission prompt: ±15° from the first reading is full). Calls onChange every
- * animation frame while it moves, and not at all with reduced motion.
+ * animation frame while it moves, and not at all with reduced motion. While `enabled` is false
+ * (an object has come forward: design 2026-11-19 §4.1) its goal is straight ahead, so the view
+ * settles back and holds still; turning it on again follows the pointer from where it is.
  */
-export function useGlance(onChange: (g: Glance) => void) {
+export function useGlance(onChange: (g: Glance) => void, enabled = true) {
   const cb = useRef(onChange);
   useEffect(() => {
     cb.current = onChange;
   }, [onChange]);
+  const on = useRef(enabled);
+  const reaim = useRef<() => void>(() => {});
+  useEffect(() => {
+    on.current = enabled;
+    reaim.current();
+  }, [enabled]);
 
   useEffect(() => {
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
@@ -83,11 +91,14 @@ export function useGlance(onChange: (g: Glance) => void) {
       id = done ? 0 : requestAnimationFrame(tick);
       if (done) last = 0;
     };
+    let wanted: [number, number] = [0, 0];
     const aim = (x: number, y: number) => {
-      goal.yaw = clamp1(x) * LIMITS.yaw;
-      goal.pitch = clamp1(y) * LIMITS.pitch;
+      wanted = [x, y];
+      goal.yaw = on.current ? clamp1(x) * LIMITS.yaw : 0;
+      goal.pitch = on.current ? clamp1(y) * LIMITS.pitch : 0;
       if (!id) id = requestAnimationFrame(tick);
     };
+    reaim.current = () => aim(...wanted);
     const onMove = (e: PointerEvent) => {
       if (e.pointerType === 'touch') return;
       aim((e.clientX / innerWidth) * 2 - 1, 1 - (e.clientY / innerHeight) * 2);

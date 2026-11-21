@@ -18,6 +18,7 @@ type Entry = {
   patch: { x0: number; y0: number; x1: number; y1: number };
   patchWidths: number[];
   widths: number[];
+  pivot: [number, number];
   screen?: [number, number][];
 };
 const ART = art as unknown as Record<'kit' | 'phone', Entry>;
@@ -32,6 +33,11 @@ describe.each(['kit', 'phone'] as const)('the opened %s', (id) => {
     expect(a.theta).toBeGreaterThan(0.05);
     expect(a.theta).toBeLessThan(1.5);
     expect(a.widths).toEqual([800, 1600]);
+    // where the pivot (the render's centre) falls in the crop: the live object aims there
+    for (const v of a.pivot) {
+      expect(v).toBeGreaterThan(0);
+      expect(v).toBeLessThan(1);
+    }
   });
 
   for (const mode of ['day', 'lamp']) {

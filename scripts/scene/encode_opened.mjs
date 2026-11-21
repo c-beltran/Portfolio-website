@@ -76,6 +76,12 @@ for (const id of IDS) {
     aspect: +(crop.width / crop.height).toFixed(5),
     theta: +(crop.height / s.focalPx).toFixed(5),
     widths: WIDTHS,
+    // The pivot is the render's centre (its camera looks straight at it): where that falls in the
+    // crop, so the live object is aimed where the render shows it (the open lid lifts the crop).
+    pivot: [
+      +((s.size / 2 - left) / crop.width).toFixed(5),
+      +((s.size / 2 - top) / crop.height).toFixed(5),
+    ],
   };
   if (s.screen)
     entry.screen = s.screen.map(([x, y]) => [

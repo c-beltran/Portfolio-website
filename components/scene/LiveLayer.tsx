@@ -4,6 +4,7 @@ import dynamic from 'next/dynamic';
 import { Component, useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { forcedTier } from '@/lib/tier';
 import { useTheme } from '@/lib/useTheme';
+import type { OpenedId } from '@/content/opened';
 
 // Client-only, and only fetched once LiveLayer decides to mount it (spec §4).
 const LiveScene = dynamic(() => import('./LiveScene'), { ssr: false });
@@ -42,7 +43,7 @@ const hasWebGL2 = () => {
  * browser idle, fades in once its first frame is ready, and steps aside on context loss, so the
  * still is always there underneath. It never takes a pointer event.
  */
-export function LiveLayer() {
+export function LiveLayer({ open = null }: { open?: OpenedId | null }) {
   const [on, setOn] = useState(false);
   const [ready, setReady] = useState(false);
   const { theme } = useTheme();
@@ -85,7 +86,7 @@ export function LiveLayer() {
   return (
     <div ref={ref} className="desk-still__live" data-ready={ready} data-lamp={theme === 'lamp'}>
       <Fallback onError={lost}>
-        <LiveScene lamp={theme === 'lamp'} onReady={onReady} capture={capture} />
+        <LiveScene lamp={theme === 'lamp'} onReady={onReady} capture={capture} open={open} />
       </Fallback>
     </div>
   );

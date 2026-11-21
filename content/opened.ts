@@ -18,6 +18,8 @@ export type OpenedArt = {
   /** The crop's height over the render's focal length: its angular size (Tier 2 sizes to it). */
   theta: number;
   widths: number[];
+  /** Where the object's pivot falls in the art, 0–1 from the top left (the live object aims there). */
+  pivot: [number, number];
   /** The patch over the object's spot on the still, master-normalised, y down. */
   patch: { x0: number; y0: number; x1: number; y1: number };
   patchWidths: number[];

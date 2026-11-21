@@ -5,6 +5,8 @@ import { Canvas, useThree } from '@react-three/fiber';
 import { Suspense, useCallback, useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { bakedMaterial, glassMaterial } from './materials';
+import { Movers } from './Movers';
+import type { OpenedId } from '@/content/opened';
 import { CAMERAS, type Vec3 } from '@/content/scene/cameras';
 import { master, viewOffset } from '@/content/scene/framing';
 import { panOf } from '@/components/desk/pan';
@@ -13,16 +15,9 @@ import { hfov } from './transition';
 
 const GROUPS = ['room', 'desk', 'monitor', 'props', 'screen', 'sky'] as const;
 type Group = (typeof GROUPS)[number];
-/** The objects that come forward (design 2026-11-19 §4.2), in their own GLB with their clips. */
+/** The objects that come forward (design 2026-11-19 §4.2), in their own GLB (Movers.tsx). */
 const MOVERS = ['kit', 'phone'] as const;
 type Mover = (typeof MOVERS)[number];
-/** Each mover mesh's material: the rigid parts take their mover's bake; the clip quad is glass. */
-const MOVER_MESH: Record<string, Mover | 'phoneScreen'> = {
-  kit_base: 'kit',
-  kit_lid: 'kit',
-  phone_body: 'phone',
-  phone_screen: 'phoneScreen',
-};
 // The phone's dark glass, under the clip quad: the residual corrects it toward the still.
 const PHONE_GLASS = '#0b0c0e';
 const tex = (g: Group | Mover, mode: 'day' | 'lamp') => `/scene/bake/${g}-${mode}.webp`;
@@ -90,13 +85,14 @@ function Scene({
   lamp,
   onReady,
   capture,
+  open,
 }: {
   lamp: boolean;
   onReady: () => void;
   capture: boolean;
+  open: OpenedId | null;
 }) {
   const { scene } = useGLTF('/scene/scene.glb');
-  const { scene: movers } = useGLTF('/scene/movers.glb');
   const glossy = Object.entries(GLOSSY) as [Group, Glossy][];
   const urls = [
     ...GROUPS.flatMap((g) => [tex(g, 'day'), tex(g, 'lamp')]),
@@ -120,7 +116,10 @@ function Scene({
       GROUPS.map((g, i) => {
         const k = glossy.findIndex(([name]) => name === g);
         const opts = k < 0 ? {} : { ...glossy[k]![1], probe, gloss: textures[n + 2 + k]! };
-        return [g, bakedMaterial(textures[2 * i]!, textures[2 * i + 1]!, { ...opts, residual })];
+        return [
+          g,
+          bakedMaterial(textures[2 * i]!, textures[2 * i + 1]!, { ...opts, residual, dim: true }),
+        ];
       }),
     ) as Record<Group, THREE.ShaderMaterial>;
     const see = (o: typeof GLASS) =>
@@ -129,11 +128,14 @@ function Scene({
     const moving = Object.fromEntries(
       MOVERS.map((m, i) => [
         m,
-        bakedMaterial(textures[m0 + 2 * i]!, textures[m0 + 2 * i + 1]!, { residual }),
+        bakedMaterial(textures[m0 + 2 * i]!, textures[m0 + 2 * i + 1]!, {
+          residual,
+          opened: true,
+        }),
       ]),
     ) as Record<Mover, THREE.ShaderMaterial>;
     const glassTex = flat(PHONE_GLASS);
-    const phoneScreen = bakedMaterial(glassTex, glassTex, { residual });
+    const phoneScreen = bakedMaterial(glassTex, glassTex, { residual, opened: true });
     return { ...baked, ...moving, phoneScreen, glass: see(GLASS), water: see(WATER) };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [textures]);
@@ -153,12 +155,13 @@ function Scene({
       }
       o.material = m;
     });
-    movers.traverse((o) => {
-      if (o instanceof THREE.Mesh && MOVER_MESH[o.name]) o.material = materials[MOVER_MESH[o.name]!];
-    });
     invalidate();
     onReady();
-  }, [scene, movers, materials, invalidate, onReady]);
+  }, [scene, materials, invalidate, onReady]);
+  const statics = useMemo(
+    () => [...GROUPS.map((g) => materials[g]), materials.glass, materials.water],
+    [materials],
+  );
 
   // Day ↔ lamp cross-fade (0.6 s), rendering on demand only while it runs.
   const first = useRef(true);
@@ -184,7 +187,7 @@ function Scene({
   return (
     <>
       <primitive object={scene} />
-      <primitive object={movers} />
+      <Movers open={open} materials={materials} statics={statics} />
     </>
   );
 }
@@ -204,7 +207,7 @@ function flat(hex: string): THREE.Texture {
  * turns the camera a few degrees, and the DOM overlays (hotspots, the name) move by the matching
  * screen distance through --gx/--gy on .desk-still.
  */
-function Rig({ capture }: { capture: boolean }) {
+function Rig({ capture, open }: { capture: boolean; open: OpenedId | null }) {
   const get = useThree((s) => s.get);
   const size = useThree((s) => s.size);
   const glance = useRef<Glance>({ yaw: 0, pitch: 0 });
@@ -253,6 +256,8 @@ function Rig({ capture }: { capture: boolean }) {
       },
       [frame],
     ),
+    // While an object is out the view holds still, so the held object and the panel don't drift.
+    open === null,
   );
   return null;
 }
@@ -262,7 +267,10 @@ export default function LiveScene(props: {
   onReady: () => void;
   /** ?tier=2&capture=master: the whole master at rest, no residual, readable pixels. */
   capture?: boolean;
+  /** The object that has come forward, if any (content/opened.ts). */
+  open?: OpenedId | null;
 }) {
+  const open = props.open ?? null;
   const capture = !!props.capture;
   return (
     <Canvas
@@ -279,9 +287,9 @@ export default function LiveScene(props: {
       camera={{ near: 0.05, far: 20 }}
     >
       <Suspense fallback={null}>
-        <Scene lamp={props.lamp} onReady={props.onReady} capture={capture} />
+        <Scene lamp={props.lamp} onReady={props.onReady} capture={capture} open={open} />
       </Suspense>
-      <Rig capture={capture} />
+      <Rig capture={capture} open={open} />
     </Canvas>
   );
 }

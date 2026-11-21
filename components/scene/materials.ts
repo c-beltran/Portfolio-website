@@ -42,12 +42,17 @@ function black(): THREE.DataTexture {
   return t;
 }
 
-/** Hand a mover's opened bake to its material once it has loaded. */
+/**
+ * Hand a mover's opened bake to its material once it has loaded, or a video (the phone's clip).
+ * three uploads video textures linear and decodes them only in its own materials, so the shader
+ * decodes a video from sRGB itself (openDecode).
+ */
 export function setOpenedBake(m: THREE.ShaderMaterial, day: THREE.Texture, lamp: THREE.Texture) {
   lightmap(day);
   lightmap(lamp);
   m.uniforms.openDay!.value = day;
   m.uniforms.openLamp!.value = lamp;
+  m.uniforms.openDecode!.value = (day as THREE.VideoTexture).isVideoTexture ? 1 : 0;
 }
 
 function lightmap(t: THREE.Texture) {
@@ -171,6 +176,7 @@ export function bakedMaterial(day: THREE.Texture, lamp: THREE.Texture, opts: Pro
       openDay: { value: black() },
       openLamp: { value: black() },
       openMix: { value: 0 },
+      openDecode: { value: 0 },
     });
   const world = !!(probe || residual);
   const fragment = [
@@ -187,7 +193,12 @@ export function bakedMaterial(day: THREE.Texture, lamp: THREE.Texture, opts: Pro
     ...(residual ? [RESIDUAL_GLSL] : []),
     ...(opts.dim ? ['uniform float dim;'] : []),
     ...(opts.opened
-      ? ['uniform sampler2D openDay;', 'uniform sampler2D openLamp;', 'uniform float openMix;']
+      ? [
+          'uniform sampler2D openDay;',
+          'uniform sampler2D openLamp;',
+          'uniform float openMix;',
+          'uniform float openDecode;',
+        ]
       : []),
     'varying vec2 vUv;',
     ...(world ? ['varying vec3 vWorld;'] : []),
@@ -195,7 +206,9 @@ export function bakedMaterial(day: THREE.Texture, lamp: THREE.Texture, opts: Pro
     '  vec4 base = mix(texture2D(day, vUv), texture2D(lamp, vUv), fade);',
     ...(opts.opened
       ? [
-          '  base = mix(base, mix(texture2D(openDay, vUv), texture2D(openLamp, vUv), fade), openMix);',
+          '  vec4 opened = mix(texture2D(openDay, vUv), texture2D(openLamp, vUv), fade);',
+          '  if (openDecode > 0.5) opened = sRGBTransferEOTF(opened);',
+          '  base = mix(base, opened, openMix);',
         ]
       : []),
     ...(probe
@@ -209,7 +222,12 @@ export function bakedMaterial(day: THREE.Texture, lamp: THREE.Texture, opts: Pro
         ]
       : []),
     ...(residual ? ['  base.rgb = residual(base.rgb, vWorld);'] : []),
-    ...(opts.dim ? [`  base.rgb *= 1.0 - ${(1 - DIM_LEVEL).toFixed(2)} * dim;`] : []),
+    // In sRGB, as CSS brightness() dims the Tier 1 still, so the two tiers dim alike.
+    ...(opts.dim
+      ? [
+          `  base.rgb = sRGBTransferEOTF(vec4(sRGBTransferOETF(base).rgb * (1.0 - ${(1 - DIM_LEVEL).toFixed(2)} * dim), 1.0)).rgb;`,
+        ]
+      : []),
     '  gl_FragColor = base;',
     '  #include <colorspace_fragment>',
     '}',
@@ -242,6 +260,8 @@ export function glassMaterial(probe: Probe, tint: THREE.Color, fill: number, str
       fill: { value: fill },
       strength: { value: strength },
       center: { value: new THREE.Vector3() },
+      // while an object is out it dims with the rest of the static scene (Movers.tsx)
+      dim: { value: 0 },
     },
     vertexShader: VERTEX,
     fragmentShader: [
@@ -249,6 +269,7 @@ export function glassMaterial(probe: Probe, tint: THREE.Color, fill: number, str
       'uniform float fill;',
       'uniform float strength;',
       'uniform vec3 center;',
+      'uniform float dim;',
       PROBE_GLSL,
       'varying vec2 vUv;',
       'varying vec3 vWorld;',
@@ -260,6 +281,7 @@ export function glassMaterial(probe: Probe, tint: THREE.Color, fill: number, str
       '  vec3 env = probe(reflect(v, n), 1.0);',
       '  float a = clamp(fill + f, 0.0, 1.0);',
       '  gl_FragColor = vec4((tint * fill + env * f) / max(a, 1e-3), a);',
+      `  gl_FragColor.rgb = sRGBTransferEOTF(vec4(sRGBTransferOETF(gl_FragColor).rgb * (1.0 - ${(1 - DIM_LEVEL).toFixed(2)} * dim), 1.0)).rgb;`,
       '  #include <colorspace_fragment>',
       '}',
     ].join('\n'),
