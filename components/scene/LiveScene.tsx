@@ -13,7 +13,19 @@ import { hfov } from './transition';
 
 const GROUPS = ['room', 'desk', 'monitor', 'props', 'screen', 'sky'] as const;
 type Group = (typeof GROUPS)[number];
-const tex = (g: Group, mode: 'day' | 'lamp') => `/scene/bake/${g}-${mode}.webp`;
+/** The objects that come forward (design 2026-11-19 §4.2), in their own GLB with their clips. */
+const MOVERS = ['kit', 'phone'] as const;
+type Mover = (typeof MOVERS)[number];
+/** Each mover mesh's material: the rigid parts take their mover's bake; the clip quad is glass. */
+const MOVER_MESH: Record<string, Mover | 'phoneScreen'> = {
+  kit_base: 'kit',
+  kit_lid: 'kit',
+  phone_body: 'phone',
+  phone_screen: 'phoneScreen',
+};
+// The phone's dark glass, under the clip quad: the residual corrects it toward the still.
+const PHONE_GLASS = '#0b0c0e';
+const tex = (g: Group | Mover, mode: 'day' | 'lamp') => `/scene/bake/${g}-${mode}.webp`;
 const PROBE = ['/scene/bake/probe-day.webp', '/scene/bake/probe-lamp.webp'];
 
 /**
@@ -84,6 +96,7 @@ function Scene({
   capture: boolean;
 }) {
   const { scene } = useGLTF('/scene/scene.glb');
+  const { scene: movers } = useGLTF('/scene/movers.glb');
   const glossy = Object.entries(GLOSSY) as [Group, Glossy][];
   const urls = [
     ...GROUPS.flatMap((g) => [tex(g, 'day'), tex(g, 'lamp')]),
@@ -91,6 +104,7 @@ function Scene({
     ...glossy.map(([, o]) => o.gloss),
     // The capture for the residual renders without it (scripts/scene/measure/residual.mjs).
     ...(capture ? [] : RESIDUAL),
+    ...MOVERS.flatMap((m) => [tex(m, 'day'), tex(m, 'lamp')]),
   ];
   const textures = useTexture(urls);
   const invalidate = useThree((s) => s.invalidate);
@@ -111,7 +125,16 @@ function Scene({
     ) as Record<Group, THREE.ShaderMaterial>;
     const see = (o: typeof GLASS) =>
       glassMaterial(probe, new THREE.Color(o.tint), o.fill, o.strength);
-    return { ...baked, glass: see(GLASS), water: see(WATER) };
+    const m0 = urls.length - 2 * MOVERS.length;
+    const moving = Object.fromEntries(
+      MOVERS.map((m, i) => [
+        m,
+        bakedMaterial(textures[m0 + 2 * i]!, textures[m0 + 2 * i + 1]!, { residual }),
+      ]),
+    ) as Record<Mover, THREE.ShaderMaterial>;
+    const glassTex = flat(PHONE_GLASS);
+    const phoneScreen = bakedMaterial(glassTex, glassTex, { residual });
+    return { ...baked, ...moving, phoneScreen, glass: see(GLASS), water: see(WATER) };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [textures]);
 
@@ -130,9 +153,12 @@ function Scene({
       }
       o.material = m;
     });
+    movers.traverse((o) => {
+      if (o instanceof THREE.Mesh && MOVER_MESH[o.name]) o.material = materials[MOVER_MESH[o.name]!];
+    });
     invalidate();
     onReady();
-  }, [scene, materials, invalidate, onReady]);
+  }, [scene, movers, materials, invalidate, onReady]);
 
   // Day ↔ lamp cross-fade (0.6 s), rendering on demand only while it runs.
   const first = useRef(true);
@@ -155,7 +181,20 @@ function Scene({
     return () => cancelAnimationFrame(id);
   }, [lamp, materials, invalidate, canvas]);
 
-  return <primitive object={scene} />;
+  return (
+    <>
+      <primitive object={scene} />
+      <primitive object={movers} />
+    </>
+  );
+}
+
+/** A 1×1 colour standing in for a bake: sRGB bytes, as the bakes are (materials.ts lightmap). */
+function flat(hex: string): THREE.Texture {
+  const rgb = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
+  const t = new THREE.DataTexture(new Uint8Array([...rgb, 255]), 1, 1);
+  t.needsUpdate = true;
+  return t;
 }
 
 /**

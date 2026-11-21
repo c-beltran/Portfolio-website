@@ -12,9 +12,17 @@ The monitor screen bakes on its own UVs at full size (the close-up reads it). Th
 backdrop plane carrying the sky gradient. Glass and water are not baked (no real-time transmission,
 spec §6): they export as plain meshes and the live scene fakes them.
 
+The movers (design 2026-11-19 §4.2: the kit case and the phone, which come forward) bake on their
+own: each rigid part becomes one mesh under its pivot (kit_base and kit_lid; phone_body), one bake
+UV is packed across a mover's parts, and each mover is baked twice per mode: at rest (frame 0),
+and in its opened pose (opened.canonical_pose in front of the seat, its clip at the last frame),
+one mover at a time. They export to their own GLB with the hierarchy and the clips.
+
 Never saves the .blend: the scene is changed in memory only. Outputs:
-  <out-dir>/<group>-<mode>.png   and   <glb> (meshes named room, desk, monitor, props, screen,
-  sky, glass, water; one UV map, the bake's; placeholder materials).
+  <out-dir>/<group>-<mode>.png, <out-dir>/<mover>-open-<mode>.png,
+  <glb> (meshes named room, desk, monitor, props, screen, sky, glass, water; one UV map, the
+  bake's; placeholder materials) and <movers-glb> (obj_kit › kit_base, kit_lid; obj_phone ›
+  phone_spin › phone_body, phone_screen; the clips kit_open and phone_turn; no materials).
 """
 
 import argparse
@@ -27,13 +35,21 @@ import bpy
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
+import movers as MV  # noqa: E402
+import opened as OP  # noqa: E402
 import render as R  # noqa: E402  (mode settings: world, lights, screen strength, exposure)
-from bake_logic import GROUPS, backdrop_covers, group_for, lift_for  # noqa: E402
+from bake_logic import GROUPS, MOVERS, backdrop_covers, group_for, lift_for  # noqa: E402
 
 ASSETS = Path.home() / "Portfolio-assets"
 # Atlas sizes (px). The screen keeps the editor image's aspect (3440x1440).
 SIZES = {"room": (1024, 1024), "desk": (2048, 2048), "monitor": (2048, 2048), "props": (2048, 2048),
-         "screen": (2048, 858), "sky": (256, 256)}
+         "screen": (2048, 858), "sky": (256, 256), "kit": (1024, 1024), "phone": (512, 512)}
+# The movers opened, close to the eye: on demand (public/opened/bake), not the first load.
+OPEN_SIZES = {"kit": (2048, 2048), "phone": (1024, 1024)}
+# Each mover's rigid parts: one mesh each, under the part's parent (an Empty part takes its parent's
+# origin). kit_lid keeps its hinge origin and the clip kit_open.
+PARTS = {"kit": ("kit_base", "kit_lid"), "phone": ("phone_body",)}
+CLIP_END = {"kit": MV.frames(MV.KIT_OPEN_S), "phone": MV.frames(MV.PHONE_TURN_S)}
 HEAVY_TRIS = 50000  # decimate an imported model above this (the mouse and phone ship ~100k+; the monitor keeps its 45k)
 HEAVY_TARGET = 8000
 
@@ -43,6 +59,7 @@ def args():
     p = argparse.ArgumentParser()
     p.add_argument("--out-dir", default=str(ASSETS / "bake"))
     p.add_argument("--glb", default=str(ASSETS / "glb" / "scene-raw.glb"))
+    p.add_argument("--movers-glb", default=str(ASSETS / "glb" / "movers-raw.glb"))
     p.add_argument("--samples", type=int, default=512)
     p.add_argument("--scale", type=float, default=1.0, help="atlas size factor (0.25 for a quick check)")
     p.add_argument("--modes", default="day,lamp")
@@ -65,7 +82,9 @@ def groups():
     scene_objs = [o for o in bpy.context.scene.objects if o.type in ("MESH", "CURVE") and not o.hide_render]
     g = {k: [] for k in GROUPS}
     for o in scene_objs:
-        g[group_for(o.name, top(o).name, is_screen(o))].append(o)
+        k = group_for(o.name, top(o).name, is_screen(o))
+        if k is not None:
+            g[k].append(o)
     for k in ("room", "desk", "monitor", "props", "screen"):
         if not g[k]:
             raise SystemExit(f"bake: group {k} is empty (object names changed?)")
@@ -151,9 +170,9 @@ def add_bake_uv(objs, unwrap=True):
         bpy.ops.object.mode_set(mode="OBJECT")
 
 
-def join_group(objs, name):
-    """One mesh per group, so Cycles bakes it in one pass (it bakes each selected object
-    separately). Each part's texture UVs are renamed UVMap first, so the join keeps them."""
+def one_texture_uv(objs):
+    """Before a join: every slot has a material, and each mesh keeps one texture UV map, named
+    UVMap, so the join keeps them all."""
     for o in objs:
         me = o.data
         if not me.materials:
@@ -167,12 +186,133 @@ def join_group(objs, name):
         if keep is None:
             keep = me.uv_layers.new(name="UVMap")
         keep.name = "UVMap"
+
+
+def join_group(objs, name):
+    """One mesh per group, so Cycles bakes it in one pass (it bakes each selected object
+    separately)."""
+    one_texture_uv(objs)
     select(objs)
     bpy.ops.object.join()
     o = bpy.context.object
     o.name = name
     o.data.uv_layers["UVMap"].active_render = True
     return [o]
+
+
+def merged_mesh(objs, frame, name):
+    """One mesh of objs (modifiers applied), in the local space of a frame (its world matrix)."""
+    deps = bpy.context.evaluated_depsgraph_get()
+    inv = frame.inverted()
+    tmp = []
+    for o in objs:
+        me = bpy.data.meshes.new_from_object(o.evaluated_get(deps), preserve_all_data_layers=True, depsgraph=deps)
+        me.transform(inv @ o.matrix_world)
+        t = bpy.data.objects.new(f"tmp_{o.name}", me)
+        bpy.context.scene.collection.objects.link(t)
+        tmp.append(t)
+    one_texture_uv(tmp)
+    select(tmp, tmp[0])
+    bpy.ops.object.join()
+    j = bpy.context.object
+    me = j.data
+    me.name = name
+    bpy.data.objects.remove(j, do_unlink=True)
+    return me
+
+
+def prepare_movers():
+    """Each mover's rigid parts as one mesh each, kept under their parents (PARTS); the heavy
+    import decimated as to_plain_meshes does. Returns {mover: [part objects]}."""
+    bpy.context.view_layer.update()
+    out = {}
+    for mover, parts in PARTS.items():
+        out[mover] = []
+        for name in parts:
+            root = bpy.data.objects[name]
+            under = [root, *root.children_recursive]
+            meshes = [o for o in under if o.type in ("MESH", "CURVE") and not o.hide_render]
+            tris = sum(len(p.vertices) - 2 for o in meshes if o.type == "MESH" for p in o.data.polygons)
+            if tris > HEAVY_TRIS:
+                print(f"  decimate {name}: {tris} -> ~{HEAVY_TARGET} tris")
+                for o in meshes:
+                    o.modifiers.new("decimate", "DECIMATE").ratio = max(0.02, HEAVY_TARGET / tris)
+            if root.type == "MESH":
+                me = merged_mesh(meshes, root.matrix_world.copy(), name)
+                for o in root.children_recursive:
+                    bpy.data.objects.remove(o, do_unlink=True)
+                root.modifiers.clear()
+                root.data = me
+                part = root
+            else:  # an Empty over an imported model: a new mesh in its parent's frame
+                par = root.parent
+                me = merged_mesh(meshes, par.matrix_world.copy(), name)
+                for o in [o for o in under]:
+                    bpy.data.objects.remove(o, do_unlink=True)
+                part = bpy.data.objects.new(name, me)
+                for c in par.users_collection:
+                    c.objects.link(part)
+                part.parent = par
+            out[mover].append(part)
+            print(f"  mover part {name}: {len(part.data.polygons)} faces")
+    return out
+
+
+class joined_copy:
+    """A temporary single mesh of objs at their current world poses, for one bake pass (they share
+    the bake UV; baking them as separate objects would let one's margin overwrite the other)."""
+
+    def __init__(self, objs):
+        self.objs = objs
+
+    def __enter__(self):
+        bpy.context.view_layer.update()
+        copies = []
+        for o in self.objs:
+            c = o.copy()
+            c.data = o.data.copy()
+            c.animation_data_clear()
+            c.parent = None
+            c.matrix_world = o.matrix_world.copy()
+            bpy.context.scene.collection.objects.link(c)
+            copies.append(c)
+        for o in self.objs:
+            o.hide_render = True  # the original stays out of its own copy's light
+        select(copies, copies[0])
+        bpy.ops.object.join()
+        self.tmp = bpy.context.object
+        self.tmp.data.uv_layers.active = self.tmp.data.uv_layers["bake"]
+        return self.tmp
+
+    def __exit__(self, *exc):
+        bpy.data.objects.remove(self.tmp, do_unlink=True)
+        for o in self.objs:
+            o.hide_render = False
+
+
+def pose_open(mover, eye, forward, up):
+    """Put a mover in its opened pose (pivot at opened.canonical_pose, its clip at the last frame).
+    Returns a function that puts it back."""
+    scene = bpy.context.scene
+    pivot = bpy.data.objects[MOVERS[mover]]
+    saved = (pivot.location.copy(), pivot.rotation_mode, pivot.rotation_euler.copy(), pivot.rotation_quaternion.copy())
+    loc, q = OP.canonical_pose(mover, eye, forward, up)
+    pivot.rotation_mode = "QUATERNION"
+    pivot.rotation_quaternion = q
+    pivot.location = loc
+    scene.frame_set(CLIP_END[mover])
+
+    def restore():
+        pivot.location, pivot.rotation_mode, pivot.rotation_euler, pivot.rotation_quaternion = saved
+        scene.frame_set(0)
+        bpy.context.view_layer.update()
+
+    return restore
+
+
+def seat():
+    """The seat camera's eye, forward and up (Blender axes): the opened poses sit in front of it."""
+    return OP.seat_axes(bpy.data.objects["cam_seat"].matrix_world)
 
 
 def target_image(objs, name, size):
@@ -310,6 +450,32 @@ def bake_roughness(objs, name, size, out_path):
     print(f"  baked {out_path.name} {size[0]}x{size[1]}")
 
 
+def export_movers(movers, glb):
+    """The movers on their own: pivots, parts and phone_screen, with the clips. The parts keep only
+    the bake UV (as UVMap); phone_screen keeps its own 0-1 UV for the clip."""
+    keep = []
+    for mover, pivot in MOVERS.items():
+        p = bpy.data.objects[pivot]
+        keep += [p, *p.children_recursive]
+    for o in keep:
+        if o.type != "MESH":
+            continue
+        me = o.data
+        if "bake" in me.uv_layers:
+            for u in [u for u in me.uv_layers if u.name != "bake"]:
+                me.uv_layers.remove(u)
+            me.uv_layers["bake"].name = "UVMap"
+        me.materials.clear()
+    bpy.context.scene.frame_set(0)
+    select(keep)
+    Path(glb).parent.mkdir(parents=True, exist_ok=True)
+    bpy.ops.export_scene.gltf(filepath=str(glb), export_format="GLB", export_yup=True, export_apply=True,
+                              export_materials="NONE", export_normals=False, export_cameras=False,
+                              export_lights=False, use_selection=True, export_animations=True,
+                              export_animation_mode="ACTIONS", export_force_sampling=True)
+    print(f"exported {glb}: {', '.join(o.name for o in keep)}")
+
+
 def export(g, glb):
     keep = []
     for name, objs in g.items():
@@ -345,14 +511,21 @@ def main():
     scene.cycles.samples = a.samples
     scene.view_settings.view_transform = "AgX"
 
+    scene.frame_set(0)
     window = window_corners()
     g = groups()
+    for k in MOVERS:
+        g.pop(k)
+    movers = prepare_movers()
+    eye, forward, up = seat()
     lift([o for objs in g.values() for o in objs])
     for k in g:
         g[k] = join_group(to_plain_meshes(g[k]), k) if g[k] else []
     for k in ("room", "desk", "monitor", "props"):
         add_bake_uv(g[k])
     add_bake_uv(g["screen"], unwrap=False)
+    for parts in movers.values():
+        add_bake_uv(parts)
     sky = sky_backdrop()
     check_backdrop(sky, scene, window)
     g["sky"] = [sky]
@@ -374,10 +547,22 @@ def main():
             t = time.time()
             bake(g[name], img, kind, filters, out / f"{name}-{mode}.png", scene)
             times[f"{name}-{mode}"] = round(time.time() - t)
+        combined = {"DIRECT", "INDIRECT", "DIFFUSE", "GLOSSY", "EMIT"}
+        for mover, parts in movers.items():
+            for tag, sizes in (("", SIZES), ("-open", OPEN_SIZES)):
+                w, h = (max(64, int(v * a.scale)) for v in sizes[mover])
+                img = bpy.data.images.new(f"{mover}{tag}-{mode}", w, h, float_buffer=True, alpha=False)
+                restore = pose_open(mover, eye, forward, up) if tag else (lambda: None)
+                t = time.time()
+                with joined_copy(parts) as tmp:
+                    bake([tmp], img, "COMBINED", combined, out / f"{mover}{tag}-{mode}.png", scene)
+                restore()
+                times[f"{mover}{tag}-{mode}"] = round(time.time() - t)
     print("bake times (s):", times)
     if not a.skip_gloss:
         for name, size in GLOSS.items():
             bake_roughness(g[name], name, tuple(max(64, int(v * a.scale)) for v in size), out / f"gloss-{name}.png")
+    export_movers(movers, a.movers_glb)
     export(g, a.glb)
 
 

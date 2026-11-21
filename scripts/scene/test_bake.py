@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from bake_logic import backdrop_covers, group_for, lift_for  # noqa: E402
+from bake_logic import GROUPS, backdrop_covers, group_for, lift_for  # noqa: E402
 
 
 class GroupFor(unittest.TestCase):
@@ -27,8 +27,19 @@ class GroupFor(unittest.TestCase):
         self.assertEqual(group_for("deco_water_glass", "deco_water_glass", False), "water")
 
     def test_props(self):
-        self.assertEqual(group_for("Object_20", "obj_phone", False), "props")
+        self.assertEqual(group_for("deco_mug", "deco_mug", False), "props")
         self.assertEqual(group_for("deco_cable_mouse", "deco_cable_mouse", False), "props")
+
+    def test_movers_bake_on_their_own(self):
+        # phase 2: the kit and the phone come forward, so each gets its own atlas
+        self.assertIn("kit", GROUPS)
+        self.assertIn("phone", GROUPS)
+        self.assertEqual(group_for("kit_base", "obj_kit", False), "kit")
+        self.assertEqual(group_for("kit_lid", "obj_kit", False), "kit")
+        self.assertEqual(group_for("Object_20", "obj_phone", False), "phone")
+
+    def test_the_clip_quad_is_never_baked(self):
+        self.assertIsNone(group_for("phone_screen", "obj_phone", False))
 
 
 class BackdropCovers(unittest.TestCase):

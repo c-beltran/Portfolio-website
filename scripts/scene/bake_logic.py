@@ -1,6 +1,9 @@
 """Pure helpers for bake.py (no bpy), so they can be unit-tested: scripts/scene/test_bake.py."""
 
-GROUPS = ("room", "desk", "monitor", "props", "screen", "glass", "water")
+GROUPS = ("room", "desk", "monitor", "props", "screen", "glass", "water", "kit", "phone")
+# The objects that come forward (design 2026-11-19 §4.2): each bakes into its own atlas, at rest
+# and opened, and exports on its own with its hierarchy and clip (bake.py export_movers).
+MOVERS = {"kit": "obj_kit", "phone": "obj_phone"}
 
 # Objects lifted in the bake only (metres): obj_badge lies in the mat's plane (both 0.750–0.753 m),
 # which Cycles happens to draw but a depth buffer can't separate. Half a millimetre, unseen.
@@ -9,7 +12,13 @@ LIFTS = {"obj_badge": 0.0005}
 
 def group_for(name: str, top: str, is_screen: bool) -> str:
     """The bake group of a mesh, from the build's names (room_*, deco_*, obj_*); top is the name of
-    its root parent, is_screen whether it carries the monitor's screen material."""
+    its root parent, is_screen whether it carries the monitor's screen material. None: never baked
+    (the phone's clip quad, which shows the clip or a flat colour)."""
+    if name == "phone_screen":
+        return None
+    for group, pivot in MOVERS.items():
+        if top == pivot:
+            return group
     if name.startswith("room_") or top == "window_frame" or name.startswith("window"):
         return "room"
     if top in ("deco_desk", "deco_mat"):
