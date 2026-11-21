@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { band, bandCount, bandMedia, master, PORTRAIT, portraitStrip } from './framing';
 import { framingCss } from './framingCss';
+import { DIM_LEVEL } from '../opened';
 
 const css = framingCss();
 
@@ -65,5 +66,12 @@ describe('framingCss', () => {
 
   it("globals.css's portrait panel sheet uses the same query", () => {
     expect(readFileSync('app/globals.css', 'utf8')).toContain(`@media ${PORTRAIT} {`);
+  });
+});
+
+describe('the dim while an object is out (design 2026-11-19 §4.1)', () => {
+  it('is the same in Tier 1 (globals.css) as in the live shader (DIM_LEVEL)', () => {
+    const globals = readFileSync('app/globals.css', 'utf8');
+    expect(globals).toContain(`brightness(${DIM_LEVEL})`);
   });
 });

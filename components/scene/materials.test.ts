@@ -69,3 +69,38 @@ describe('the residual (M3c: the live seat matches the still)', () => {
     expect(bakedMaterial(t(), t()).fragmentShader).not.toContain('residual');
   });
 });
+
+describe('coming forward (phase 2): the dim and the opened bake', () => {
+  const t = () => new THREE.Texture();
+
+  it('adds dim and openMix only when asked for', () => {
+    const plain = bakedMaterial(t(), t());
+    expect(plain.uniforms).not.toHaveProperty('dim');
+    expect(plain.uniforms).not.toHaveProperty('openMix');
+    const m = bakedMaterial(t(), t(), { dim: true, opened: true });
+    expect(m.uniforms.dim!.value).toBe(0);
+    expect(m.uniforms.openMix!.value).toBe(0);
+    for (const u of ['openDay', 'openLamp']) expect(m.uniforms).toHaveProperty(u);
+  });
+
+  it('starts the opened bake black, 1×1, until it loads', () => {
+    const m = bakedMaterial(t(), t(), { opened: true });
+    const img = (m.uniforms.openDay!.value as THREE.DataTexture).image;
+    expect([img.width, img.height]).toEqual([1, 1]);
+  });
+
+  it('at dim 0 and openMix 0 the output is the rest bake, untouched', () => {
+    const m = bakedMaterial(t(), t(), { dim: true, opened: true });
+    // the opened bake mixes in by openMix after the day/lamp fade; the dim scales by DIM_LEVEL
+    expect(m.fragmentShader).toContain(
+      'base = mix(base, mix(texture2D(openDay, vUv), texture2D(openLamp, vUv), fade), openMix);',
+    );
+    expect(m.fragmentShader).toContain('base.rgb *= 1.0 - 0.55 * dim;');
+  });
+
+  it('leaves the shader alone without them', () => {
+    const f = bakedMaterial(t(), t()).fragmentShader;
+    expect(f).not.toContain('openMix');
+    expect(f).not.toContain('dim');
+  });
+});

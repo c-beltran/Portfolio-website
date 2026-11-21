@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { DIM_LEVEL } from '@/content/opened';
 
 type Probe = [day: THREE.Texture, lamp: THREE.Texture];
 
@@ -22,7 +23,32 @@ export type ProbeOptions = {
     viewProj: THREE.Matrix4;
     weight?: number;
   };
+  /**
+   * Coming forward (design 2026-11-19 §4.1): a `dim` uniform (0–1) that darkens the output toward
+   * DIM_LEVEL while an object is out (the static scene; Tier 1's CSS brightness() matches it).
+   */
+  dim?: true;
+  /**
+   * The opened-pose bake of a mover (design §6): `openDay` and `openLamp` (black 1×1 until they
+   * load) mixed over the rest bake by `openMix` (0–1) after the day/lamp fade.
+   */
+  opened?: true;
 };
+
+/** A black 1×1 standing in for a bake that hasn't loaded. */
+function black(): THREE.DataTexture {
+  const t = new THREE.DataTexture(new Uint8Array([0, 0, 0, 255]), 1, 1);
+  t.needsUpdate = true;
+  return t;
+}
+
+/** Hand a mover's opened bake to its material once it has loaded. */
+export function setOpenedBake(m: THREE.ShaderMaterial, day: THREE.Texture, lamp: THREE.Texture) {
+  lightmap(day);
+  lightmap(lamp);
+  m.uniforms.openDay!.value = day;
+  m.uniforms.openLamp!.value = lamp;
+}
 
 function lightmap(t: THREE.Texture) {
   t.flipY = false;
@@ -139,6 +165,13 @@ export function bakedMaterial(day: THREE.Texture, lamp: THREE.Texture, opts: Pro
       residualWeight: { value: residual.weight ?? 1 },
     });
   }
+  if (opts.dim) uniforms.dim = { value: 0 };
+  if (opts.opened)
+    Object.assign(uniforms, {
+      openDay: { value: black() },
+      openLamp: { value: black() },
+      openMix: { value: 0 },
+    });
   const world = !!(probe || residual);
   const fragment = [
     'uniform sampler2D day;',
@@ -152,10 +185,19 @@ export function bakedMaterial(day: THREE.Texture, lamp: THREE.Texture, opts: Pro
         ]
       : ['uniform float fade;']),
     ...(residual ? [RESIDUAL_GLSL] : []),
+    ...(opts.dim ? ['uniform float dim;'] : []),
+    ...(opts.opened
+      ? ['uniform sampler2D openDay;', 'uniform sampler2D openLamp;', 'uniform float openMix;']
+      : []),
     'varying vec2 vUv;',
     ...(world ? ['varying vec3 vWorld;'] : []),
     'void main() {',
     '  vec4 base = mix(texture2D(day, vUv), texture2D(lamp, vUv), fade);',
+    ...(opts.opened
+      ? [
+          '  base = mix(base, mix(texture2D(openDay, vUv), texture2D(openLamp, vUv), fade), openMix);',
+        ]
+      : []),
     ...(probe
       ? [
           '  vec3 v = normalize(vWorld - cameraPosition);',
@@ -167,6 +209,7 @@ export function bakedMaterial(day: THREE.Texture, lamp: THREE.Texture, opts: Pro
         ]
       : []),
     ...(residual ? ['  base.rgb = residual(base.rgb, vWorld);'] : []),
+    ...(opts.dim ? [`  base.rgb *= 1.0 - ${(1 - DIM_LEVEL).toFixed(2)} * dim;`] : []),
     '  gl_FragColor = base;',
     '  #include <colorspace_fragment>',
     '}',
