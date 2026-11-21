@@ -97,6 +97,7 @@ The framing is chosen by the window's aspect ratio (width ÷ height), not by its
 - **On keyboard focus**, the focused object's label shows.
 - This replaces spec §2 "Discoverability (amended)", which had labels always visible on a first visit.
 - **The glow (Carlos, 2026-11-20):** "the rectangular outlines do not look so good". The hover rectangle and the open object's ring are replaced by a slight warm glow that follows the object's silhouette, chosen from a sketch.
+  - **On the edges only (Carlos, 2026-11-21):** "the glow should be on the edges not the item". The glow lies just outside the silhouette and never lights the object itself; on the monitor, neither half's glow lies on the screen.
   - It shows on hover, on the open object, with keyboard focus in the Sections list, and on touch screens together with the labels. It never shows while an object has come forward.
   - It is built from a silhouette mask per object, rendered from the seat (`scripts/scene/render_masks.py`, `encode_glow.mjs`, about 2 kB each). The masks load once the page is idle, never on first paint, and the glow follows the glance in the live preview.
 

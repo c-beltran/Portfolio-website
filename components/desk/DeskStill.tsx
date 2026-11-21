@@ -159,20 +159,17 @@ function DeskPatch({ id, mode }: { id: OpenedId; mode: 'day' | 'lamp' }) {
 }
 
 /**
- * The hover glow (Carlos, 2026-11-20: a slight glow instead of a rectangle): a soft warm ring that
- * follows the object's silhouette, plus a faint lift on the object, from masks rendered from the
- * seat (scripts/scene/render_masks.py, encode_glow.mjs). It sits just before its hotspot, so CSS
- * lights it from that hotspot's hover and open state (globals.css), and follows the glance.
+ * The hover glow (Carlos, 2026-11-20: a slight glow instead of a rectangle; 2026-11-21: on the
+ * edges, not the item): a soft warm ring just outside the object's silhouette, never on the object,
+ * from masks rendered from the seat (scripts/scene/render_masks.py, encode_glow.mjs). It sits just
+ * before its hotspot, so CSS lights it from that hotspot's hover and open state (globals.css), and
+ * follows the glance.
  */
 function DeskGlow({ item }: { item: DeskItemId }) {
-  const style = {
-    '--ring': `url(/glow/${item}-ring.webp)`,
-    '--lift': `url(/glow/${item}-mask.webp)`,
-  } as CSSProperties;
+  const style = { '--ring': `url(/glow/${item}-ring.webp)` } as CSSProperties;
   return (
     <div className="desk-glow" data-item={item} style={style}>
       <i className="desk-glow__ring" />
-      <i className="desk-glow__lift" />
     </div>
   );
 }
