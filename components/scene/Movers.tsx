@@ -9,7 +9,7 @@ import poses from '@/content/scene/opened-poses.json';
 import type { Vec3 } from '@/content/scene/cameras';
 import { setOpenedBake } from './materials';
 import { OUT, REST, stepMoment, type Moment } from './moment';
-import { blendPose, presentPose, type Pose } from './present';
+import { blendPose, presentPose, projectedHeight, type Pose } from './present';
 import { easeOutCubic } from './transition';
 
 const PIVOT: Record<OpenedId, string> = { kit: 'obj_kit', phone: 'obj_phone' };
@@ -132,9 +132,9 @@ class MoverRig {
   }
 
   /** Each rendered frame: fit every mover to its slot (.opened__art) through the live camera. */
-  fit(cam: THREE.PerspectiveCamera, height: number) {
+  fit(cam: THREE.PerspectiveCamera, view: { width: number; height: number }) {
     const c = this.s.canvas.getBoundingClientRect();
-    const focalPx = (cam.projectionMatrix.elements[5]! * height) / 2;
+    const focalPx = (cam.projectionMatrix.elements[5]! * view.height) / 2;
     for (const id of OPENED_IDS) {
       const m = this.all[id];
       const box = document
@@ -146,16 +146,29 @@ class MoverRig {
         const x = ((box.left + box.width * px - c.left) / c.width) * 2 - 1;
         const y = 1 - ((box.top + box.height * py - c.top) / c.height) * 2;
         this.ray.set(x, y, 0.5).unproject(cam).sub(cam.position).normalize();
-        m.present = presentPose({
-          eye: cam.position.toArray() as Vec3,
-          forward: poses.forward as Vec3,
-          canonical: poses[id].pose as Pose,
-          d0: poses[id].d0,
-          theta: artOf(id).theta,
-          ray: this.ray.toArray() as Vec3,
-          artHeightPx: box.height,
-          focalPx,
-        });
+        const fitTo = (artHeightPx: number) =>
+          presentPose({
+            eye: cam.position.toArray() as Vec3,
+            forward: poses.forward as Vec3,
+            canonical: poses[id].pose as Pose,
+            d0: poses[id].d0,
+            theta: artOf(id).theta,
+            ray: this.ray.toArray() as Vec3,
+            artHeightPx,
+            focalPx,
+          });
+        // Sized as if on the camera's axis (as its render was), then refitted for the stretch a
+        // flat image gives it off the axis, so it is as tall on screen as the art box.
+        const first = fitTo(box.height);
+        const dist = cam.position.distanceTo(new THREE.Vector3(...first.position));
+        const seen = projectedHeight(
+          cam,
+          this.ray.toArray() as Vec3,
+          dist,
+          artOf(id).theta * poses[id].d0,
+          view,
+        );
+        m.present = seen > 0 ? fitTo((box.height * box.height) / seen) : first;
         if (id === (this.open ?? this.last)) this.s.canvas.dataset.fit = box.height.toFixed(1);
       }
       const k = easeOutCubic(m.moment.travel);
@@ -284,6 +297,6 @@ export function Movers({
     latest.current = open;
     rig.current?.setOpen(open);
   }, [open]);
-  useFrame((state) => rig.current?.fit(state.camera as THREE.PerspectiveCamera, state.size.height));
+  useFrame((state) => rig.current?.fit(state.camera as THREE.PerspectiveCamera, state.size));
   return <primitive object={scene} />;
 }

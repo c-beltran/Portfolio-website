@@ -81,6 +81,9 @@ const gx = (page: Page) =>
 
 test.describe('?tier=2: your head follows the cursor', () => {
   test.skip(({ isMobile }) => isMobile, 'mouse');
+  // Its waits run to 20 s; under the full suite (phase 2 added the live coming-forward tests),
+  // headless WebGL is slow enough that the default 30 s test budget cut them short.
+  test.slow();
 
   test('the cursor at the right edge turns the view right, and the hotspots go with it', async ({
     page,

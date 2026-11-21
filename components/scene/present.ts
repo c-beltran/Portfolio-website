@@ -49,3 +49,33 @@ export function blendPose(a: Pose, b: Pose, k: number): Pose {
   const q = new THREE.Quaternion(...a.quaternion).slerp(new THREE.Quaternion(...b.quaternion), k);
   return { position: position.toArray() as Vec3, quaternion: q.toArray() as Pose['quaternion'] };
 }
+
+/**
+ * How long, in px, an upright segment of length `size` looks through the camera, centred `dist`
+ * along `ray` from the camera and square to the ray. presentPose sizes an object as if it sat on
+ * the camera's axis, as in its render; off the axis a flat image stretches it (about 1/cos² along
+ * the offset), so the live scene measures that here and refits.
+ */
+export function projectedHeight(
+  cam: THREE.Camera,
+  ray: Vec3,
+  dist: number,
+  size: number,
+  view: { width: number; height: number },
+): number {
+  const r = new THREE.Vector3(...ray).normalize();
+  const centre = cam.getWorldPosition(new THREE.Vector3()).addScaledVector(r, dist);
+  const up = new THREE.Vector3(0, 1, 0).applyQuaternion(
+    cam.getWorldQuaternion(new THREE.Quaternion()),
+  );
+  up.addScaledVector(r, -up.dot(r)).normalize();
+  const a = centre
+    .clone()
+    .addScaledVector(up, size / 2)
+    .project(cam);
+  const b = centre
+    .clone()
+    .addScaledVector(up, -size / 2)
+    .project(cam);
+  return Math.hypot(((a.x - b.x) * view.width) / 2, ((a.y - b.y) * view.height) / 2);
+}

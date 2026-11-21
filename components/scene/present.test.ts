@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { describe, expect, it } from 'vitest';
 import poses from '@/content/scene/opened-poses.json';
-import { blendPose, presentPose, type Pose } from './present';
+import { blendPose, presentPose, projectedHeight, type Pose } from './present';
 
 /**
  * The pose an object takes in front of the panel's slot (design 2026-11-19 §4.1): the canonical
@@ -79,5 +79,25 @@ describe('blendPose', () => {
     const m2 = new THREE.Quaternion(...blendPose(a, flipped, 0.5).quaternion);
     expect(m1.angleTo(m2)).toBeLessThan(1e-9);
     expect(m1.angleTo(new THREE.Quaternion())).toBeCloseTo(Math.PI / 4, 9);
+  });
+});
+
+describe('projectedHeight', () => {
+  // a camera at the origin looking down -z, 50° vertical field, 1000×800 px
+  const cam = new THREE.PerspectiveCamera(50, 1000 / 800, 0.05, 20);
+  cam.updateMatrixWorld();
+  cam.updateProjectionMatrix();
+  const view = { width: 1000, height: 800 };
+  const f = 400 / Math.tan((25 * Math.PI) / 180);
+
+  it('on the axis, is focal × size / distance', () => {
+    expect(projectedHeight(cam, [0, 0, -1], 2, 0.1, view)).toBeCloseTo((f * 0.1) / 2, 6);
+  });
+
+  it('off the axis, a flat image stretches it about 1/cos² along the offset', () => {
+    const a = (15 * Math.PI) / 180;
+    const ray: [number, number, number] = [0, -Math.sin(a), -Math.cos(a)];
+    const h = projectedHeight(cam, ray, 2, 0.05, view);
+    expect(h / ((f * 0.05) / 2)).toBeCloseTo(1 / Math.cos(a) ** 2, 2);
   });
 });
