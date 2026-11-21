@@ -807,6 +807,25 @@ html:has(.desk-still) body {
   pointer-events: auto;
 }
 
+.opened__art {
+  position: relative;
+}
+
+/* The phone's clip, on its screen (PhoneClip.tsx places it), once the phone itself is drawn. */
+.opened__art canvas:not([data-drawn]) ~ .phone-clip {
+  visibility: hidden;
+}
+
+/* The phone's clip, on its screen (PhoneClip.tsx places it). */
+.phone-clip {
+  position: absolute;
+  display: block;
+  object-fit: cover;
+  border-radius: 4% / 9%;
+  transform-origin: 0 0;
+  background: #0b0c0e;
+}
+
 .opened__art canvas {
   display: block;
   width: 100%;

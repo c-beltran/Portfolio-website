@@ -18,6 +18,8 @@ export type PanelBlock =
   | { kind: 'links' }
   /** The header's content, on the monitor's CV page: summary, ten-second facts, résumé, Classic. */
   | { kind: 'cv' }
+  /** Pause/Play for the phone's clip (WCAG 2.2.2), components/panel/ClipControl.tsx. */
+  | { kind: 'clip' }
   | { kind: 'todo'; text: string };
 
 const n = (value: number) => value.toLocaleString('en-US');
@@ -88,6 +90,11 @@ export const PANELS: Record<SectionSlug, PanelBlock[]> = {
   'power-walk': [
     { kind: 'eyebrow', text: 'THE PHONE · PROJECT 02' },
     { kind: 'title', text: 'Power Walk', draft: true },
+    { kind: 'clip' },
+    {
+      kind: 'todo',
+      text: '[TODO: Power Walk screen recording from Carlos (the clip is a placeholder)]',
+    },
     { kind: 'todo', text: '[TODO: Q26 in development, not public yet: landing page to decide]' },
     { kind: 'fact', fact: 'P04' },
     {

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, type CSSProperties } from 'react';
 import { artOf, artSrc, OPENED_IDS, type OpenedId } from '@/content/opened';
+import { PhoneClip } from './PhoneClip';
 
 type Mode = 'day' | 'lamp';
 
@@ -107,6 +108,7 @@ export function Opened({ id, mode, leaving }: Props) {
       <div className="opened__slot">
         <div className="opened__art" style={{ '--aspect': artOf(id).aspect } as CSSProperties}>
           <canvas ref={ref} />
+          {id === 'phone' && <PhoneClip leaving={leaving} />}
         </div>
       </div>
     </div>

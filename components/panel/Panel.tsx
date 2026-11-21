@@ -4,6 +4,7 @@ import { headerSummary, LINKS, RESUME_TODO, showResume, showResumeTodo } from '@
 import type { SectionSlug } from '@/content/objects';
 import { DRAFT_MARK, PANELS, type PanelBlock } from '@/content/panels';
 import statsJson from '@/content/stats.json';
+import { ClipControl } from './ClipControl';
 import type { Stats } from '@/content/stats.types';
 
 const STATS = statsJson as Stats;
@@ -101,6 +102,8 @@ function Block({ block }: { block: PanelBlock }) {
           </ul>
         </>
       );
+    case 'clip':
+      return <ClipControl />;
     case 'todo':
       return <p className="panel__todo">{block.text}</p>;
   }

@@ -4,11 +4,22 @@ import { describe, expect, it } from 'vitest';
 
 /**
  * What an object that comes forward loads on demand (design 2026-11-19 §5.5, §6), never on the
- * first load: each object's Tier 2 opened bakes, day plus lamp, stay within 400 kB (my call,
- * plan M3c-forward).
+ * first load: the phone's clip (≤ 1 MB, design §6), and each object's Tier 2 opened bakes, day plus
+ * lamp, within 400 kB (my call, plan M3c-forward).
  */
 const BAKE = join(process.cwd(), 'public/opened/bake');
 const CAP = 400 * 1024;
+
+const CLIPS = join(process.cwd(), 'public/clips');
+
+describe('the phone clip', () => {
+  it('is an MP4 of at most 1 MB, with its poster', () => {
+    const clip = join(CLIPS, 'power-walk.mp4');
+    expect(existsSync(clip)).toBe(true);
+    expect(statSync(clip).size).toBeLessThanOrEqual(1024 * 1024);
+    expect(existsSync(join(CLIPS, 'power-walk-poster.webp'))).toBe(true);
+  });
+});
 
 describe('on-demand opened assets', () => {
   for (const id of ['kit', 'phone']) {
