@@ -50,9 +50,17 @@ test.describe('with a mouse', () => {
   });
 
   test("the open object's label stays visible", async ({ page }) => {
-    await gotoDesk(page, '/potaflow');
+    await gotoDesk(page, '/experience');
     await page.mouse.move(8, 10);
-    await expect.poll(() => shown(page)).toEqual(['kit']);
+    await expect.poll(() => shown(page)).toEqual(['badge']);
+  });
+
+  test('an object that came forward has no label on the desk', async ({ page }) => {
+    await gotoDesk(page, '/potaflow');
+    const [x, y] = await centre(page, 'phone');
+    await page.mouse.move(x, y);
+    await page.mouse.move(8, 10);
+    await expect.poll(() => shown(page)).toEqual([]);
   });
 
   test('opened with the mouse and closed with Esc: the Sections card stays hidden', async ({

@@ -86,9 +86,11 @@ test.describe('phone bottom sheet', () => {
     await expect(back).toBeInViewport();
   });
 
+  // An object that stays on the desk (phase 2: with the kit or the phone out, the dimmed desk is one
+  // close target instead; forward.spec).
   test('an object above the open sheet switches sections', async ({ page }) => {
     await gotoDesk(page, '/');
-    await hotspot(page, 'kit').click();
+    await hotspot(page, 'photo').click();
     await expect.poll(() => panelPlace(page)).toBe('sheet');
     // The monitor stands above the sheet's top edge in the straight-ahead view.
     const [m, sheet] = [
@@ -113,17 +115,19 @@ test.describe('phone bottom sheet', () => {
         true,
       );
     });
-    await gotoDesk(page, '/potaflow');
+    await gotoDesk(page, '/experience');
     await page.waitForTimeout(400);
     expect(
       await page.evaluate(() => (window as unknown as { transitions: string[] }).transitions),
     ).toEqual([]);
     expect(await panel(page).evaluate((el) => getComputedStyle(el).transform)).toBe('none');
-    // The open object paints already ringed.
-    const ring = await hotspot(page, 'kit').evaluate((el) => getComputedStyle(el).boxShadow);
+    // The open object paints already ringed (one that stays on the desk: the kit and the phone
+    // come forward instead).
+    const ring = await hotspot(page, 'badge').evaluate((el) => getComputedStyle(el).boxShadow);
     expect(ring).not.toBe('none');
   });
 
+  // A section whose object stays on the desk; a forward object's panel fades in instead.
   test('the first section opened slides the sheet up', async ({ page }) => {
     await gotoDesk(page, '/');
     await panel(page).evaluate((el) => {
@@ -132,7 +136,7 @@ test.describe('phone bottom sheet', () => {
         (window as unknown as { slid: string[] }).slid.push(e.propertyName),
       );
     });
-    await hotspot(page, 'kit').click();
+    await hotspot(page, 'badge').click();
     await expect
       .poll(() => page.evaluate(() => (window as unknown as { slid: string[] }).slid))
       .toContain('transform');

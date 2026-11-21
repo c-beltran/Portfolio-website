@@ -8,6 +8,8 @@ type Props = {
   onClick: () => void;
   /** The tape label on the object (spec §2, discoverability). */
   label: string;
+  /** The pointer came over it: a chance to fetch what opening it shows. */
+  onIntent?: () => void;
 };
 
 /**
@@ -16,7 +18,7 @@ type Props = {
  * transform from hotspotVars. Out of the Tab order: the drawer is the
  * keyboard and screen-reader path (spec §3.4).
  */
-export function Hotspot({ item, slug, pressed, onClick, label }: Props) {
+export function Hotspot({ item, slug, pressed, onClick, label, onIntent }: Props) {
   return (
     <button
       type="button"
@@ -27,6 +29,7 @@ export function Hotspot({ item, slug, pressed, onClick, label }: Props) {
       aria-pressed={pressed}
       style={hotspotVars(item) as CSSProperties}
       onClick={onClick}
+      onPointerEnter={onIntent}
       // A click must not move focus into the aria-hidden desk (focus stays where it was).
       onMouseDown={(e) => e.preventDefault()}
     >

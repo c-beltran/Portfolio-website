@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { DESK_OBJECTS, type SectionSlug } from '@/content/objects';
 import { useTheme } from '@/lib/useTheme';
+import { prefetchArt } from './Opened';
 
 type Props = {
   selected: SectionSlug | null;
@@ -43,6 +44,7 @@ export function Drawer({ selected, onOpen }: Props) {
               data-slug={o.slug}
               aria-pressed={selected === o.slug}
               onClick={() => onOpen(o.slug)}
+              onFocus={() => prefetchArt(o.id)}
             >
               {o.label}
             </button>

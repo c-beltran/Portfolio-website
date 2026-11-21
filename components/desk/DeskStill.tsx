@@ -1,6 +1,14 @@
-import { useEffect, useLayoutEffect, useRef, type MouseEvent, type RefObject } from 'react';
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  type CSSProperties,
+  type MouseEvent,
+  type RefObject,
+} from 'react';
 import { PORTRAIT } from '@/content/deskLayout';
 import { deskDescription, DESK_OBJECTS, type SectionSlug } from '@/content/objects';
+import { artOf, openedFor, patchSrc, type OpenedId } from '@/content/opened';
 import {
   band,
   bandCount,
@@ -18,6 +26,7 @@ import { useTheme } from '@/lib/useTheme';
 import { LiveLayer } from '@/components/scene/LiveLayer';
 import { Hotspot } from './Hotspot';
 import { MonitorName } from './MonitorName';
+import { prefetchArt } from './Opened';
 import { CENTRE_SCRIPT, panOf, setPan } from './pan';
 import { useLabels } from './useLabels';
 
@@ -115,6 +124,40 @@ function DeskPhoto({ mode }: { mode: 'day' | 'lamp' }) {
 }
 
 /**
+ * While an object is out, a render of its spot with the object gone covers it on the still, so it
+ * isn't shown twice (scripts/scene/render_opened.py --patch). Placed in master percents like the
+ * hotspots, its edges feathered into the still.
+ */
+function DeskPatch({ id, mode }: { id: OpenedId; mode: 'day' | 'lamp' }) {
+  const { patch: r, patchWidths } = artOf(id);
+  const set = (ext: 'avif' | 'webp') =>
+    patchWidths.map((w) => `${patchSrc(id, mode, w, ext)} ${w}w`).join(', ');
+  // Its share of the master's width at the window's scale, as the stills size theirs.
+  const w = (r.x1 - r.x0) * M.w;
+  const sizes = `${PORTRAIT} ${sizesFor(w, true)}, ${sizesFor(w)}`;
+  const style = {
+    '--px0': r.x0,
+    '--py0': r.y0,
+    '--pw': r.x1 - r.x0,
+    '--ph': r.y1 - r.y0,
+  } as CSSProperties;
+  return (
+    <picture>
+      <source type="image/avif" srcSet={set('avif')} sizes={sizes} />
+      <img
+        className="desk-still__patch"
+        data-item={id}
+        src={patchSrc(id, mode, patchWidths[0]!, 'webp')}
+        srcSet={set('webp')}
+        sizes={sizes}
+        alt=""
+        style={style}
+      />
+    </picture>
+  );
+}
+
+/**
  * The still a touch device would need if it turned now (portrait ↔ landscape): its URL by the same
  * maths the <picture> uses, so the swap is instant after a turn (AVIF; every current phone has it).
  */
@@ -186,6 +229,7 @@ function useKeptPan(ref: RefObject<HTMLDivElement | null>) {
  */
 export function DeskStill({ selected, onOpen, onClose }: Props) {
   const { theme, toggle } = useTheme();
+  const opened = openedFor(selected);
   const still = useRef<HTMLDivElement>(null);
   const layer = useRef<HTMLDivElement>(null);
   useKeptPan(still);
@@ -212,7 +256,8 @@ export function DeskStill({ selected, onOpen, onClose }: Props) {
     return () => window.removeEventListener('load', idle);
   }, []);
 
-  // Clicking the desk away from any object goes back to the desk (spec §2).
+  // Clicking the desk away from any object goes back to the desk (spec §2). While an object is out
+  // the hotspots take no clicks (globals.css), so the whole dimmed desk closes it.
   const onLayerClick = (e: MouseEvent<HTMLDivElement>) => {
     if (!(e.target as Element).closest('button.hotspot')) onClose();
   };
@@ -232,8 +277,11 @@ export function DeskStill({ selected, onOpen, onClose }: Props) {
             // A click on the desk never moves focus (into the aria-hidden layer or onto the scroller).
             onMouseDown={(e) => e.preventDefault()}
           >
-            <DeskPhoto mode="day" />
-            <DeskPhoto mode="lamp" />
+            <div className="desk-still__art">
+              <DeskPhoto mode="day" />
+              <DeskPhoto mode="lamp" />
+              {opened && <DeskPatch id={opened} mode={theme === 'lamp' ? 'lamp' : 'day'} />}
+            </div>
             {DESK_OBJECTS.map((o) => (
               <Hotspot
                 key={o.id}
@@ -242,6 +290,7 @@ export function DeskStill({ selected, onOpen, onClose }: Props) {
                 label={o.label}
                 pressed={selected === o.slug}
                 onClick={() => onOpen(o.slug)}
+                onIntent={() => prefetchArt(o.id)}
               />
             ))}
             <Hotspot item="lightbar" label="Lamp" pressed={theme === 'lamp'} onClick={toggle} />

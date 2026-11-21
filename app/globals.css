@@ -659,7 +659,7 @@ html:has(.desk-still) body {
   top: calc(16px + env(safe-area-inset-top));
   right: calc(16px + env(safe-area-inset-right));
   bottom: calc(16px + env(safe-area-inset-bottom));
-  width: clamp(320px, 34vw, 460px);
+  width: var(--panel-w);
   overflow-y: auto;
   overscroll-behavior: contain;
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
@@ -712,5 +712,201 @@ html:has(.desk-still) body {
 @media (prefers-reduced-motion: no-preference) {
   .desk > .panel:not(.panel--empty) {
     transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+}
+
+/*
+ * ---- Coming forward (design 2026-11-19 §4.1): the kit and the phone (content/opened.ts). ----
+ * While one is out, .desk carries data-open and data-side (the side the object sits on): the still
+ * dims and softens, the desk takes no hotspot clicks (any click on it puts the object back), the
+ * object's render sits in a slot on its own side and the panel on the other; in portrait the
+ * object is above the panel. All CSS on server-rendered attributes, so a direct load paints it.
+ * data-animate (Desk.tsx) is set once the visitor changes what's open: a direct load never moves.
+ */
+.desk {
+  --panel-w: clamp(320px, 34vw, 460px);
+}
+
+/* The photos and the patch: one layer to dim (the master's box, like the layer). */
+.desk-still__art {
+  position: absolute;
+  inset: 0;
+}
+
+.desk-still__art,
+.desk-still__overlay {
+  transition: filter 0.3s ease-out;
+}
+
+/*
+ * The still, and the HTML laid on it (the name on the monitor), dim together. brightness() is
+ * content/opened.ts DIM_LEVEL (framingCss.test.ts checks they agree).
+ */
+.desk[data-open] .desk-still__art,
+.desk[data-open] .desk-still__overlay {
+  filter: brightness(0.45) blur(6px);
+}
+
+.desk-still__patch {
+  position: absolute;
+  left: calc(var(--px0) * 100%);
+  top: calc(var(--py0) * 100%);
+  width: calc(var(--pw) * 100%);
+  height: calc(var(--ph) * 100%);
+  display: block;
+  -webkit-mask-image:
+    linear-gradient(to right, transparent, #000 12%, #000 88%, transparent),
+    linear-gradient(to bottom, transparent, #000 12%, #000 88%, transparent);
+  -webkit-mask-composite: source-in;
+  mask-image:
+    linear-gradient(to right, transparent, #000 12%, #000 88%, transparent),
+    linear-gradient(to bottom, transparent, #000 12%, #000 88%, transparent);
+  mask-composite: intersect;
+}
+
+.desk[data-open] .desk-still__layer .hotspot {
+  pointer-events: none;
+  box-shadow: none;
+}
+
+.desk[data-open] .desk-still__layer .hotspot .sticker {
+  opacity: 0;
+}
+
+.opened {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.opened__slot {
+  position: absolute;
+  top: calc(16px + env(safe-area-inset-top));
+  bottom: calc(16px + env(safe-area-inset-bottom));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  container-type: size;
+}
+
+.desk[data-side='left'] .opened__slot,
+.opened__slot {
+  left: calc(16px + env(safe-area-inset-left));
+  right: calc(32px + var(--panel-w) + env(safe-area-inset-right));
+}
+
+.desk[data-side='right'] .opened__slot {
+  left: calc(32px + var(--panel-w) + env(safe-area-inset-left));
+  right: calc(16px + env(safe-area-inset-right));
+}
+
+.opened__art {
+  width: min(88cqw, calc(88cqh * var(--aspect)));
+  aspect-ratio: var(--aspect);
+  pointer-events: auto;
+}
+
+.opened__art canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+}
+
+.opened__art canvas[data-drawn] {
+  opacity: 1;
+}
+
+.desk[data-animate] .opened__art canvas {
+  transition: opacity 0.3s ease-out;
+}
+
+.opened[data-leaving] .opened__art {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease-out;
+}
+
+/* The panel goes to the other side; it fades in from its own side, never sliding across. */
+.desk[data-side='right'] > .panel {
+  right: auto;
+  left: calc(16px + env(safe-area-inset-left));
+}
+
+.desk[data-open] > .panel {
+  transition: none;
+}
+
+:root:not([data-input='pointer']) .desk[data-side='right'] .drawer:focus-within {
+  left: auto;
+  right: calc(16px + env(safe-area-inset-right));
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .desk[data-animate][data-side='left'] > .panel:not(.panel--empty) {
+    animation: panel-in-from-right 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .desk[data-animate][data-side='right'] > .panel:not(.panel--empty) {
+    animation: panel-in-from-left 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .desk[data-animate][data-open] > .panel:not(.panel--empty) {
+    animation: panel-fade-in 0.3s ease-out;
+  }
+}
+
+@keyframes panel-in-from-right {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+}
+
+@keyframes panel-in-from-left {
+  from {
+    opacity: 0;
+    transform: translateX(-24px);
+  }
+}
+
+@keyframes panel-in-from-below {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+}
+
+@keyframes panel-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* Portrait (content/scene/framing.ts PORTRAIT): the object in the top 42dvh, the panel below. */
+@media (max-aspect-ratio: 6/5) {
+  .desk[data-side] .opened__slot {
+    top: calc(8px + env(safe-area-inset-top));
+    bottom: auto;
+    left: calc(8px + env(safe-area-inset-left));
+    right: calc(8px + env(safe-area-inset-right));
+    height: calc(42dvh - 16px - env(safe-area-inset-top));
+  }
+
+  .desk[data-side] > .panel {
+    top: 42dvh;
+    left: 0;
+    right: 0;
+    height: 58dvh;
+    max-height: none;
+  }
+}
+
+@media (max-aspect-ratio: 6/5) and (prefers-reduced-motion: no-preference) {
+  .desk[data-animate][data-side] > .panel:not(.panel--empty) {
+    animation-name: panel-in-from-below;
   }
 }
