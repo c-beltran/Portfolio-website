@@ -60,10 +60,26 @@ test.describe('the phone clip', () => {
     expect(after).toEqual([]);
   });
 
+  test("the Pause/Play button is a 44 px target, styled like the panel's other buttons", async ({
+    page,
+  }) => {
+    await gotoDesk(page, '/power-walk');
+    const b = (await control(page, 'Pause the clip')
+      .or(control(page, 'Play the clip'))
+      .boundingBox())!;
+    expect(b.height).toBeGreaterThanOrEqual(44);
+    expect(b.width).toBeGreaterThanOrEqual(44);
+    const radius = await page
+      .locator('.panel__clip-button')
+      .evaluate((el) => getComputedStyle(el).borderTopLeftRadius);
+    expect(parseFloat(radius)).toBeGreaterThan(20);
+  });
+
   test("the clip sits on the phone's screen", async ({ page }) => {
     await gotoDesk(page, '/power-walk');
-    await expect(page.locator('.opened__art canvas')).toHaveAttribute('data-drawn', 'true');
-    const v = (await video(page).boundingBox())!;
+    await expect(page.locator('.opened__canvas')).toHaveAttribute('data-drawn', 'true');
+    // what shows is the canvas the frames are drawn on (the <video> is its 1 px source)
+    const v = (await page.locator('canvas.phone-clip').boundingBox())!;
     const a = (await page.locator('.opened__art').boundingBox())!;
     expect(v.width).toBeGreaterThan(a.width * 0.8);
     expect(v.x).toBeGreaterThanOrEqual(a.x);

@@ -7,7 +7,7 @@ import { clickFelt, drawerButton, gotoDesk, hotspot, panelTitle, path } from './
  */
 const main = (page: Page) => page.locator('main.desk');
 const art = (page: Page) => page.locator('.opened__art');
-const canvas = (page: Page) => page.locator('.opened__art canvas');
+const canvas = (page: Page) => page.locator('.opened__canvas');
 const panel = (page: Page) => page.locator('.desk > .panel');
 const box = async (l: Locator) => (await l.boundingBox())!;
 type Box = { x: number; y: number; width: number; height: number };
@@ -31,6 +31,31 @@ async function inSlot(page: Page) {
   expect(overlaps(a, await box(panel(page)))).toBe(false);
   return a;
 }
+
+/** The art box on every frame from Esc until the art has gone (it fades for 300 ms). */
+const boxesThroughClose = (page: Page) =>
+  page.evaluate(async () => {
+    const out: { x: number; y: number; w: number; h: number }[] = [];
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    const t0 = performance.now();
+    while (performance.now() - t0 < 1500) {
+      await new Promise(requestAnimationFrame);
+      const a = document.querySelector('.opened__art');
+      if (!a) break;
+      const r = a.getBoundingClientRect();
+      out.push({ x: r.x, y: r.y, w: r.width, h: r.height });
+    }
+    return out;
+  });
+const steady = (before: Box, boxes: { x: number; y: number; w: number; h: number }[]) => {
+  expect(boxes.length).toBeGreaterThan(0);
+  for (const b of boxes) {
+    expect(Math.abs(b.x - before.x)).toBeLessThanOrEqual(1);
+    expect(Math.abs(b.y - before.y)).toBeLessThanOrEqual(1);
+    expect(Math.abs(b.w - before.width)).toBeLessThanOrEqual(1);
+    expect(Math.abs(b.h - before.height)).toBeLessThanOrEqual(1);
+  }
+};
 
 test.describe('coming forward, wide windows', () => {
   test.skip(({ isMobile }) => isMobile, 'the portrait layout is tested below');
@@ -183,6 +208,34 @@ test.describe('coming forward, wide windows', () => {
     await inSlot(page);
   });
 
+  test('closing keeps the art where it is while it fades (Review Focus 3)', async ({ page }) => {
+    // the phone: its slot is on the right, the side the default slot is not
+    await gotoDesk(page, '/power-walk');
+    await drawn(page);
+    steady(await box(art(page)), await boxesThroughClose(page));
+  });
+
+  test("/power-walk's largest paint is never the art or the clip", async ({ page }) => {
+    await page.addInitScript(() => {
+      (window as unknown as { lcp: string[] }).lcp = [];
+      new PerformanceObserver((list) => {
+        for (const e of list.getEntries() as (PerformanceEntry & { element?: Element })[])
+          (window as unknown as { lcp: string[] }).lcp.push(
+            e.element ? `${e.element.tagName}.${e.element.className}` : '?',
+          );
+      }).observe({ type: 'largest-contentful-paint', buffered: true });
+    });
+    await gotoDesk(page, '/power-walk');
+    await drawn(page);
+    await expect
+      .poll(() => page.evaluate(() => document.querySelector('video')?.currentTime ?? 0))
+      .toBeGreaterThan(1);
+    await page.waitForTimeout(500);
+    const lcp = await page.evaluate(() => (window as unknown as { lcp: string[] }).lcp);
+    expect(lcp.length).toBeGreaterThan(0);
+    expect(lcp[lcp.length - 1]).not.toMatch(/^(VIDEO|CANVAS)/);
+  });
+
   test('resizing while out keeps the art in its slot', async ({ page }) => {
     await gotoDesk(page, '/potaflow');
     await drawn(page);
@@ -216,6 +269,12 @@ test.describe('coming forward, no JavaScript', () => {
 
 test.describe('coming forward, portrait', () => {
   test.skip(({ isMobile }) => !isMobile, 'a portrait phone');
+
+  test('closing keeps the art where it is while it fades', async ({ page }) => {
+    await gotoDesk(page, '/potaflow');
+    await drawn(page);
+    steady(await box(art(page)), await boxesThroughClose(page));
+  });
 
   test('in a portrait window the object is above the panel', async ({ page }) => {
     await gotoDesk(page, '/power-walk');

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, type CSSProperties } from 'react';
-import { artOf, artSrc, OPENED_IDS, type OpenedId } from '@/content/opened';
+import { artOf, artSrc, OPENED_IDS, sideOf, type OpenedId } from '@/content/opened';
 import { PhoneClip } from './PhoneClip';
 
 type Mode = 'day' | 'lamp';
@@ -104,10 +104,18 @@ type Props = { id: OpenedId; mode: Mode; leaving?: boolean };
 export function Opened({ id, mode, leaving }: Props) {
   const ref = useArtCanvas(id, mode);
   return (
-    <div className="opened" aria-hidden="true" data-id={id} data-leaving={leaving || undefined}>
+    // Its own side, not the desk's: the desk drops data-side the moment it closes, while this art
+    // fades out for 300 ms where it was.
+    <div
+      className="opened"
+      aria-hidden="true"
+      data-id={id}
+      data-side={sideOf(id)}
+      data-leaving={leaving || undefined}
+    >
       <div className="opened__slot">
         <div className="opened__art" style={{ '--aspect': artOf(id).aspect } as CSSProperties}>
-          <canvas ref={ref} />
+          <canvas ref={ref} className="opened__canvas" />
           {id === 'phone' && <PhoneClip leaving={leaving} />}
         </div>
       </div>

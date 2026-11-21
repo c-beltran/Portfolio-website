@@ -149,7 +149,8 @@ button {
 }
 
 .drawer__button,
-.panel__back {
+.panel__back,
+.panel__clip-button {
   min-height: 44px;
   padding: 0 16px;
   border-radius: 999px;
@@ -735,7 +736,9 @@ html:has(.desk-still) body {
 
 .desk-still__art,
 .desk-still__overlay {
-  transition: filter 0.3s ease-out;
+  transition:
+    filter 0.3s ease-out,
+    opacity 0.3s ease-out;
 }
 
 /*
@@ -790,13 +793,13 @@ html:has(.desk-still) body {
   container-type: size;
 }
 
-.desk[data-side='left'] .opened__slot,
+/* The slot follows the object's own side (.opened[data-side]), so a closing object stays put. */
 .opened__slot {
   left: calc(16px + env(safe-area-inset-left));
   right: calc(32px + var(--panel-w) + env(safe-area-inset-right));
 }
 
-.desk[data-side='right'] .opened__slot {
+.opened[data-side='right'] .opened__slot {
   left: calc(32px + var(--panel-w) + env(safe-area-inset-left));
   right: calc(16px + env(safe-area-inset-right));
 }
@@ -812,32 +815,42 @@ html:has(.desk-still) body {
 }
 
 /* The phone's clip, on its screen (PhoneClip.tsx places it), once the phone itself is drawn. */
-.opened__art canvas:not([data-drawn]) ~ .phone-clip {
+.opened__canvas:not([data-drawn]) ~ .phone-clip {
   visibility: hidden;
+}
+
+/* The clip's source: in the page (the canvas and the live scene read its frames), 1 px, unseen. */
+.phone-clip__source {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1px;
+  height: 1px;
+  opacity: 0.01;
+  pointer-events: none;
 }
 
 /* The phone's clip, on its screen (PhoneClip.tsx places it). */
 .phone-clip {
   position: absolute;
   display: block;
-  object-fit: cover;
   border-radius: 4% / 9%;
   transform-origin: 0 0;
   background: #0b0c0e;
 }
 
-.opened__art canvas {
+.opened__canvas {
   display: block;
   width: 100%;
   height: 100%;
   opacity: 0;
 }
 
-.opened__art canvas[data-drawn] {
+.opened__canvas[data-drawn] {
   opacity: 1;
 }
 
-.desk[data-animate] .opened__art canvas {
+.desk[data-animate] .opened__canvas {
   transition: opacity 0.3s ease-out;
 }
 
@@ -907,7 +920,7 @@ html:has(.desk-still) body {
 
 /* Portrait (content/scene/framing.ts PORTRAIT): the object in the top 42dvh, the panel below. */
 @media (max-aspect-ratio: 6/5) {
-  .desk[data-side] .opened__slot {
+  .opened[data-side] .opened__slot {
     top: calc(8px + env(safe-area-inset-top));
     bottom: auto;
     left: calc(8px + env(safe-area-inset-left));
@@ -931,8 +944,23 @@ html:has(.desk-still) body {
 }
 
 /* The live preview (?tier=2) draws the object itself: the Tier 1 render and clip step aside (the
-   video keeps playing; the live phone's screen shows it). The slot keeps its box for the fit. */
-.desk:has(.desk-still__live[data-ready='true']) .opened__art canvas,
+   video keeps playing; the live phone's screen shows it). The slot keeps its box for the fit. They
+   go only once the live layer has faded in (0.3 s), so the object never blinks out. */
+.desk:has(.desk-still__live[data-ready='true']) .opened__canvas,
 .desk:has(.desk-still__live[data-ready='true']) .phone-clip {
   visibility: hidden;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .desk:has(.desk-still__live[data-ready='true']) .opened__canvas,
+  .desk:has(.desk-still__live[data-ready='true']) .phone-clip {
+    transition: visibility 0s linear 0.3s;
+  }
+}
+
+/* In the live preview the 3D object travels under the HTML laid on the still (the name on the
+   monitor), so the name steps aside while an object is out or on its way (data-travel, Movers). */
+.desk:has(.desk-still__live[data-ready='true'] canvas[data-travel]:not([data-travel='0.00']))
+  .desk-still__overlay {
+  opacity: 0;
 }

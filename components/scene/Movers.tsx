@@ -33,7 +33,9 @@ type Mover = {
   /** The pose last fitted to its slot (kept for the way back, once the slot has gone). */
   present: Pose | null;
   moment: Moment;
-  baked: boolean;
+  /** Its opened bake: asked for (on its first open), and in the material (mixed in only then). */
+  requested: boolean;
+  loaded: boolean;
 };
 
 const poseOf = (o: THREE.Object3D): Pose => ({
@@ -48,6 +50,8 @@ type Setup = {
   materials: Mats;
   statics: THREE.ShaderMaterial[];
   canvas: HTMLCanvasElement;
+  /** For the test hook data-textures: the textures the renderer holds. */
+  renderer: THREE.WebGLRenderer;
   invalidate: () => void;
   /** The object already out when the scene mounts (a direct load): it starts out, unanimated. */
   initial: OpenedId | null;
@@ -86,7 +90,8 @@ class MoverRig {
           rest: poseOf(pivot),
           present: null,
           moment: id === s.initial ? OUT : REST,
-          baked: false,
+          requested: false,
+          loaded: false,
         };
         return [id, m];
       }),
@@ -133,6 +138,7 @@ class MoverRig {
 
   /** Each rendered frame: fit every mover to its slot (.opened__art) through the live camera. */
   fit(cam: THREE.PerspectiveCamera, view: { width: number; height: number }) {
+    this.s.canvas.dataset.textures = String(this.s.renderer.info.memory.textures);
     const c = this.s.canvas.getBoundingClientRect();
     const focalPx = (cam.projectionMatrix.elements[5]! * view.height) / 2;
     for (const id of OPENED_IDS) {
@@ -181,8 +187,7 @@ class MoverRig {
   dispose() {
     this.alive = false;
     cancelAnimationFrame(this.raf);
-    this.video?.tex.dispose();
-    this.video = null;
+    this.dropVideo();
     for (const s of this.s.statics) s.uniforms.dim!.value = 0;
   }
 
@@ -197,7 +202,8 @@ class MoverRig {
       // The residual is exact only where the object rests; it fades off it as it lifts (design §6).
       for (const mat of id === 'phone' ? [materials.phone, materials.phoneScreen] : [materials.kit])
         if (mat.uniforms.residualWeight) mat.uniforms.residualWeight.value = 1 - k;
-      materials[id].uniforms.openMix!.value = m.baked ? m.moment.clip : 0;
+      // Until its opened bake has arrived the placeholder is black: keep the rest bake showing.
+      materials[id].uniforms.openMix!.value = m.loaded ? m.moment.clip : 0;
       m.action.time = m.moment.clip * m.duration;
       canvas.dataset[hookName(id)] = m.moment.travel.toFixed(2);
     }
@@ -208,13 +214,15 @@ class MoverRig {
     canvas.dataset.open = this.open ?? '';
     canvas.dataset.travel = shown.moment.travel.toFixed(2);
     canvas.dataset.clip = shown.moment.clip.toFixed(2);
+    const mix = materials[this.open ?? this.last ?? 'kit'].uniforms.openMix!.value as number;
+    canvas.dataset.openMix = mix.toFixed(2);
   }
 
   /** The opened bake loads the first time its mover comes out (on demand: design §5.5). */
   private loadBake(id: OpenedId) {
     const m = this.all[id];
-    if (m.baked) return;
-    m.baked = true;
+    if (m.requested) return;
+    m.requested = true;
     const loader = new THREE.TextureLoader();
     void Promise.all([
       loader.loadAsync(openBake(id, 'day')),
@@ -223,19 +231,38 @@ class MoverRig {
       ([day, lamp]) => {
         if (!this.alive) return; // a rig replaced since: never write over the live one
         setOpenedBake(this.s.materials[id], day, lamp);
+        m.loaded = true;
         this.apply();
         this.s.invalidate();
       },
-      () => (m.baked = false),
+      () => (m.requested = false),
     );
   }
+
+  /**
+   * Let go of the clip's texture: unbind it from the screen first, or three re-uploads the disposed
+   * texture on the next draw and nothing ever frees it (one leaked per close).
+   */
+  private dropVideo() {
+    if (!this.video) return;
+    const u = this.s.materials.phoneScreen.uniforms;
+    u.openDay!.value = u.openLamp!.value = this.blank;
+    u.openDecode!.value = 0;
+    this.video.tex.dispose();
+    this.video = null;
+  }
+
+  private blank = (() => {
+    const t = new THREE.DataTexture(new Uint8Array([0, 0, 0, 255]), 1, 1);
+    t.needsUpdate = true;
+    return t;
+  })();
 
   /** The phone's screen shows the clip's <video> (PhoneClip.tsx) while it's in the page. */
   private syncVideo() {
     const el = document.getElementById(CLIP_ID) as HTMLVideoElement | null;
     if (el === (this.video?.el ?? null)) return;
-    this.video?.tex.dispose();
-    this.video = null;
+    this.dropVideo();
     if (!el) return;
     const tex = new THREE.VideoTexture(el);
     setOpenedBake(this.s.materials.phoneScreen, tex, tex);
@@ -283,6 +310,7 @@ export function Movers({
       materials,
       statics,
       canvas: gl.domElement,
+      renderer: gl,
       invalidate,
       initial: latest.current,
     });

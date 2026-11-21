@@ -128,10 +128,85 @@ test.describe('coming forward live', () => {
     await gotoDesk(page, '/potaflow?tier=2');
     await waitLive(page);
     await expect
-      .poll(() =>
-        page.locator('.opened__art canvas').evaluate((el) => getComputedStyle(el).visibility),
-      )
+      .poll(() => page.locator('.opened__canvas').evaluate((el) => getComputedStyle(el).visibility))
       .toBe('hidden');
+  });
+
+  test('?tier=2: a direct load mixes in the opened bake only once it has arrived', async ({
+    page,
+  }) => {
+    await page.route('**/opened/bake/**', async (r) => {
+      await new Promise((res) => setTimeout(res, 4000));
+      await r.continue();
+    });
+    await gotoDesk(page, '/potaflow?tier=2');
+    await waitLive(page);
+    const mix = () => canvas(page).evaluate((c: HTMLCanvasElement) => c.dataset.openMix);
+    expect(await mix()).toBe('0.00');
+    await expect.poll(mix, { timeout: LONG }).toBe('1.00');
+  });
+
+  test('?tier=2: the name on the monitor steps aside while an object is out', async ({ page }) => {
+    const opacity = () =>
+      page.locator('.desk-still__overlay').evaluate((el) => getComputedStyle(el).opacity);
+    await gotoDesk(page, '/potaflow?tier=2');
+    await waitLive(page);
+    await expect.poll(opacity, { timeout: LONG }).toBe('0');
+    await page.keyboard.press('Escape');
+    await expect.poll(async () => (await hook(page)).travel, { timeout: LONG }).toBe(0);
+    await expect.poll(opacity, { timeout: LONG }).toBe('1');
+  });
+
+  test('?tier=2: the Tier 1 art stays until the live scene has faded in', async ({ page }) => {
+    // read the art's visibility in the same task that the live layer turns ready
+    await page.addInitScript(() => {
+      const w = window as unknown as { atReady?: string };
+      new MutationObserver((_, obs) => {
+        const live = document.querySelector('.desk-still__live[data-ready="true"]');
+        const c = document.querySelector('.opened__canvas');
+        if (live && c) {
+          w.atReady = getComputedStyle(c).visibility;
+          obs.disconnect();
+        }
+      }).observe(document, { subtree: true, attributes: true, attributeFilter: ['data-ready'] });
+    });
+    await gotoDesk(page, '/potaflow?tier=2');
+    await waitLive(page);
+    expect(await page.evaluate(() => (window as unknown as { atReady?: string }).atReady)).toBe(
+      'visible',
+    );
+  });
+
+  test('?tier=2: closing the phone frees its video texture', async ({ page }) => {
+    await gotoDesk(page, '/?tier=2');
+    await waitLive(page);
+    const textures = () =>
+      canvas(page).evaluate((c: HTMLCanvasElement) => Number(c.dataset.textures));
+    // counted each time the phone is out again: a texture leaked per close adds one each cycle
+    const cycle = async () => {
+      await drawerButton(page, 'Power Walk').press('Enter');
+      await expect.poll(async () => (await hook(page)).clip, { timeout: LONG }).toBe(1);
+      await page.waitForTimeout(500);
+      const out = await textures();
+      await page.keyboard.press('Escape');
+      await expect
+        .poll(
+          async () => {
+            const h = await hook(page);
+            return [h.travel, h.clip];
+          },
+          { timeout: LONG },
+        )
+        .toEqual([0, 0]);
+      return out;
+    };
+    // one cycle to warm up (the screen's 1×1 stand-in is uploaded on the first close), then steady
+    await cycle();
+    const second = await cycle();
+    const third = await cycle();
+    const fourth = await cycle();
+    expect(Number.isFinite(second)).toBe(true);
+    expect([third, fourth]).toEqual([second, second]);
   });
 
   test('?tier=2: resizing while out refits the object', async ({ page }) => {
