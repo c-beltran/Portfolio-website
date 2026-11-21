@@ -51,7 +51,10 @@ test.describe('still desk hotspots', () => {
 
   test('rapid object clicks, then Back, walk back in order', async ({ page }) => {
     await gotoDesk(page, '/');
-    for (const id of ['badge', 'monitor', 'kit']) await hotspot(page, id).click();
+    // Click the elements themselves: on a phone the second section's sheet covers the kit, and a
+    // pointer click only got there while the sheet was still sliding up (lost under load).
+    for (const id of ['badge', 'monitor', 'kit'])
+      await hotspot(page, id).evaluate((el) => (el as HTMLElement).click());
     await expect.poll(() => path(page)).toBe('/potaflow');
     for (const expected of ['/how-i-build', '/experience', '/']) {
       await page.goBack();
