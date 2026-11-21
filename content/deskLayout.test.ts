@@ -103,4 +103,15 @@ describe('labelFocusCss', () => {
     );
     expect(css).toMatch(/\{\s*opacity: 1;\s*\}$/);
   });
+
+  it('glows the object too (the hover glow, Carlos 2026-11-20)', () => {
+    const css = labelFocusCss();
+    for (const o of DESK_OBJECTS)
+      expect(css).toContain(
+        `.desk:has(.drawer__button[data-slug='${o.slug}']:focus) .desk-glow[data-item='${o.id}']`,
+      );
+    expect(css).toContain(
+      `.desk:has(.drawer__button--lamp:focus) .desk-glow[data-item='lightbar']`,
+    );
+  });
 });

@@ -2,11 +2,12 @@ import {
   useEffect,
   useLayoutEffect,
   useRef,
+  useState,
   type CSSProperties,
   type MouseEvent,
   type RefObject,
 } from 'react';
-import { PORTRAIT } from '@/content/deskLayout';
+import { PORTRAIT, type DeskItemId } from '@/content/deskLayout';
 import { deskDescription, DESK_OBJECTS, type SectionSlug } from '@/content/objects';
 import { artOf, openedFor, patchSrc, type OpenedId } from '@/content/opened';
 import {
@@ -158,6 +159,25 @@ function DeskPatch({ id, mode }: { id: OpenedId; mode: 'day' | 'lamp' }) {
 }
 
 /**
+ * The hover glow (Carlos, 2026-11-20: a slight glow instead of a rectangle): a soft warm ring that
+ * follows the object's silhouette, plus a faint lift on the object, from masks rendered from the
+ * seat (scripts/scene/render_masks.py, encode_glow.mjs). It sits just before its hotspot, so CSS
+ * lights it from that hotspot's hover and open state (globals.css), and follows the glance.
+ */
+function DeskGlow({ item }: { item: DeskItemId }) {
+  const style = {
+    '--ring': `url(/glow/${item}-ring.webp)`,
+    '--lift': `url(/glow/${item}-mask.webp)`,
+  } as CSSProperties;
+  return (
+    <div className="desk-glow" data-item={item} style={style}>
+      <i className="desk-glow__ring" />
+      <i className="desk-glow__lift" />
+    </div>
+  );
+}
+
+/**
  * The still a touch device would need if it turned now (portrait ↔ landscape): its URL by the same
  * maths the <picture> uses, so the swap is instant after a turn (AVIF; every current phone has it).
  */
@@ -230,6 +250,8 @@ function useKeptPan(ref: RefObject<HTMLDivElement | null>) {
 export function DeskStill({ selected, onOpen, onClose }: Props) {
   const { theme, toggle } = useTheme();
   const opened = openedFor(selected);
+  // The glow's masks load once the page is idle, like the lamp render: never on the first load.
+  const [glow, setGlow] = useState(false);
   const still = useRef<HTMLDivElement>(null);
   const layer = useRef<HTMLDivElement>(null);
   useKeptPan(still);
@@ -240,6 +262,7 @@ export function DeskStill({ selected, onOpen, onClose }: Props) {
   // so the first switch to lamp mode cross-fades at once.
   useEffect(() => {
     const warm = () => {
+      setGlow(true);
       document
         .querySelectorAll<HTMLImageElement>('.desk-still__photo--lamp img')
         .forEach((img) => (img.loading = 'eager'));
@@ -282,7 +305,8 @@ export function DeskStill({ selected, onOpen, onClose }: Props) {
               <DeskPhoto mode="lamp" />
               {opened && <DeskPatch id={opened} mode={theme === 'lamp' ? 'lamp' : 'day'} />}
             </div>
-            {DESK_OBJECTS.map((o) => (
+            {DESK_OBJECTS.flatMap((o) => [
+              glow && <DeskGlow key={`glow-${o.id}`} item={o.id} />,
               <Hotspot
                 key={o.id}
                 item={o.id}
@@ -291,8 +315,9 @@ export function DeskStill({ selected, onOpen, onClose }: Props) {
                 pressed={selected === o.slug}
                 onClick={() => onOpen(o.slug)}
                 onIntent={() => prefetchArt(o.id)}
-              />
-            ))}
+              />,
+            ])}
+            {glow && <DeskGlow item="lightbar" />}
             <Hotspot item="lightbar" label="Lamp" pressed={theme === 'lamp'} onClick={toggle} />
           </div>
           <LiveLayer open={opened} />

@@ -121,10 +121,15 @@ test.describe('phone bottom sheet', () => {
       await page.evaluate(() => (window as unknown as { transitions: string[] }).transitions),
     ).toEqual([]);
     expect(await panel(page).evaluate((el) => getComputedStyle(el).transform)).toBe('none');
-    // The open object paints already ringed (one that stays on the desk: the kit and the phone
-    // come forward instead).
-    const ring = await hotspot(page, 'badge').evaluate((el) => getComputedStyle(el).boxShadow);
-    expect(ring).not.toBe('none');
+    // The open object glows (one that stays on the desk: the kit and the phone come forward
+    // instead). The glow replaced the ring (Carlos, 2026-11-20); its masks arrive after the page.
+    await expect
+      .poll(() =>
+        page
+          .locator('.desk-glow[data-item="badge"]')
+          .evaluate((el) => Number(getComputedStyle(el).opacity)),
+      )
+      .toBe(1);
   });
 
   // A section whose object stays on the desk; a forward object's panel fades in instead.

@@ -83,10 +83,18 @@ export function hotspotVars(id: DeskItemId): Record<`--${string}`, string> {
  */
 export function labelFocusCss(): string {
   const on = ":root:not([data-input='pointer'])";
-  const rules = DESK_OBJECTS.map(
-    (o) =>
-      `${on} .desk:has(.drawer__button[data-slug='${o.slug}']:focus) .hotspot[data-slug='${o.slug}'] .sticker`,
+  const rules = DESK_OBJECTS.flatMap((o) => {
+    const focus = `${on} .desk:has(.drawer__button[data-slug='${o.slug}']:focus)`;
+    // its label, and its glow (Carlos, 2026-11-20)
+    return [
+      `${focus} .hotspot[data-slug='${o.slug}'] .sticker`,
+      `${focus} .desk-glow[data-item='${o.id}']`,
+    ];
+  });
+  const lamp = `${on} .desk:has(.drawer__button--lamp:focus)`;
+  rules.push(
+    `${lamp} .hotspot[data-item='lightbar'] .sticker`,
+    `${lamp} .desk-glow[data-item='lightbar']`,
   );
-  rules.push(`${on} .desk:has(.drawer__button--lamp:focus) .hotspot[data-item='lightbar'] .sticker`);
   return `${rules.join(',\n')} {\n  opacity: 1;\n}`;
 }

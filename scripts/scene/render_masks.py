@@ -1,0 +1,72 @@
+"""
+Renders a silhouette mask of each clickable object from the seat, for the hover glow (Carlos,
+2026-11-20: a slight glow that follows the object instead of a rectangle):
+
+    Blender -b ~/Portfolio-assets/blend/workspace.blend --python scripts/scene/render_masks.py -- \
+        [--out ~/Portfolio-assets/renders/masks]
+
+Workbench, flat: the object white, everything else black (so what stands in front of it cuts it,
+as on the still), at a quarter of the master's resolution (framing.py). The monitor's screen is one
+mask, mask-screen.png; encode_glow.mjs splits it into its two halves (How I build, the CV). Writes
+mask-<item>.png. Never saves the .blend.
+"""
+
+import argparse
+import os
+import sys
+from pathlib import Path
+
+import bpy
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import framing  # noqa: E402
+
+ITEMS = {
+    "kit": "obj_kit",
+    "phone": "obj_phone",
+    "badge": "obj_badge",
+    "photo": "obj_photo",
+    "notepad": "obj_notepad",
+    "card": "obj_card",
+    "lightbar": "obj_lightbar",
+}
+
+
+def is_screen(o):
+    return o.type == "MESH" and any(m and m.get("screen") and m.name.startswith("screen_monitor") for m in o.data.materials)
+
+
+def main():
+    argv = sys.argv[sys.argv.index("--") + 1 :] if "--" in sys.argv else []
+    p = argparse.ArgumentParser()
+    p.add_argument("--out", default=str(Path.home() / "Portfolio-assets" / "renders" / "masks"))
+    a = p.parse_args(argv)
+    Path(a.out).mkdir(parents=True, exist_ok=True)
+    scene = bpy.context.scene
+    scene.render.engine = "BLENDER_WORKBENCH"
+    sh = scene.display.shading
+    sh.light = "FLAT"
+    sh.color_type = "OBJECT"
+    scene.display.render_aa = "16"
+    scene.render.film_transparent = True
+    scene.view_settings.view_transform = "Standard"
+    scene.render.dither_intensity = 0  # no ±1 noise on the black: clean masks compress to nothing
+    scene.camera = bpy.data.objects[framing.CAMERA]
+    w, h = framing.resolution()
+    scene.render.resolution_x, scene.render.resolution_y = w // 4, h // 4
+    scene.render.resolution_percentage = 100
+    scene.frame_set(0)
+    meshes = [o for o in scene.objects if o.type in ("MESH", "CURVE") and not o.hide_render]
+    targets = {item: set([bpy.data.objects[name], *bpy.data.objects[name].children_recursive]) for item, name in ITEMS.items()}
+    targets["screen"] = {o for o in meshes if is_screen(o)}
+    for item, mine in targets.items():
+        if not mine:
+            raise SystemExit(f"render_masks: nothing for {item}")
+        for o in meshes:
+            o.color = (1, 1, 1, 1) if o in mine else (0, 0, 0, 1)
+        scene.render.filepath = str(Path(a.out) / f"mask-{item}.png")
+        bpy.ops.render.render(write_still=True)
+        print(f"mask {item}")
+
+
+main()
