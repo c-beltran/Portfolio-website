@@ -134,6 +134,14 @@ Carlos: "we should detect if user is on a mobile device and have an indicator to
   - On portrait phones, the object is in the top part and the detail panel scrolls below it, replacing the bottom sheet.
 - The detail panel is real HTML (spec §3.2) and keeps today's panel content, focus handling and `aria-live`.
 - The motion is about 0.9 s with an ease-out, matching the camera moves, then the object's own animation. With reduced motion (Tier 1), there is no travel: the opened-object image appears with a short cross-fade.
+- **As built (phase 2, the kit case and the phone; my calls, 2026-11-20):**
+  - Only the kit and the phone come forward so far. The other six keep phase 1's open (ring, label, panel card or sheet, no dim) until phase 3. Carlos confirmed this on 2026-11-20.
+  - While one is out, `.desk` carries `data-open` and `data-side`. The still and the name on the monitor dim to `brightness(0.45)` and blur 6 px; the live scene dims by the same amount in sRGB, with no blur. It is CSS on server-rendered attributes, so a direct load paints it, without JavaScript too.
+  - The whole dimmed desk is one close target: its hotspots, the light bar included, take no clicks while an object is out. The lamp stays in the Sections list. A click on the object keeps it out. The panel's "Back to desk" is the close control.
+  - The object sits in a slot on its own side, with the panel on the other side; in portrait it is in the top 42dvh above the panel. A forward panel fades in from its own side (24 px) and never slides across. Switching straight to the other object drops the old art at once; a close fades it in 0.3 s.
+  - In Tier 1, a patch render of the object's spot with the object gone covers it on the still, so it isn't shown twice. The opened render is drawn on a `<canvas>`, not an `<img>`, so it is never the page's largest element (an `<img>` would land about when the seat photo does on Lighthouse's slow phone, against the 2.0 s gate). The cost: without JavaScript, the dim and the panel show but the object doesn't.
+  - The glance holds still while an object is out.
+  - The phone plays its clip muted and looped, with a Pause/Play button in the panel (WCAG 2.2.2: it loops past 5 s, and the opened phone is decorative). It never autoplays under reduced motion, and going back stops it and drops its source.
 
 ### 4.2 Each object
 
@@ -203,6 +211,10 @@ Carlos: "we should detect if user is on a mobile device and have an indicator to
   - "Softens" means a CSS blur on the Tier 1 still. In Tier 2 the desk is only dimmed, because spec §6 rules out real-time depth of field.
 - Hotspots follow the glance: each frame, their boxes are re-projected from the objects' bounds.
 - **A direct load of a section route** (for example `/potaflow`) paints the seat still, dimmed, with the panel open. The opened-object image streams in afterwards, so it is never the page's largest element.
+- **As built (phase 2):**
+  - The movers are pivots over rigid parts with one glTF clip each (`kit_open` hinges the lid 105° in 0.8 s; `phone_turn` turns the phone a quarter in 0.5 s), in their own `movers.glb`. Each has its own atlas, baked at rest and in its opened pose (a canonical pose in front of the seat, `scripts/scene/opened.py`). The opened bakes load on demand from `public/opened/bake`.
+  - The live object is fitted each frame to the DOM slot that holds the Tier 1 art: aimed where the render shows its pivot, sized to the box, and refitted for the stretch a flat image gives off the camera's axis. The slot is the only layout.
+  - Measured on 2026-11-20: Lighthouse `/potaflow` LCP 759 ms, and its LCP element is a panel paragraph, not the art. The live scene adds 1034 kB of the 3 MB. Desktop runs at 60 fps median through both moments (Apple M4).
 - **Close-up textures** for an opened object load when it opens. They count toward that object's on-demand cap, not the 3 MB first load.
 - If Carlos sees a leftover shadow when he reviews it, the fallback is a per-object baked shadow decal that fades out as the object lifts.
 
@@ -213,6 +225,7 @@ Carlos: "we should detect if user is on a mobile device and have an indicator to
   - **(my call, phase 1, measured)** It stays at full weight through the ±3° glance. Projected onto the geometry from the seat, it stays on its surfaces as the head turns. It fades only for a lean-in (phase 3).
   - **Measured at the seat (2026-11-20):** every review window, day and lamp, has a mean difference of 1.8–3.8 and at most 0.8% of pixels off by more than 40, including a portrait window swiped to either side. Before the residual it was 8.95 at 1280×800. The residual is 64 kB in all.
   - It's masked off any object that's out.
+  - **As built (phase 2):** the mover's own residual fades as it lifts (`residualWeight` = 1 − travel). The desk under where it rested keeps its bake and its few residual pixels, hidden by the dim, as for the baked shadow above. Recaptured after the kit's lid seam: every review window, day and lamp, is at most 3.86 mean and 0.8% over 40.
 - Target, as before: mean difference ≤ 6 and ≤ 3% of pixels off by more than 40, measured with `scripts/scene/measure/match.mjs` at the new cameras.
 - This was recommended earlier, and Carlos didn't object. The HDR multi-probe is the fallback if the residual shows seams while glancing.
 
@@ -242,6 +255,7 @@ Carlos: "we should detect if user is on a mobile device and have an indicator to
    - Built first on the kit case (lid, gauge, screwdriver, generic certificate) and the phone (rotate and placeholder clip).
    - The opened-pose Tier 1 stills for both.
    - Review: recordings of both moments.
+   - **As built (2026-11-20):** done on `m3c/coming-forward`, not pushed. The kit case opens on a gauge (ticks only), a screwdriver and a generic certificate (grey bars, a blank box, a seal), all modelled and drawn in code. The phone turns and plays a placeholder clip until Carlos's screen recording arrives.
 3. **The rest of the desk.**
    - The badge, photo, notepad, card and the monitor lean-in with its HTML screen content.
    - The resting screens (4.3).
