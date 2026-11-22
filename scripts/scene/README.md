@@ -1,24 +1,25 @@
-# Workspace scene (M3a)
+# The scene pipeline
 
-Builds and renders the 3D scene of the workspace headlessly with Blender 5.3. Inputs and outputs live outside the repo in `~/Portfolio-assets/` (see `docs/ASSETS.md`).
+The desk is built by script with headless Blender 5.3. Inputs and intermediate files live in `~/Portfolio-assets/`. The scripts write the optimized web assets to `public/` and the layout data to `content/scene/`.
 
-```sh
-B=/Applications/Blender.app/Contents/MacOS/Blender
-# Build the scene from the code-built objects and the pinned downloads in assets.json
-$B -b --factory-startup --python scripts/scene/build_scene.py -- --out ~/Portfolio-assets/blend/workspace.blend
-# Render a view: clay | day | lamp, overview | phone (square)
-$B -b ~/Portfolio-assets/blend/workspace.blend --python scripts/scene/render.py -- --mode clay --camera overview --out ~/Portfolio-assets/renders/clay-overview.png
-```
+## Pipeline
 
-- **Object names** (the contract later steps rely on): `obj_monitor`, `obj_kit`, `obj_phone`, `obj_badge`, `obj_photo`, `obj_notepad`, `obj_card`, `obj_lightbar`. Decoration is named `deco_*`.
-- **Movers** (phase 2): `obj_kit` and `obj_phone` are pivots (Empties) over rigid parts, with one clip each, keyed at 60 fps from frame 0: `kit_open` hinges `kit_lid` on `kit_base`, and `phone_turn` turns `phone_spin` (over `phone_body` and the clip quad `phone_screen`) a quarter about the screen. The geometry lives in `movers.py` (tests: `python3 -I scripts/scene/test_movers.py`). After a build, `$B -b ~/Portfolio-assets/blend/workspace.blend --python scripts/scene/check_movers.py` checks the hierarchy and both clips.
-- **Downloads:** glTF only, CC0 or CC-BY, pinned by sha256 in `assets.json`. Each is a zip in `~/Portfolio-assets/downloads/`, fetched from the source in `docs/ASSETS.md`. The build checks the zip against its pin and every extracted file against the zip (`pins.py`; tests: `python3 -I scripts/scene/test_pins.py`), and stops on a missing or changed download. `--allow-proxy` builds with placeholder blocks instead, for layout only. Never open a downloaded `.blend`. Blender runs with autoexec off, which is the default.
+Run in this order. Each script's header gives its arguments.
 
-## Hotspot bounds
+| Step        | Script                                                      | Produces                                          |
+| ----------- | ----------------------------------------------------------- | ------------------------------------------------- |
+| 1. Build    | `build_scene.py`                                            | `workspace.blend`, from code and pinned downloads |
+| 2. Check    | `check_room.py`, `check_movers.py`                          | Pass or fail on the built scene                   |
+| 3. Project  | `export_bounds.py`, `export_cameras.py`, `export_opened.py` | Click targets, cameras and poses                  |
+| 4. Render   | `render.py`, `render_opened.py`, `render_masks.py`          | Stills, opened objects and glow masks             |
+| 5. Bake     | `bake.py`, `probe.py`                                       | Lighting and reflections for the live desk        |
+| 6. Optimize | `optimize_glb.sh`, `encode_*.mjs`                           | Files ready for the web                           |
+| 7. Match    | `measure/residual.mjs`                                      | The live-to-still correction layer                |
 
-```sh
-Blender -b --factory-startup ~/Portfolio-assets/blend/workspace.blend \
-  --python scripts/scene/export_bounds.py -- --out content/scene/bounds.json
-```
+Use `--python-exit-code 1` with Blender, which otherwise exits 0 when a script throws.
 
-Projects each `obj_*` through `cam_overview` into `content/scene/bounds.json` (normalized boxes, y down) and records `minCollisionFreeWidth`: the narrowest desk at which every hotspot, grown to at least 44×44 px, is free of overlaps. `content/scene/bounds.test.ts` re-derives it. It is a report: objects are never moved to make hotspots fit. The monitor's box is its screen, not its arm and clamp.
+Geometry lives in modules without `bpy` (`room.py`, `movers.py`, `framing.py`, `opened.py`), tested with `python3 -I scripts/scene/test_<name>.py`.
+
+## Downloads
+
+Only glTF under CC0 or CC BY, pinned by checksum in `assets.json` and credited in [ASSETS.md](../../docs/ASSETS.md). The build stops on a changed file. Never open a downloaded `.blend`.
