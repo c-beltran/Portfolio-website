@@ -14,6 +14,8 @@ three.js's Y-up axes the way export_cameras.py and the glTF exporter do: (x, y, 
 
 import math
 
+FILL = 0.8  # of a square frame's half-width, where an opened render's or a lean-in's farthest point sits
+
 # The axes are the pivot's local axes (build_scene.py): the kit's +Z is the inside of the case
 # and +Y its hinge side; the phone's +Z is out of the screen and +Y toward its top.
 PRESENT = {

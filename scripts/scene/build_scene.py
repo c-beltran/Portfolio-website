@@ -850,18 +850,8 @@ def build_cameras(coll):
     # desk's depth runs down the screen; a square frame with all eight objects in view.
     phone = cam("cam_phone", Vector((-0.03, -0.85, 1.75)), Vector((-0.06, 0.16, 0.85)), 19.5, 18)
     phone.data.shift_y = 0.033  # crop the floor, keep the light bar's label room
-    # Monitor close-up: straight in front of the screen's centre, at its height, far enough
-    # back that the screen fills about 80% of a 16:9 frame at 35 mm.
-    mon = bpy.data.objects.get("obj_monitor")
-    screen = [o for o in (mon.children_recursive if mon else []) if o.type == "MESH"
-              and any(m and m.name.startswith("Wallpaper") for m in o.data.materials)]
-    if screen:
-        lo, hi = world_bounds(screen)
-        centre = (lo + hi) / 2
-        half_fov = math.atan(36 / 2 / 35)
-        back = ((hi.x - lo.x) / 0.8) / 2 / math.tan(half_fov)
-        cam("cam_monitor", Vector((centre.x, lo.y - back, centre.z)), centre, 35, 36)
     build_seat_cameras(cam)
+    build_lean_cameras(cam)
     bpy.context.scene.camera = overview
 
 
@@ -872,6 +862,24 @@ def build_cameras(coll):
 SEAT_EYE = Vector((-0.03, -0.85, 1.30))
 SEAT_PITCH = 22.5  # degrees down
 SEAT_SAFE_HFOV = 73.5  # degrees, across the safe frame
+
+
+def build_lean_cameras(cam):
+    """A camera per lean-in (cam_monitor: the screen's left half; cam_cv: its right; cam_board),
+    square to it, its lens putting the farthest corner at opened.FILL of a square frame. The
+    lean-in's render looks through it as is."""
+    import lean
+    import opened
+    import screen_geo
+
+    bpy.context.view_layer.update()
+    for name, corners in screen_geo.lean_corners(bpy.context.evaluated_depsgraph_get()).items():
+        eye, target = (Vector(v) for v in lean.lean_camera(corners, SEAT_EYE))
+        o = cam(f"cam_{name}", eye, target, 35, 36)
+        bpy.context.view_layer.update()
+        inv = o.matrix_world.inverted()
+        reach = max(max(abs(p.x), abs(p.y)) / -p.z for p in (inv @ c for c in corners))
+        o.data.lens = o.data.sensor_width / 2 * opened.FILL / reach
 
 
 def build_seat_cameras(cam):
@@ -1086,9 +1094,9 @@ def main():
     build_light_bar(objs)
     build_ball(objs)
     build_board(objs)
-    build_cameras(cams)
     apply_materials()
     make_room_movers(objs)  # joined once each part has its material
+    build_cameras(cams)  # they find the screen by its material
     build_lights()
     key_clips()
     Path(a.out).parent.mkdir(parents=True, exist_ok=True)

@@ -177,10 +177,13 @@ def _save(name, px):
     return img
 
 
-def editor_image(w=3440, h=1440, seed=7):
-    """Editor with a file tree and code-coloured line blocks on the left half; the right half is
+def editor_image(frame=0, w=3440, h=1440, seed=7):
+    """Editor with a file tree, code-coloured line blocks and a terminal pane on the left half (only
+    the terminal depends on frame); the right half is
     a blank paper page, where the site lays Carlos's name in HTML (the
     monitor's right half is his CV screen). No readable text in the image."""
+    import screen_art as A
+
     rng = np.random.default_rng(seed)
     px = np.zeros((h, w, 4))
     px[..., 3] = 1
@@ -207,7 +210,18 @@ def editor_image(w=3440, h=1440, seed=7):
             px[y : y + line_h, x : x + tw, :3] = palette[int(rng.integers(0, len(palette)))]
             x += tw + int(w * 0.006)
         y += gap
-    return _save("screen_monitor", px)
+
+    def paint(rect, colour):
+        x0, y0, x1, y1 = rect
+        px[round(y0 * h) : round(y1 * h), round(x0 * w) : round(x1 * w), :3] = hexc(colour)
+
+    tx0, ty0, tx1, ty1 = A.TERMINAL
+    paint((tx0, ty1, 0.5, 1.0), "#2B2D30")  # the status bar under the pane
+    paint((tx0, ty0, tx1, ty1), "#161618")
+    for x0, y0, x1, y1 in A.terminal_rows(frame):
+        paint((x0, y0, x1, y1), "#6AAB73" if x1 - x0 <= A.PROMPT_W + 1e-9 else "#8C8F94")
+    # drawn upright; saved bottom row first, as the model's v runs down (screen_art.image_uv)
+    return _save(f"screen_monitor_{frame}" if frame else "screen_monitor", px[::-1])
 
 
 def _segments(px, u, v, segs, halves, ink):
@@ -347,23 +361,14 @@ def printed(name, img, rough=0.6):
     return m
 
 
-def laptop_image(w=1600, h=1000, seed=3):
-    """A dark web page with a colourful banner, like the reference laptop, with no text or logos."""
-    rng = np.random.default_rng(seed)
-    hexc = lambda s: np.array(srgb(s))
-    px = np.zeros((h, w, 4))
-    px[..., 3] = 1
-    px[..., :3] = hexc("#121318")
-    px[: int(h * 0.06), :, :3] = hexc("#24262E")
-    bx0, by0, bx1, by1 = int(w * 0.12), int(h * 0.16), int(w * 0.88), int(h * 0.52)
-    yy, xx = np.mgrid[by0:by1, bx0:bx1]
-    t = (xx - bx0) / (bx1 - bx0)
-    banner = (1 - t)[..., None] * hexc("#E2683C") + t[..., None] * hexc("#7B4FD6")
-    px[by0:by1, bx0:bx1, :3] = banner
-    y = int(h * 0.6)
-    while y < h - 30:
-        px[y : y + 10, bx0 : bx0 + int(rng.integers(int(w * 0.2), int(w * 0.7))), :3] = hexc("#5E6270")
-        y += 26
+def laptop_image(w=1600, h=1000):
+    """A generic dashboard (screen_art.dashboard_blocks), with no text, numbers or logos."""
+    import screen_art as A
+
+    px = np.ones((h, w, 4))
+    px[..., :3] = np.array(srgb("#EEF0F2"))
+    for (x0, y0, x1, y1), colour in A.dashboard_blocks():
+        px[round(y0 * h) : round(y1 * h), round(x0 * w) : round(x1 * w), :3] = np.array(srgb(colour))
     return _save("screen_laptop", px)
 
 
@@ -425,6 +430,8 @@ def tint_texture_material(root, tint_hex):
 def laptop_screen(root, img):
     """The laptop is one mesh with one texture atlas: replace the atlas's screen rectangle with
     the generated page and emit only there (mask), keeping the rest of the laptop's texture."""
+    import screen_art as A
+
     for o in [root] + list(root.children_recursive):
         if o.type != "MESH":
             continue
@@ -435,8 +442,7 @@ def laptop_screen(root, img):
             uv = nt.nodes.new("ShaderNodeTexCoord")
             sep = nt.nodes.new("ShaderNodeSeparateXYZ")
             nt.links.new(uv.outputs["UV"], sep.inputs["Vector"])
-            # Screen rectangle in UV space (atlas pixels 905–1295 × 140–720 of 2048, V flipped).
-            u0, u1, v0, v1 = 905 / 2048, 1295 / 2048, 1 - 720 / 2048, 1 - 140 / 2048
+            u0, u1, v0, v1 = A.LAPTOP_SCREEN
 
             def between(sock, lo, hi):
                 a = nt.nodes.new("ShaderNodeMath")
@@ -461,9 +467,9 @@ def laptop_screen(root, img):
             # Remap UV inside the rectangle to 0–1 for the page image (rotated: the atlas lays the
             # screen out portrait).
             ru = nt.nodes.new("ShaderNodeMapRange")
-            ru.inputs["From Min"].default_value, ru.inputs["From Max"].default_value = v0, v1
+            ru.inputs["From Min"].default_value, ru.inputs["From Max"].default_value = A.LAPTOP_ACROSS
             rv = nt.nodes.new("ShaderNodeMapRange")
-            rv.inputs["From Min"].default_value, rv.inputs["From Max"].default_value = u1, u0
+            rv.inputs["From Min"].default_value, rv.inputs["From Max"].default_value = A.LAPTOP_UP
             nt.links.new(sep.outputs["Y"], ru.inputs["Value"])
             nt.links.new(sep.outputs["X"], rv.inputs["Value"])
             comb = nt.nodes.new("ShaderNodeCombineXYZ")

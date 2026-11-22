@@ -41,7 +41,7 @@ CLIP_END = {"kit": MV.frames(MV.KIT_OPEN_S), "phone": MV.frames(MV.PHONE_TURN_S)
 # Square frame of the opened render, large enough that each object's crop is at least 1600 px wide,
 # so the 1600 px file is a downscale, never an upscale.
 SIZE = 3300
-FILL = 0.8
+FILL = OP.FILL
 PATCH_PAD = 0.015
 BOUNDS = HERE.parent.parent / "content" / "scene" / "bounds-seat.json"
 

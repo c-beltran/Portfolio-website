@@ -1,6 +1,6 @@
 """
 Writes content/scene/cameras.json: every scene camera's eye, target, lens, sensor width and
-shift, in three.js axes (Y up): Blender (x, y, z) -> three (x, z, -y). The live scene and the
+shift, and what each lean-in shows (screen: its corners from the top-left, clockwise), in three.js axes (Y up): Blender (x, y, z) -> three (x, z, -y). The live scene and the
 Cycles clips both read it, so they frame the same.
 
     Blender -b --factory-startup ~/Portfolio-assets/blend/workspace.blend \
@@ -9,12 +9,23 @@ Cycles clips both read it, so they frame the same.
 
 import argparse
 import json
+import os
 import sys
 
 import bpy
 from mathutils import Vector
 
-CAMERAS = {"overview": "cam_overview", "phone": "cam_phone", "monitor": "cam_monitor", "seat": "cam_seat"}
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import screen_geo  # noqa: E402
+
+CAMERAS = {
+    "overview": "cam_overview",
+    "phone": "cam_phone",
+    "monitor": "cam_monitor",
+    "cv": "cam_cv",
+    "board": "cam_board",
+    "seat": "cam_seat",
+}
 # The target is a point on the view axis this far ahead (the scene's targets are 1-1.5 m away).
 TARGET_DISTANCE = 1.0
 
@@ -29,6 +40,7 @@ def main():
     p.add_argument("--out", required=True)
     a = p.parse_args(argv)
     out = {}
+    shows = screen_geo.lean_corners(bpy.context.evaluated_depsgraph_get())
     for key, name in CAMERAS.items():
         o = bpy.data.objects[name]
         if o.data.sensor_fit != "HORIZONTAL":
@@ -42,6 +54,8 @@ def main():
             "sensorWidth": round(o.data.sensor_width, 4),
             "shift": [round(o.data.shift_x, 4), round(o.data.shift_y, 4)],
         }
+        if key in shows:
+            out[key]["screen"] = [three(p) for p in shows[key]]
     with open(a.out, "w") as f:
         json.dump(out, f, indent=2)
         f.write("\n")

@@ -13,9 +13,13 @@ export type SceneCamera = {
   sensorWidth: number;
   /** Lens shift as a fraction of the frame's larger side. */
   shift: [number, number];
+  /** A lean-in's camera: the corners of what it shows, from the top-left, clockwise. */
+  screen?: Vec3[];
 };
 
-export const CAMERAS = data as Record<'overview' | 'phone' | 'monitor' | 'seat', SceneCamera>;
+export type CameraId = 'overview' | 'phone' | 'monitor' | 'cv' | 'board' | 'seat';
+
+export const CAMERAS = data as Record<CameraId, SceneCamera>;
 
 /** three.js PerspectiveCamera.fov (vertical, degrees) for a frame of this width / height. */
 export function verticalFov(cam: SceneCamera, aspect: number): number {
