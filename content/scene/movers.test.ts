@@ -2,6 +2,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import sharp from 'sharp';
 import { describe, expect, it } from 'vitest';
+import { meshKey } from '../../components/scene/moverParts';
 
 /**
  * The movers (design 2026-11-19 §4.2, §6): the kit case and the phone export on their own, with
@@ -9,13 +10,14 @@ import { describe, expect, it } from 'vitest';
  * chunk, without three.
  */
 type Gltf = {
-  nodes: { name?: string; children?: number[] }[];
+  nodes: { name?: string; children?: number[]; mesh?: number }[];
   animations?: {
     name?: string;
     channels: { sampler: number; target: { node?: number; path: string } }[];
     samplers: { input: number }[];
   }[];
   accessors: { max?: number[] }[];
+  meshes: { name?: string }[];
 };
 
 const PUBLIC = join(process.cwd(), 'public');
@@ -37,6 +39,21 @@ const parentOf = (g: Gltf, name: string) => {
 
 describe('movers.glb', () => {
   const g = gltf('scene/movers.glb');
+
+  // The live kit's lid drew black (2026-11-21): gltf-transform's quantize can't rescale an animated
+  // node, so it moves kit_lid's mesh into an unnamed child, which three's GLTFLoader names after the
+  // mesh with a suffix ("kit_lid_1", checked by loading this file): no name the lookup knew.
+  it("every mesh takes its baked material, even one the optimizer moved into its part's child", () => {
+    g.nodes.forEach((n, i) => {
+      if (n.mesh === undefined) return;
+      const parent = g.nodes.find((p) => p.children?.includes(i));
+      const loaded = n.name ?? `${g.meshes[n.mesh]!.name}_1`;
+      expect(
+        meshKey(loaded, parent?.name),
+        `node ${i} (${loaded} under ${parent?.name})`,
+      ).toBeDefined();
+    });
+  });
 
   it('keeps each mover under its pivot', () => {
     expect(parentOf(g, 'obj_kit')).toBeNull();

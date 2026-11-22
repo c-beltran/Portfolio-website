@@ -11,15 +11,9 @@ import { setOpenedBake } from './materials';
 import { OUT, REST, stepMoment, type Moment } from './moment';
 import { blendPose, presentPose, projectedHeight, type Pose } from './present';
 import { easeOutCubic } from './transition';
+import { meshKey } from './moverParts';
 
 const PIVOT: Record<OpenedId, string> = { kit: 'obj_kit', phone: 'obj_phone' };
-/** Each mover mesh's material: the rigid parts take their mover's bake; the clip quad is glass. */
-const MESH: Record<string, OpenedId | 'phoneScreen'> = {
-  kit_base: 'kit',
-  kit_lid: 'kit',
-  phone_body: 'phone',
-  phone_screen: 'phoneScreen',
-};
 const CLIP_ID = 'power-walk-clip';
 const openBake = (id: OpenedId, mode: 'day' | 'lamp') => `/opened/bake/${id}-open-${mode}.webp`;
 
@@ -97,7 +91,8 @@ class MoverRig {
       }),
     ) as Record<OpenedId, Mover>;
     s.scene.traverse((o) => {
-      if (o instanceof THREE.Mesh && MESH[o.name]) o.material = s.materials[MESH[o.name]!];
+      const key = o instanceof THREE.Mesh ? meshKey(o.name, o.parent?.name) : undefined;
+      if (key) (o as THREE.Mesh).material = s.materials[key];
     });
     if (s.initial) this.loadBake(s.initial);
     this.syncVideo();
