@@ -226,54 +226,59 @@ def editor_image(w=3440, h=1440, seed=7):
     return _save("screen_monitor", px)
 
 
-def gauge_face_image(size=512):
-    """The kit gauge's dial: tick marks and a rim on warm white, from movers.dial_ticks. No
-    numerals, no brand (design 2026-11-19 §4.2)."""
-    import movers as MV
+def _segments(px, u, v, segs, halves, ink):
+    """Ink line segments ((x0, y0), (x1, y1)) of the given half-widths onto px (unit-disc u, v)."""
+    for ((x0, y0), (x1, y1)), half in zip(segs, halves):
+        dx, dy = x1 - x0, y1 - y0
+        t = np.clip(((u - x0) * dx + (v - y0) * dy) / (dx * dx + dy * dy), 0, 1)
+        px[np.hypot(u - (x0 + t * dx), v - (y0 + t * dy)) < half, :3] = ink
 
+
+def _dial(size):
     px = np.zeros((size, size, 4))
     px[..., 3] = 1
-    px[..., :3] = np.array(srgb("#E9E6DF"))
-    ink = np.array(srgb("#2A2A2C"))
+    px[..., :3] = np.array(srgb("#F2F1EC"))
     yy, xx = np.mgrid[0:size, 0:size]
     u = (xx + 0.5) / size * 2 - 1
     v = 1 - (yy + 0.5) / size * 2  # +v up, as the disc's UVs
-    r = np.hypot(u, v)
+    return px, u, v, np.hypot(u, v)
+
+
+def gauge_face_image(size=1024):
+    """The gauge's face, after Carlos's (2026-11-21): white, a blue band under an arc of ticks
+    across the top (movers.dial_ticks, about the needle's low pivot), and three small squares in
+    the hoses' red, blue and yellow. No numerals, no brand (design 2026-11-19 §4.2)."""
+    import movers as MV
+
+    px, u, v, r = _dial(size)
+    ink = np.array(srgb("#26272A"))
+    pxv, pyv = MV.DIAL_PIVOT
+    rp = np.hypot(u - pxv, v - pyv)
+    ang = np.degrees(np.arctan2(v - pyv, u - pxv))
+    half = MV.DIAL_SWEEP / 2 + 1.5
+    band = (rp > MV.DIAL_ARC[0] - 0.085) & (rp < MV.DIAL_ARC[0] - 0.03) & (np.abs(ang - 90) < half)
+    px[band, :3] = np.array(srgb("#2F5DA8"))
+    ticks = MV.dial_ticks()
+    _segments(px, u, v, ticks, [0.011 if i % 5 == 0 else 0.006 for i in range(len(ticks))], ink)
+    for x, colour in ((-0.13, "#B3261E"), (0.0, "#1F4A9A"), (0.13, "#D9A520")):
+        sq = (np.abs(u - x) < 0.045) & (np.abs(v + 0.16) < 0.045)
+        px[sq, :3] = np.array(srgb(colour))
     px[(r > 0.955) & (r < 0.985), :3] = ink  # rim line
-    for i, ((x0, y0), (x1, y1)) in enumerate(MV.dial_ticks()):
-        half = 0.016 if i % 5 == 0 else 0.009
-        dx, dy = x1 - x0, y1 - y0
-        t = np.clip(((u - x0) * dx + (v - y0) * dy) / (dx * dx + dy * dy), 0, 1)
-        d = np.hypot(u - (x0 + t * dx), v - (y0 + t * dy))
-        px[d < half, :3] = ink
-    px[r > 1.0, :3] = np.array(srgb("#A8864F"))  # outside the dial: the brass bezel
+    px[r > 1.0, :3] = np.array(srgb("#141416"))  # outside the face: the black bezel
     return _save("kit_gauge_face", px)
 
 
-def certificate_image(w=768, h=512):
-    """A generic certificate: plain grey shapes on paper, from movers.certificate_marks. Nothing can
-    be read: no name, licence number or logo (design 2026-11-19 §4.2)."""
+def small_gauge_face_image(size=256):
+    """The small supply gauge's face: white, ticks round 270° (movers.small_dial_ticks). No
+    numerals, no brand."""
     import movers as MV
 
-    paper = np.array(srgb("#ECEAE4"))
-    px = np.zeros((h, w, 4))
-    px[..., 3] = 1
-    px[..., :3] = paper
-    yy, xx = np.mgrid[0:h, 0:w]
-    x, y = (xx + 0.5) / w, (yy + 0.5) / h  # 0–1, y down
-    for m in MV.certificate_marks():
-        ink = np.array(srgb("#" + ("%02X" % round(m["grey"] * 255)) * 3))
-        if m["kind"] == "rect":
-            inside = (x >= m["x0"]) & (x <= m["x1"]) & (y >= m["y0"]) & (y <= m["y1"])
-            if m.get("outline"):
-                b = 2.5 / h
-                inner = (x >= m["x0"] + b * h / w) & (x <= m["x1"] - b * h / w) & (y >= m["y0"] + b) & (y <= m["y1"] - b)
-                inside &= ~inner
-            px[inside, :3] = ink
-        else:  # a ring, its radii in sheet heights
-            d = np.hypot((x - m["cx"]) * w / h, y - m["cy"])
-            px[(d >= m["r0"]) & (d <= m["r1"]), :3] = ink
-    return _save("kit_certificate", px)
+    px, u, v, r = _dial(size)
+    ink = np.array(srgb("#26272A"))
+    ticks = MV.small_dial_ticks()
+    _segments(px, u, v, ticks, [0.03 if i % 5 == 0 else 0.018 for i in range(len(ticks))], ink)
+    px[r > 1.0, :3] = np.array(srgb("#141416"))
+    return _save("kit_minigauge_face", px)
 
 
 def printed(name, img, rough=0.6):

@@ -230,11 +230,67 @@ def under(o, par):
     return o
 
 
+def tube(name, pts, r, coll):
+    """A hose: a round tube along pts, as a smooth-shaded mesh (the bake joins meshes)."""
+    cu = bpy.data.curves.new(name, "CURVE")
+    cu.dimensions = "3D"
+    sp = cu.splines.new("POLY")
+    sp.points.add(len(pts) - 1)
+    for pt, q in zip(sp.points, pts):
+        pt.co = (*q, 1.0)
+    cu.bevel_depth, cu.bevel_resolution, cu.use_fill_caps = r, 2, True
+    tmp = bpy.data.objects.new(name + "_curve", cu)
+    coll.objects.link(tmp)
+    bpy.context.view_layer.update()
+    me = bpy.data.meshes.new_from_object(tmp.evaluated_get(bpy.context.evaluated_depsgraph_get()))
+    bpy.data.objects.remove(tmp, do_unlink=True)
+    bpy.data.curves.remove(cu)
+    for poly in me.polygons:
+        poly.use_smooth = True
+    o = bpy.data.objects.new(name, me)
+    coll.objects.link(o)
+    return o
+
+
+def ring_mesh(name, r_out, r_in, h, recess, coll, verts=64, chamfer=0.0008):
+    """A gauge's bezel, origin at its centre: a round rim of height h, open at the top on a floor
+    just under its face (recess down), built directly rather than by a boolean."""
+    import bmesh
+
+    floor = h / 2 - recess - 0.0003  # just under the face disc
+    profile = [(r_out, -h / 2), (r_out, h / 2 - chamfer), (r_out - chamfer, h / 2), (r_in, h / 2), (r_in, floor)]
+    bm = bmesh.new()
+    rings = [[bm.verts.new((r * math.cos(2 * math.pi * k / verts), r * math.sin(2 * math.pi * k / verts), z)) for k in range(verts)] for r, z in profile]
+    for a, b in zip(rings, rings[1:]):
+        for k in range(verts):
+            bm.faces.new((a[k], a[(k + 1) % verts], b[(k + 1) % verts], b[k])).smooth = True
+    bm.faces.new(rings[-1])
+    bm.faces.new(list(reversed(rings[0])))
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    me = bpy.data.meshes.new(name)
+    bm.to_mesh(me)
+    bm.free()
+    o = bpy.data.objects.new(name, me)
+    coll.objects.link(o)
+    return o
+
+
+def grid_mesh(name, verts, faces, coll):
+    me = bpy.data.meshes.new(name)
+    me.from_pydata(verts, [], faces)
+    for poly in me.polygons:
+        poly.use_smooth = True
+    o = bpy.data.objects.new(name, me)
+    coll.objects.link(o)
+    return o
+
+
 def build_kit(coll):
     """The backflow test-kit case as a mover (design 2026-11-19 §4.2): a pivot at the case's centre
-    with today's rest pose; a base holding foam, a gauge, a screwdriver and a generic certificate;
-    and a lid hinged on the base's back top edge. Every part is placed in the case's own frame
-    (movers.py); the clip kit_open is keyed in key_clips()."""
+    with today's rest pose; a base whose foam holds Carlos's kit (2026-11-21, his photos: the gauge
+    with its hoses, brass fittings and his screwdriver); and a lid hinged on the base's back top
+    edge, lined with egg-crate foam. Every part is placed in the case's own frame (movers.py); the
+    clip kit_open is keyed in key_clips()."""
     import movers as MV
 
     w, d, h = MV.KIT_SIZE
@@ -258,32 +314,41 @@ def build_kit(coll):
     for i, dx in enumerate((-0.075, 0.075)):  # two latches on the front face, across the seam
         under(box(f"kit_latch_{i}", (0.028, 0.008, 0.022), (dx, -d / 2 - 0.001, -h / 2 + 0.045), coll, bevel=0.002), base)
 
+    def make(name, b, grow=0.0, rise=0.0, bevel=None):
+        """One layout box as a mesh, grown by grow all round (a pocket) and raised at the top by rise."""
+        x, y, z = b["centre"]
+        sx, sy, sz = b["size"]
+        k = b["kind"]
+        if k == "lying":
+            r, ln = b["r"] + grow, sx + 2 * grow
+            return cylinder(name, r, ln, (x, y, z - ln / 2), coll, rot=(0, 90, b["rot_z_deg"]), verts=32, bevel=0.0006 if bevel is None else bevel)
+        if k in ("upright", "ring", "hex"):
+            hh = sz + 2 * grow + rise
+            sides = 6 if k == "hex" and not grow else (64 if b["r"] > 0.008 else 24)
+            return cylinder(name, b["r"] + grow, hh, (x, y, z - sz / 2 - grow), coll, verts=sides, bevel=0.0005 if bevel is None else bevel)
+        size = (sx + 2 * grow, sy + 2 * grow, sz + 2 * grow + rise)
+        return box(name, size, (x, y, z - sz / 2 - grow), coll, rot=(0, 0, b["rot_z_deg"]), bevel=0.0004 if bevel is None else bevel)
+
     C = L["contents"]
     foam = under(box("kit_foam", L["foam"]["size"], at(L["foam"]), coll, bevel=0), base)
-    g, sd, sh = C["gauge"], C["screwdriver"], C["shaft"]
-    pockets = [
-        under(cylinder("cut_gauge", g["r"] + 0.002, g["size"][2] + 0.02, (g["centre"][0], g["centre"][1], g["centre"][2] - g["size"][2] / 2 - 0.002), coll, bevel=0), base)
-    ]
-    for b, name in ((sd, "cut_handle"), (sh, "cut_shaft")):
-        r, ln = b["r"] + 0.0015, b["size"][0] + 0.002
-        c = cylinder(name, r, ln, (b["centre"][0], b["centre"][1], b["centre"][2] - ln / 2), coll, rot=(0, 90, b["rot_z_deg"]), bevel=0)
-        pockets.append(under(c, base))
+    # Every solid part sits in a pocket cut through the foam's top; the hoses lie on it.
+    pockets = [under(make(f"cut_{n}", b, grow=0.0015, rise=0.02, bevel=0), base) for n, b in C.items() if b["kind"] != "disc" and n not in ("needle", "needle_cap")]
     cut(foam, pockets)
 
-    gauge = under(cylinder("kit_gauge", g["r"], g["size"][2], at(g), coll, verts=64, bevel=0.0015), base)
-    face = disc("kit_gauge_face", C["gauge_face"]["r"], C["gauge_face"]["centre"], coll)
-    nd = C["needle"]
-    needle = box("kit_needle", nd["size"], at(nd), coll, rot=(0, 0, nd["rot_z_deg"]), bevel=0)
-    for o in (face, needle):
-        under(o, base)
-        reparent(o, gauge)
-    handle = cylinder("kit_screwdriver", sd["r"], sd["size"][0], (sd["centre"][0], sd["centre"][1], sd["centre"][2] - sd["size"][0] / 2), coll, rot=(0, 90, sd["rot_z_deg"]), verts=24, bevel=0.002)
-    under(handle, base)
-    shaft = cylinder("kit_screwdriver_shaft", sh["r"], sh["size"][0], (sh["centre"][0], sh["centre"][1], sh["centre"][2] - sh["size"][0] / 2), coll, rot=(0, 90, sh["rot_z_deg"]), verts=16, bevel=0)
-    under(shaft, base)
-    reparent(shaft, handle)
-    ct = C["certificate"]
-    under(plane("kit_certificate", ct["size"][:2], ct["centre"], coll, rot=(0, 0, ct["rot_z_deg"])), base)
+    parts = {}
+    for n, b in C.items():
+        if b["kind"] == "disc":
+            o = disc(f"kit_{n}", b["r"], b["centre"], coll)
+        elif b["kind"] == "ring":  # a bezel round its recessed face
+            o = ring_mesh(f"kit_{n}", b["r"], b["r_in"], b["size"][2], b["recess"], coll)
+            o.location = b["centre"]
+        else:
+            o = make(f"kit_{n}", b)
+        parts[n] = under(o, base)
+    for n in ("gauge_face", "needle", "needle_cap"):
+        reparent(parts[n], parts["gauge"])
+    for k, hose in L["hoses"].items():
+        under(tube(f"kit_hose_{k}", hose["path"], hose["r"], coll), base)
 
     # The lid: origin on the hinge, so kit_open is one rotation about its local X.
     lid = under(box("kit_lid", lid_size, (0, 0, 0), coll, bevel=MV.KIT_BEVEL), kit)
@@ -291,7 +356,8 @@ def build_kit(coll):
     lid.location = hinge
     under(box("kit_handle", (0.1, 0.022, 0.018), (0, -d / 2, MV.LID_H), coll, bevel=0.006), lid)
     pad = L["pad"]
-    under(box("kit_lid_pad", pad["size"], at(pad), coll, bevel=0.001), lid)
+    crate = under(grid_mesh("kit_lid_pad", *MV.egg_crate(pad["size"][0], pad["size"][1]), coll), lid)
+    crate.location = pad["centre"]
     return kit
 
 
@@ -614,8 +680,10 @@ def apply_materials():
 
     C, h = M.principled, M.srgb
     case = C("kit_case", h("#2B3038"), 0.5, spread=0.12)
-    foam = C("kit_foam", h("#2E3136"), 0.95, spread=0.03)
+    foam = C("kit_foam", h("#55585D"), 0.95, spread=0.03)  # grey, as in his case
     steel = C("latch_steel", h("#B8BBBF"), 0.3, metal=1.0)
+    chrome = C("chrome", h("#C8CBCF"), 0.15, metal=1.0)
+    bezel = C("gauge_bezel", h("#141416"), 0.35, coat=0.3)
     by_prefix = {
         "room_floor": C("floor", h("#8E8781"), 0.55),
         "room_": M.plaster(C("wall", h("#ECEBE8"), 0.85, spread=0.04)),
@@ -636,12 +704,26 @@ def apply_materials():
         "kit_lid": case,
         "kit_handle": C("kit_handle", h("#141416"), 0.4),
         "kit_latch_": steel,
-        "kit_gauge_face": M.printed("gauge_face", M.gauge_face_image(), 0.35),
-        "kit_gauge": C("gauge_brass", h("#A8864F"), 0.35, metal=1.0),
-        "kit_needle": C("needle_red", h("#B3261E"), 0.4),
-        "kit_screwdriver_shaft": steel,
-        "kit_screwdriver": C("screwdriver_handle", h("#C8372D"), 0.45),
-        "kit_certificate": M.printed("cert_paper", M.certificate_image(), 0.8),
+        # Carlos's kit (2026-11-21, his photos): the gauge's white face in a black bezel, its
+        # aluminium manifold and red, blue and yellow knobs and hoses, brass fittings, and his
+        # black-and-yellow screwdriver.
+        "kit_gauge_face": M.printed("gauge_face", M.gauge_face_image(), 0.3),
+        "kit_minigauge_face": M.printed("minigauge_face", M.small_gauge_face_image(), 0.3),
+        "kit_gauge": bezel,
+        "kit_minigauge": bezel,
+        "kit_needle": C("needle_black", h("#111113"), 0.4),
+        "kit_manifold": C("manifold_aluminium", h("#C4C7CB"), 0.35, metal=1.0),
+        "kit_knob_red": C("knob_red", h("#A3201B"), 0.35),
+        "kit_knob_blue": C("knob_blue", h("#1C2F66"), 0.35),
+        "kit_knob_yellow": C("knob_yellow", h("#D9A520"), 0.35),
+        "kit_hose_red": C("hose_red", h("#B02A22"), 0.45),
+        "kit_hose_blue": C("hose_blue", h("#1F4A9A"), 0.45),
+        "kit_hose_yellow": C("hose_yellow", h("#E8B520"), 0.45),
+        "kit_brass_": C("brass", h("#B8925A"), 0.3, metal=1.0),
+        "kit_screwdriver_collar": C("screwdriver_collar", h("#E6B82A"), 0.2, coat=0.5),
+        "kit_screwdriver_shaft": chrome,
+        "kit_screwdriver_tip": chrome,
+        "kit_screwdriver": C("screwdriver_grip", h("#17171A"), 0.6),
         "deco_laptop_stand": C("aluminium", h("#B9BCC1"), 0.3, metal=1.0),
         "deco_wrist_rest": M.walnut("walnut"),
         "obj_lightbar": C("lightbar", h("#2E2F33"), 0.35, metal=0.8),

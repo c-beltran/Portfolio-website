@@ -25,6 +25,26 @@ def corners(box):
     return out
 
 
+def seg_dist(p, a, b):
+    """The distance from point p to segment ab, in the plane (z ignored)."""
+    (px, py), (ax, ay), (bx, by) = p[:2], a[:2], b[:2]
+    dx, dy = bx - ax, by - ay
+    t = 0.0 if dx == dy == 0 else max(0.0, min(1.0, ((px - ax) * dx + (py - ay) * dy) / (dx * dx + dy * dy)))
+    return math.hypot(px - ax - t * dx, py - ay - t * dy)
+
+
+def footprint_dist(p, box):
+    """How far point p (x, y) lies outside a content's footprint (0 inside): a circle for round
+    upright parts, else its turned rectangle."""
+    (cx, cy, _), (sx, sy, _) = box["centre"], box["size"]
+    if box["kind"] in ("ring", "upright", "hex"):
+        return max(0.0, math.hypot(p[0] - cx, p[1] - cy) - box["r"])
+    a = math.radians(box["rot_z_deg"])
+    lx = (p[0] - cx) * math.cos(a) + (p[1] - cy) * math.sin(a)
+    ly = -(p[0] - cx) * math.sin(a) + (p[1] - cy) * math.cos(a)
+    return math.hypot(max(0.0, abs(lx) - sx / 2), max(0.0, abs(ly) - sy / 2))
+
+
 class Case(unittest.TestCase):
     def setUp(self):
         self.base, self.base_z, self.lid, self.lid_z, self.hinge = MV.split_case(MV.KIT_SIZE, MV.LID_H)
@@ -74,57 +94,112 @@ class Case(unittest.TestCase):
         half_w = MV.KIT_SIZE[0] / 2 - MV.WALL
         half_d = MV.KIT_SIZE[1] / 2 - MV.WALL
         layout = MV.kit_layout()
-        self.assertEqual(
-            {"gauge", "gauge_face", "needle", "screwdriver", "shaft", "certificate"},
-            set(layout["contents"]),
-        )
+        self.assertAlmostEqual(layout["item_top"], top - MV.ITEM_CLEAR, places=9)
         for name, box in layout["contents"].items():
-            self.assertLessEqual(box["centre"][2] + box["size"][2] / 2, top - 0.001, name)
+            self.assertLessEqual(box["centre"][2] + box["size"][2] / 2, layout["item_top"] + 1e-9, name)
             for x, y in corners(box):
                 self.assertLessEqual(abs(x), half_w, f"{name} x")
                 self.assertLessEqual(abs(y), half_d, f"{name} y")
+        for colour, hose in layout["hoses"].items():
+            for x, y, z in hose["path"]:
+                self.assertLessEqual(abs(x) + hose["r"], half_w, f"{colour} hose x")
+                self.assertLessEqual(abs(y) + hose["r"], half_d, f"{colour} hose y")
+                self.assertLessEqual(z + hose["r"], layout["item_top"] + 1e-9, f"{colour} hose z")
         foam = layout["foam"]
-        self.assertAlmostEqual(foam["centre"][2] + foam["size"][2] / 2, top - 0.003, places=9)
+        self.assertAlmostEqual(foam["centre"][2] + foam["size"][2] / 2, top - MV.FOAM_DROP, places=9)
 
-    def test_contents_do_not_overlap(self):
+    def test_contents_are_carloss_kit(self):
+        # Carlos, 2026-11-21: "closer to my real kit": the gauge with its hoses, the fittings and
+        # the screwdriver (his photos); the generic certificate is dropped.
         c = MV.kit_layout()["contents"]
+        for name in ("gauge", "gauge_face", "needle", "minigauge", "minigauge_face", "manifold",
+                     "screwdriver", "screwdriver_collar", "screwdriver_shaft", "screwdriver_tip"):
+            self.assertIn(name, c)
+        self.assertEqual(sum(1 for n in c if n.startswith("brass_fitting_")), 4)
+        self.assertNotIn("certificate", c)
+        self.assertFalse(hasattr(MV, "certificate_marks"))
 
-        def rect(b):
-            xs, ys = zip(*corners(b))
-            return min(xs), min(ys), max(xs), max(ys)
+    def test_knobs_read_red_blue_yellow(self):
+        layout = MV.kit_layout()
+        c = layout["contents"]
+        self.assertEqual(tuple(layout["hoses"]), MV.HOSES)
+        xs = [c[f"knob_{k}"]["centre"][0] for k in ("red", "blue", "yellow")]
+        self.assertEqual(xs, sorted(xs), "left to right on the manifold, as on his gauge")
+        for k in MV.HOSES:  # each hose starts at its own knob
+            hx, hy, _ = layout["hoses"][k]["path"][0]
+            kx = c[f"knob_{k}"]["centre"][0]
+            self.assertAlmostEqual(hx, kx, places=6, msg=k)
+            self.assertLess(hy, c[f"knob_{k}"]["centre"][1], k)
 
-        # the three items' footprints (the screwdriver's handle stands for the whole tool)
-        g, s, cert = rect(c["gauge"]), rect(c["screwdriver"]), rect(c["certificate"])
-        for a, b in ((g, cert), (g, s)):
-            self.assertTrue(a[2] <= b[0] or b[2] <= a[0] or a[3] <= b[1] or b[3] <= a[1])
+    def test_hoses_never_cross(self):
+        hoses = MV.kit_layout()["hoses"]
+        names = list(hoses)
+        for i, a in enumerate(names):
+            pa = hoses[a]["path"]
+            for p, q in zip(pa, pa[1:]):
+                self.assertLessEqual(math.dist(p, q), 0.004, f"{a}: sampled every few mm")
+            for b in names[i + 1 :]:
+                pb = hoses[b]["path"]
+                gap = min(seg_dist(p, s0, s1) for p in pa for s0, s1 in zip(pb, pb[1:]))
+                self.assertGreaterEqual(gap, hoses[a]["r"] + hoses[b]["r"] - 1e-6, f"{a} and {b}")
+
+    def test_hoses_run_clear_of_the_other_contents(self):
+        layout = MV.kit_layout()
+        c = layout["contents"]
+        for colour, hose in layout["hoses"].items():
+            r = hose["r"]
+            for name, box in c.items():
+                if name.endswith(colour) or box["kind"] == "disc" or name == "needle":
+                    continue  # its own knob, nipple and end; the faces lie inside their gauges
+                for x, y, _ in hose["path"]:
+                    self.assertGreaterEqual(footprint_dist((x, y), box), r - 1e-6, f"{colour} hose over {name}")
+
+
+class Lid(unittest.TestCase):
+    def test_egg_crate_clears_the_contents(self):
+        """The lid's egg-crate foam (as in his case): its bumps, below the lid's underside, stop
+        short of the tallest content when the lid shuts."""
+        layout = MV.kit_layout()
+        pad = layout["pad"]
+        verts, faces = MV.egg_crate(pad["size"][0], pad["size"][1])
+        zs = [v[2] for v in verts]
+        self.assertLessEqual(max(zs), 0.0)
+        self.assertGreaterEqual(min(zs), -(MV.ITEM_CLEAR - 0.0005))
+        self.assertLess(min(zs), -0.003, "deep enough to read as egg-crate")
+        xs, ys = [v[0] for v in verts], [v[1] for v in verts]
+        self.assertAlmostEqual(max(xs) - min(xs), pad["size"][0], places=9)
+        self.assertAlmostEqual(max(ys) - min(ys), pad["size"][1], places=9)
+        self.assertTrue(all(len(f) == 4 and max(f) < len(verts) for f in faces))
+
+    def test_egg_crate_faces_out_of_the_lid(self):
+        """Its faces point down, out of the lid's underside (towards the viewer once it opens): the
+        bake and the live scene light a face from the side it points to."""
+        verts, faces = MV.egg_crate(0.1, 0.06)
+        for f in faces[:: max(1, len(faces) // 50)]:
+            (ax, ay, _), (bx, by, _), (cx, cy, _) = (verts[i] for i in f[:3])
+            self.assertLess((bx - ax) * (cy - ay) - (by - ay) * (cx - ax), 0, "normal down (-z)")
 
 
 class Marks(unittest.TestCase):
     def test_dial_has_ticks_only(self):
+        """His gauge's scale: an arc of ticks across the top of the face, above the needle's low
+        pivot. Ticks only: no numerals, no brand."""
         ticks = MV.dial_ticks()
+        self.assertEqual(len(ticks), 31)
+        px, py = MV.DIAL_PIVOT
+        for (x0, y0), (x1, y1) in ticks:
+            for x, y in ((x0, y0), (x1, y1)):
+                self.assertLessEqual(math.hypot(x, y), 0.93 + 1e-9, "inside the face")
+                self.assertGreater(y, 0.2, "across the top of the face")
+            self.assertGreater(math.hypot(x0 - px, y0 - py), 0.95, "far from the pivot: nothing inside the arc")
+
+    def test_small_dial_has_ticks_only(self):
+        ticks = MV.small_dial_ticks()
         self.assertEqual(len(ticks), 40)
         for (x0, y0), (x1, y1) in ticks:
             for x, y in ((x0, y0), (x1, y1)):
                 self.assertLessEqual(math.hypot(x, y), 1.0 + 1e-9)
             self.assertGreater(math.hypot(x0, y0), 0.6, "ticks sit at the rim, no numerals inside")
-
-    def test_certificate_marks_inside_margin(self):
-        marks = MV.certificate_marks()
-        self.assertGreater(len(marks), 8)
-        self.assertEqual(marks, MV.certificate_marks(seed=7), "deterministic")
-        kinds = {m["kind"] for m in marks}
-        self.assertLessEqual(kinds, {"rect", "ring"}, "no glyph paths by construction")
-        self.assertIn("ring", kinds)
-        lo, hi = 0.06, 0.94
-        for m in marks:
-            if m["kind"] == "rect":
-                xs, ys = (m["x0"], m["x1"]), (m["y0"], m["y1"])
-            else:
-                xs = (m["cx"] - m["r1"], m["cx"] + m["r1"])
-                ys = (m["cy"] - m["r1"], m["cy"] + m["r1"])
-            for v in (*xs, *ys):
-                self.assertGreaterEqual(v, lo - 1e-9, m)
-                self.assertLessEqual(v, hi + 1e-9, m)
 
 
 if __name__ == "__main__":
