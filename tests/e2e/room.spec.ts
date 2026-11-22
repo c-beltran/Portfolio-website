@@ -66,7 +66,13 @@ test.describe('the room', () => {
       const [x0, x1] = [Math.max(0, layer.x + b.x0 * layer.width), layer.x + b.x1 * layer.width];
       await page.mouse.click((x0 + x1) / 2, layer.y + ((b.y0 + b.y1) / 2) * layer.height);
       await expect.poll(() => path(page)).toBe('/soccer');
-      const label = (await hotspot(page, 'ball').locator('.sticker').boundingBox())!;
+      await expect(hotspot(page, 'ball')).toHaveAttribute('aria-pressed', 'true');
+      const sticker = hotspot(page, 'ball').locator('.sticker');
+      // Measured where it comes to rest: the open state moves it.
+      await sticker.evaluate((el) =>
+        Promise.allSettled(el.getAnimations().map((animation) => animation.finished)),
+      );
+      const label = (await sticker.boundingBox())!;
       expect(label.x, 'the label starts inside the window').toBeGreaterThanOrEqual(0);
     });
   }

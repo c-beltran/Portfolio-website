@@ -87,6 +87,9 @@ export function ultrawideOnlyCss(): string {
     left: 100%;
     transform: rotate(-2deg);
   }
+  ${each((id) => `.hotspot[data-item='${id}'][data-slug][aria-pressed='true'] .sticker`)} {
+    transform: translateY(-3px) rotate(-2deg);
+  }
   ${each((id) => `.hotspot[data-item='${id}']::after`)} {
     content: '';
     position: absolute;
