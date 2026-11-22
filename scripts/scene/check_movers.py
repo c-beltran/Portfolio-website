@@ -1,11 +1,10 @@
 """
-Checks the two movers in workspace.blend:
+Checks the movers in workspace.blend:
 
     Blender -b ~/Portfolio-assets/blend/workspace.blend --python scripts/scene/check_movers.py
 
-Exits 1 and prints what's missing unless the kit case and the phone have their pivots, rigid
-parts and clips: kit_open lifts the lid, phone_turn turns the phone a quarter about its screen.
-Nothing is saved.
+Exits 1 and prints what's missing unless each object that comes forward has its pivot, rigid
+parts and clip, rests where it lay, and ends its clip showing what it should. Nothing is saved.
 """
 
 import math
@@ -18,6 +17,15 @@ from mathutils import Vector
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import movers as MV  # noqa: E402
+
+try:
+    import flat_movers as F  # noqa: E402
+    import room_movers as RV  # noqa: E402
+except ImportError as e:
+    print("CHECK_MOVERS FAIL")
+    print(" -", e)
+    sys.stdout.flush()
+    os._exit(1)
 
 # child: (parent it must hang under, type)
 TREE = {
@@ -43,8 +51,46 @@ TREE = {
     "phone_spin": ("obj_phone", "EMPTY"),
     "phone_body": ("phone_spin", None),
     "phone_screen": ("phone_spin", "MESH"),
+    "obj_badge": (None, "EMPTY"),
+    "badge_flip": ("obj_badge", "EMPTY"),
+    "badge_card": ("badge_flip", "MESH"),
+    "badge_front": ("badge_card", "MESH"),
+    "badge_clip": ("badge_card", "MESH"),
+    "obj_photo": (None, "EMPTY"),
+    "photo_tilt": ("obj_photo", "EMPTY"),
+    "photo_frame": ("photo_tilt", "MESH"),
+    "photo_print": ("photo_frame", "MESH"),
+    "obj_notepad": (None, "EMPTY"),
+    "notepad_page": ("obj_notepad", "MESH"),
+    "notepad_block": ("obj_notepad", "MESH"),
+    "notepad_sketch": ("notepad_block", "MESH"),
+    "notepad_pen": ("notepad_block", "MESH"),
+    "obj_card": (None, "EMPTY"),
+    "card_flip": ("obj_card", "EMPTY"),
+    "card_body": ("card_flip", "MESH"),
+    "obj_car": (None, "EMPTY"),
+    "car_turn": ("obj_car", "EMPTY"),
+    "car_body": ("car_turn", "MESH"),
+    "obj_ball": (None, "EMPTY"),
+    "ball_roll": ("obj_ball", "EMPTY"),
+    "ball_skin": ("ball_roll", "MESH"),
+    "obj_mug": (None, "EMPTY"),
+    "mug_tip": ("obj_mug", "EMPTY"),
+    "mug_body": ("mug_tip", "MESH"),
+}
+# Where each lay before it became a mover (world boxes, metres): (the parts, min, max). The badge is
+# 3 mm higher, on the mat; the pen has moved off the notepad's page.
+REST_BOX = {
+    "badge": (("badge_card",), (-0.38238, 0.00988, 0.753), (-0.29762, 0.11012, 0.756)),
+    "photo": (("photo_frame", "photo_print"), (0.43036, 0.4347, 0.75051), (0.56964, 0.5253, 0.92949)),
+    "notepad": (("notepad_block", "notepad_page"), (-0.58775, -0.21414, 0.75), (-0.41225, 0.01414, 0.758)),
+    "card": (("card_body",), (0.23275, -0.25569, 0.753), (0.32725, -0.18431, 0.7536)),
+    "car": (("car_body",), (0.30353, 0.12513, 0.75), (0.49647, 0.27487, 0.81369)),
+    "ball": (("ball_skin",), (-2.06, 0.44, 0.0), (-1.84, 0.66, 0.22)),
+    "mug": (("mug_body",), (0.43189, -0.05654, 0.755), (0.5375, 0.02981, 0.84993)),
 }
 CLIPS = {"kit_open": ("kit_lid", MV.frames(MV.KIT_OPEN_S)), "phone_turn": ("phone_spin", MV.frames(MV.PHONE_TURN_S))}
+CLIPS.update({name: (c[0], MV.frames(c[1])) for name, c in {**F.CLIPS, **RV.CLIPS}.items()})
 
 problems = []
 get = bpy.data.objects.get
@@ -137,6 +183,59 @@ if not problems:
         problems.append(f"phone_turn: the long axis turns {math.degrees(math.acos(min(1, abs(float(long0 @ long1))))):.1f}°, expected 90°")
     if abs(float(n0 @ n1)) < math.cos(math.radians(1)):
         problems.append("phone_turn: the screen tips out of its plane")
+    scene.frame_set(0)
+
+    # The rest lie where they lay.
+    for name, (parts, lo, hi) in REST_BOX.items():
+        pts = world_verts([get(p) for p in parts])
+        off = max(np.abs(pts.min(axis=0) - np.array(lo)).max(), np.abs(pts.max(axis=0) - np.array(hi)).max())
+        if off > 0.001:
+            problems.append(f"obj_{name}: its box is {off * 1000:.1f} mm off where it lay")
+        if max(abs(s - 1) for s in get(f"obj_{name}").matrix_world.to_scale()) > 1e-5:
+            problems.append(f"obj_{name}: the pivot is scaled")
+
+    # The pen lies beside the page, on the mat.
+    inv = get("obj_notepad").matrix_world.inverted()
+    xs = lambda part: [(inv @ Vector(p)).x for p in world_verts([get(part)])]  # noqa: E731
+    if min(xs("notepad_pen")) <= max(xs("notepad_page")):
+        problems.append("notepad_pen lies over the page")
+
+    # The lanyard stays on the desk.
+    strap = get("deco_lanyard")
+    if not strap or strap.parent or not get("deco_lanyard_ring"):
+        problems.append("no deco_lanyard lying on its own, with its ring")
+    elif np.ptp(world_verts([strap])[:, 2]) > 0.006:
+        problems.append("deco_lanyard doesn't lie flat")
+    elif np.linalg.norm(world_verts([get("deco_lanyard_ring")]).mean(axis=0) - world_verts([get("badge_clip")]).mean(axis=0)) > 0.02:
+        problems.append("deco_lanyard_ring is away from the badge's clip")
+    coaster = get("deco_coaster_mug")
+    if not coaster or coaster.parent:
+        problems.append("deco_coaster_mug doesn't stay on the desk")
+    for gone in ("deco_pen", "deco_photo_print", "deco_mug"):
+        if get(gone):
+            problems.append(f"{gone} still exists")
+
+    # The badge and the card end on their backs, facing out of their pivots, the right way up.
+    for mover, (part, corners) in F.FACES.items():
+        scene.frame_set(CLIPS[f"{mover}_flip"][1])
+        m = get(part).matrix_world
+        tl, tr, br, bl = (m @ Vector(c) for c in corners)
+        frame = get(f"obj_{mover}").matrix_world.to_3x3()
+        n = (br - bl).cross(tl - bl).normalized()
+        if n.angle(frame @ Vector((0, 0, 1))) > math.radians(1):
+            problems.append(f"{mover}_flip: the back doesn't face out of the pivot")
+        if (tl - bl).normalized().angle(frame @ Vector((0, 1, 0))) > math.radians(1):
+            problems.append(f"{mover}_flip: the back isn't the right way up")
+
+    # The mug ends with its handle on the right.
+    scene.frame_set(CLIPS["mug_tip"][1])
+    p = world_verts([get("mug_body")])[:, :2]
+    axis = get("mug_tip").matrix_world.translation
+    d = p - np.array((axis.x, axis.y))
+    r = np.hypot(d[:, 0], d[:, 1])
+    far = d[r > r.max() - 0.002].mean(axis=0)
+    if abs(math.degrees(math.atan2(far[1], far[0]))) > 3:
+        problems.append("mug_tip: the handle doesn't end on the right")
     scene.frame_set(0)
 
 if problems:

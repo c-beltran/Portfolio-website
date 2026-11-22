@@ -306,6 +306,35 @@ def magnet_icon_image(place, size=256):
     return _save(f"magnet_{place}", px)
 
 
+def badge_front_image(w=540, h=860):
+    """The badge's front: flat blocks for a photo, two lines and a stripe. No words, no logo."""
+    import flat_movers as FM
+
+    yy, xx = np.mgrid[0:h, 0:w]
+    u, v = (xx + 0.5) / w, (yy + 0.5) / h
+    px = np.ones((h, w, 4))
+    px[..., :3] = np.array(srgb("#F7F7F5"))
+    for ink, (x0, y0, x1, y1) in zip(FM.BADGE_INKS, FM.badge_front_marks()):
+        px[(u >= x0) & (u <= x1) & (v >= y0) & (v <= y1), :3] = np.array(srgb(ink))
+    return _save("badge_front", px)
+
+
+def sketch_image(w=512):
+    """The page under the notepad's top one: a rough pencil drawing of the desk. No words."""
+    import flat_movers as FM
+
+    aspect = FM.SKETCH[0] / FM.SKETCH[1]
+    h = round(w / aspect)
+    yy, xx = np.mgrid[0:h, 0:w]
+    u, v = (xx + 0.5) / h, (yy + 0.5) / h
+    px = np.ones((h, w, 4))
+    px[..., :3] = np.array(srgb("#F2EFE8"))
+    segs = [((ax * aspect, ay), (bx * aspect, by)) for line in FM.sketch_strokes() for (ax, ay), (bx, by) in zip(line, line[1:])]
+    segs = [(p, q) for p, q in segs if p != q]
+    _segments(px, u, v, segs, [0.0021] * len(segs), np.array(srgb("#4A4A4F")))
+    return _save("notepad_sketch", px)
+
+
 def printed(name, img, rough=0.6):
     """A matte surface printed with an image on its UVs."""
     m = new_material(name)

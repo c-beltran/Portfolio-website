@@ -34,9 +34,9 @@ if not get("deco_coaster_mug"):
     problems.append("deco_coaster_mug missing")
 
 # The soccer ball on the floor by the left wall: a sphere of white and black panels.
-ball = get("obj_ball")
+ball = get("ball_skin")
 if not ball:
-    problems.append("no obj_ball")
+    problems.append("no ball_skin")
 else:
     centre = Vector(R.BALL["at"])
     pts = [ball.matrix_world @ v.co for v in ball.data.vertices]
@@ -98,7 +98,13 @@ else:
     cy = (min(p.y for p in pts) + max(p.y for p in pts)) / 2
     if math.hypot(cx - R.CAR["at"][0], cy - R.CAR["at"][1]) > 0.005:
         problems.append(f"obj_car: footprint centred at ({cx:.3f}, {cy:.3f}), not {R.CAR['at']}")
-    lamps = [o.matrix_world @ v.co for o in meshes if any(m and m.name == "car_lamp_front" for m in o.data.materials) for v in o.data.vertices]
+    lamps = [
+        o.matrix_world @ o.data.vertices[i].co
+        for o in meshes
+        for p in o.data.polygons
+        if o.data.materials[p.material_index] and o.data.materials[p.material_index].name == "car_lamp_front"
+        for i in set(p.vertices)
+    ]
     if not lamps:
         problems.append("obj_car: no car_lamp_front faces")
     else:

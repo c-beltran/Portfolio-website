@@ -33,8 +33,6 @@ import framing  # noqa: E402
 
 OBJECTS = ["obj_monitor", "obj_kit", "obj_phone", "obj_badge", "obj_photo", "obj_notepad", "obj_card", "obj_lightbar",
            "obj_car", "obj_ball", "obj_board", "obj_mug"]  # the car, the ball, the board
-# Clickable objects the build names as decoration: the mug became Coffee after it was baked.
-BUILT_AS = {"obj_mug": "deco_mug"}
 # Decoration projected for the tests only (written under "decor", never a hotspot): the plant must
 # show in every window; the board must hang above the laptop.
 DECOR = ["deco_plant", "deco_laptop"]
@@ -219,7 +217,7 @@ def main():
     cam = bpy.data.objects[cam_name]
     depsgraph = bpy.context.evaluated_depsgraph_get()
     aspect = scene.render.resolution_y / scene.render.resolution_x
-    boxes = {name: project(scene, cam, bpy.data.objects[BUILT_AS.get(name, name)], depsgraph) for name in OBJECTS}
+    boxes = {name: project(scene, cam, bpy.data.objects[name], depsgraph) for name in OBJECTS}
     quads = None
     if a.camera == "seat":
         # The seat's monitor is two hotspots: How I build (left) and the CV page (right, design 4.2).

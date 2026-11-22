@@ -17,7 +17,7 @@ const OBJECTS = [
   'obj_car',
   'obj_ball',
   'obj_board',
-  // the mug (Coffee), built as deco_mug
+  // the mug (Coffee)
   'obj_mug',
 ] as const;
 /** Shown only in ultrawide windows: the ball lies by the left wall. */

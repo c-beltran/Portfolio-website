@@ -19,4 +19,4 @@ The [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) models are modifie
 
 ## Made for this site
 
-Everything else in the scene is built in code under [`scripts/scene/`](../scripts/scene): the furniture, test kit, ball, magnet board and its icons, glows, and the placeholder phone clip. The photo, handwriting and screen recording are still to come.
+Everything else in the scene is built in code under [`scripts/scene/`](../scripts/scene): the furniture, test kit, badge and lanyard, notepad and sketch, card, photo frame, ball, magnet board and its icons, glows, and the placeholder phone clip. The photo, handwriting and screen recording are still to come.

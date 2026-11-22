@@ -22,6 +22,7 @@ from mathutils import Matrix, Vector
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
+import flat_movers as FM  # noqa: E402
 import room as RM  # noqa: E402  (where the car, the plant, the ball and the board go)
 ASSETS_DIR = Path.home() / "Portfolio-assets"
 DESK_TOP = 0.75
@@ -151,31 +152,11 @@ def build_desk(coll):
 
 def build_simple_objects(coll):
     t = DESK_TOP + 0.003  # on the mat
-    # Notepad (A5, spiral side up) and pen, front left.
-    pad = box("obj_notepad", (0.148, 0.21, 0.008), (-0.5, -0.1, DESK_TOP), coll, rot=(0, 0, 8), bevel=0.001)
-    # cylinder() lifts by half its length (for upright use); the pen lies flat.
-    pen = cylinder("deco_pen", 0.0045, 0.14, (-0.47, -0.11, DESK_TOP + 0.013 - 0.07), coll, rot=(0, 90, 20))
-    set_parent(pen, pad)
-    # Business card (85×55 mm), front right of the keyboard.
-    box("obj_card", (0.085, 0.055, 0.0006), (0.28, -0.22, t), coll, rot=(0, 0, -12), bevel=0.0002)
-    # ID badge (CR80 card in a sleeve) lying by the laptop stand, lanyard coiled beside it.
-    badge = box("obj_badge", (0.054, 0.086, 0.003), (-0.34, 0.06, DESK_TOP), coll, rot=(0, 0, 25), bevel=0.0008)
-    # Small framed photo (13×18 cm frame) leaning against the wall right of the monitor.
-    frame = box("obj_photo", (0.13, 0.018, 0.18), (0.5, 0.48, DESK_TOP), coll, rot=(-12, 0, -18), bevel=0.002)
-    frame["role"] = "photo_frame"
-    bpy.ops.mesh.primitive_plane_add(size=1)
-    prt = bpy.context.active_object
-    prt.name = "deco_photo_print"
-    prt.scale = (0.105, 0.15, 1)
-    bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
-    move_to(prt, coll)
-    prt.parent = frame  # local frame: the box's centre, metres (its scale was applied)
-    prt.location = (0, -0.0095, 0)
-    prt.rotation_euler = (math.radians(90), 0, 0)
+    build_flat_movers(coll)
     case = build_kit(coll)  # the backflow test-kit case beside the laptop, on the desk
     # Walnut wrist rest in front of the keyboard (from the reference photo).
     box("deco_wrist_rest", (0.33, 0.075, 0.018), (-0.03, -0.205, t), coll, bevel=0.006)
-    return {"pad": pad, "case": case}
+    return {"case": case}
 
 
 def apply_modifiers(o):
@@ -276,6 +257,74 @@ def ring_mesh(name, r_out, r_in, h, recess, coll, verts=64, chamfer=0.0008):
     return o
 
 
+def pivot(name, loc, coll, rot=(0, 0, 0), par=None):
+    """An unscaled Empty, its transform read in its parent's frame."""
+    e = bpy.data.objects.new(name, None)
+    coll.objects.link(e)
+    if par:
+        under(e, par)
+    e.location = loc
+    e.rotation_euler = [math.radians(a) for a in rot]
+    return e
+
+
+def part(name, size, centre, par, coll, bevel=0.0):
+    """A box centred at centre in its parent's frame."""
+    o = under(box(name, size, (0, 0, 0), coll, bevel=bevel), par)
+    o.location = centre
+    return o
+
+
+def build_flat_movers(coll):
+    """The badge, the photo, the notepad with its pen, and the card as movers: each a pivot where it
+    lies, an owner for its clip, and rigid parts (flat_movers.py)."""
+    roots = {k: pivot(f"obj_{k}", loc, coll, rot) for k, (loc, rot) in FM.REST.items()}
+
+    w, h, d = FM.BADGE
+    flip = pivot("badge_flip", (0, 0, 0), coll, par=roots["badge"])
+    card = part("badge_card", FM.BADGE, (0, 0, 0), flip, coll, bevel=0.0008)
+    front = under(plane("badge_front", (w - 0.004, h - 0.004), (0, 0, 0), coll), card)
+    front.location = (0, 0, d / 2 + 0.0001)
+    part("badge_clip", FM.BADGE_CLIP, (0, h / 2 + FM.BADGE_CLIP[1] / 4, 0), card, coll, bevel=0.0005)
+
+    w, h, d = FM.PHOTO
+    tilt = pivot("photo_tilt", FM.PHOTO_HINGE, coll, (FM.LEAN_DEG, 0, 0), roots["photo"])
+    frame = part("photo_frame", FM.PHOTO, (0, h / 2, d / 2), tilt, coll, bevel=0.002)
+    frame["role"] = "photo_frame"
+    prt = under(plane("photo_print", FM.PRINT, (0, 0, 0), coll), frame)
+    prt.location = (0, 0, d / 2 + 0.0005)
+
+    w, h, d = FM.PAD
+    top = d / 2 - FM.PAGE_T  # the block's top, under the page
+    mid = (top - d / 2) / 2
+    block = part("notepad_block", (w, h, d - FM.PAGE_T), (0, 0, mid), roots["notepad"], coll, bevel=0.001)
+    sheet = part("notepad_page", (w, h, FM.PAGE_T), (0, h / 2, top), roots["notepad"], coll)
+    sheet.data.transform(Matrix.Translation((0, -h / 2, FM.PAGE_T / 2)))  # its origin on the spiral edge
+    sketch = under(plane("notepad_sketch", FM.SKETCH, (0, 0, 0), coll), block)
+    sketch.location = (0, 0, top + 0.00005 - mid)
+    r, length = FM.PEN
+    x, y, z = FM.PEN_AT
+    pen = under(cylinder("notepad_pen", r, length, (0, 0, 0), coll, rot=(90, 0, 0)), block)
+    pen.location = (x, y, z - mid)
+
+    flip = pivot("card_flip", (0, 0, 0), coll, par=roots["card"])
+    part("card_body", FM.CARD, (0, 0, 0), flip, coll, bevel=0.0002)
+
+
+def build_lanyard(coll):
+    """The badge's lanyard, coiled on the mat: a flat strap and a steel ring at the clip. It stays."""
+    o = grid_mesh("deco_lanyard", *FM.ribbon(FM.lanyard_path(), *FM.STRAP), coll)
+    for poly in o.data.polygons:
+        poly.use_smooth = False
+    major, minor = FM.RING
+    bpy.ops.mesh.primitive_torus_add(major_radius=major, minor_radius=minor, major_segments=32, minor_segments=8, location=FM.ring_centre())
+    ring = bpy.context.active_object
+    ring.name = "deco_lanyard_ring"
+    for poly in ring.data.polygons:
+        poly.use_smooth = True
+    move_to(ring, coll)
+
+
 def grid_mesh(name, verts, faces, coll):
     me = bpy.data.meshes.new(name)
     me.from_pydata(verts, [], faces)
@@ -368,15 +417,16 @@ def build_ball(coll):
     import room as RM
 
     verts, tris, black, _ = RM.soccer_ball(RM.BALL["r"])
-    me = bpy.data.meshes.new("obj_ball")
+    me = bpy.data.meshes.new("ball_skin")
     me.from_pydata(verts, [], tris)
     for poly, b in zip(me.polygons, black):
         poly.material_index = 1 if b else 0
         poly.use_smooth = True
-    o = bpy.data.objects.new("obj_ball", me)
+    o = bpy.data.objects.new("ball_skin", me)
     coll.objects.link(o)
-    o.location = RM.BALL["at"]
-    return o
+    root = pivot("obj_ball", RM.BALL["at"], coll)
+    under(o, pivot("ball_roll", (0, 0, 0), coll, par=root))
+    return root
 
 
 def build_board(coll):
@@ -464,20 +514,78 @@ def make_phone_mover(coll):
     return pivot
 
 
+def make_import_mover(root_name, owner, body_name, place, coll):
+    """An imported model as a mover, once it has its materials: its meshes joined into one part,
+    with the import's scale and yaw applied, under an owner for the clip and an unscaled pivot.
+    place(meshes, lo, hi) gives the pivot's and the owner's world positions."""
+    root = bpy.data.objects.get(root_name)
+    if not root:
+        return None
+    tree = [root, *root.children_recursive]
+    meshes = [o for o in tree if o.type == "MESH"]
+    others = [o for o in tree if o.type != "MESH"]
+    at, owner_at = place(meshes, *vertex_bounds(meshes))
+    to_owner = Matrix.Translation(-owner_at)
+    worlds = {o: o.matrix_world.copy() for o in meshes}
+    for o in meshes:
+        m = to_owner @ worlds[o]
+        o.parent = None
+        o.matrix_world = Matrix.Identity(4)
+        o.data = o.data.copy()
+        o.data.transform(m)
+        if m.determinant() < 0:  # a mirrored node: keep its faces outward
+            o.data.flip_normals()
+    bpy.ops.object.select_all(action="DESELECT")
+    for o in meshes:
+        o.select_set(True)
+    bpy.context.view_layer.objects.active = meshes[0]
+    if len(meshes) > 1:
+        bpy.ops.object.join()
+    body = bpy.context.view_layer.objects.active
+    for o in others:
+        bpy.data.objects.remove(o, do_unlink=True)
+    body.name = body.data.name = body_name
+    new_root = pivot(root_name, at, coll)
+    under(body, pivot(owner, owner_at - at, coll, par=new_root))
+    return new_root
+
+
+def make_room_movers(coll):
+    """The Corolla, pivoted at its centre, and the mug, at the cup's axis (not the handle's box)."""
+
+    def car_at(meshes, lo, hi):
+        mid = (lo + hi) / 2
+        return mid, mid
+
+    def mug_at(meshes, lo, hi):
+        coffee = [o for o in meshes if any(m and m.name.startswith("Coffee") for m in o.data.materials)] or meshes
+        a, b = vertex_bounds(coffee)
+        x, y = (a.x + b.x) / 2, (a.y + b.y) / 2
+        return Vector((x, y, (lo.z + hi.z) / 2)), Vector((x, y, lo.z))
+
+    make_import_mover("obj_car", "car_turn", "car_body", car_at, coll)
+    make_import_mover("obj_mug", "mug_tip", "mug_body", mug_at, coll)
+
+
 def key_clips():
     """Key the movers' clips at 60 fps from frame 0, each frame from movers.py's easing (linear
     between keys, so any sampler reads the same curve), and leave the scene at rest on frame 0."""
     import movers as MV
+    import room_movers as RV
 
     scene = bpy.context.scene
     scene.render.fps = MV.FPS
     scene.frame_start = 0
     bpy.context.preferences.edit.keyframe_new_interpolation_type = "LINEAR"
     get = bpy.data.objects.get
-    for clip, owner, seconds, index, value in (
+    clips = [
         ("kit_open", "kit_lid", MV.KIT_OPEN_S, 0, MV.lid_rotation_x),
         ("phone_turn", "phone_spin", MV.PHONE_TURN_S, 2, lambda t: math.radians(MV.turn_angle(t))),
-    ):
+    ]
+    for module in (FM, RV):
+        for clip, (owner, seconds, axis, _, _) in module.CLIPS.items():
+            clips.append((clip, owner, seconds, "XYZ".index(axis), lambda t, m=module, c=clip: math.radians(m.angle(c, t))))
+    for clip, owner, seconds, index, value in clips:
         o = get(owner)
         if not o:
             continue
@@ -486,7 +594,7 @@ def key_clips():
             o.rotation_euler[index] = value(f / n)
             o.keyframe_insert("rotation_euler", index=index, frame=f)
         o.animation_data.action.name = clip
-    scene.frame_end = MV.frames(MV.KIT_OPEN_S)
+    scene.frame_end = max(MV.frames(seconds) for _, _, seconds, _, _ in clips)
     scene.frame_set(0)
 
 
@@ -515,7 +623,7 @@ COMPLEX = {
     "plant": dict(proxy=(0.17, 0.19, 0.27), rot=(0, 0, 0), width=0.17, at=RM.PLANT["at"]),
 }
 # Interactive vs decoration naming for the complex objects.
-NAMES = {"monitor": "obj_monitor", "phone": "obj_phone", "car": "obj_car"}
+NAMES = {"monitor": "obj_monitor", "phone": "obj_phone", "car": "obj_car", "mug": "obj_mug"}
 
 
 def load_assets():
@@ -657,10 +765,11 @@ def import_or_proxy(key, coll, assets, allow_proxy=False):
 
 
 def set_dressing(coll):
-    """A coaster under the mug, a short book stack, and cables: the clutter of a real desk. (No
-    water glass: the portrait behind it shows.)"""
+    """A coaster under the mug, the badge's lanyard, a short book stack, and cables: the clutter of a
+    real desk. (No water glass: the portrait behind it shows.)"""
+    build_lanyard(coll)
     for key in ("mug",):
-        root = bpy.data.objects.get(f"deco_{key}")
+        root = bpy.data.objects.get(f"obj_{key}")
         if root:
             lo, hi = world_bounds([o for o in root.children_recursive if o.type == "MESH"])
             cx, cy = (lo.x + hi.x) / 2, (lo.y + hi.y) / 2
@@ -786,6 +895,7 @@ def apply_materials():
     steel = C("latch_steel", h("#B8BBBF"), 0.3, metal=1.0)
     chrome = C("chrome", h("#C8CBCF"), 0.15, metal=1.0)
     bezel = C("gauge_bezel", h("#141416"), 0.35, coat=0.3)
+    paper = C("paper_pad", h("#F2EFE8"), 0.85, spread=0.05)
     by_prefix = {
         "room_floor": C("floor", h("#8E8781"), 0.55),
         "room_": M.plaster(C("wall", h("#ECEBE8"), 0.85, spread=0.04)),
@@ -793,13 +903,18 @@ def apply_materials():
         "deco_desk_top": M.fine(C("desk_top", h("#1D1D20"), 0.5, spread=0.04)),
         "deco_desk_": C("desk_steel", h("#2B2B2E"), 0.35, metal=1.0),
         "deco_mat": M.desk_mat("desk_mat"),
-        "obj_notepad": C("paper_pad", h("#F2EFE8"), 0.85, spread=0.05),
-        "deco_pen": C("pen", h("#151517"), 0.25, coat=0.6),
-        "obj_card": C("card_stock", h("#F4F1EA"), 0.8, spread=0.05),
-        "obj_badge": C("badge_plastic", h("#F7F7F5"), 0.3, coat=0.4),
+        "notepad_sketch": M.printed("notepad_sketch", M.sketch_image(), 0.85),
+        "notepad_pen": C("pen", h("#151517"), 0.25, coat=0.6),
+        "notepad_page": paper,
+        "notepad_block": paper,
+        "card_body": C("card_stock", h("#F4F1EA"), 0.8, spread=0.05),
+        "badge_front": M.printed("badge_front", M.badge_front_image(), 0.3),
+        "badge_clip": steel,
+        "badge_card": C("badge_plastic", h("#F7F7F5"), 0.3, coat=0.4),
+        "deco_lanyard_ring": steel,
         "deco_lanyard": C("lanyard", h("#23314F"), 0.8),
-        "obj_photo": C("photo_frame", h("#18181A"), 0.45),
-        "deco_photo_print": M.photo_print("photo_print"),
+        "photo_frame": C("photo_frame", h("#18181A"), 0.45),
+        "photo_print": M.photo_print("photo_print"),
         "board_face": C("board_steel", h("#D3D5D7"), 0.4),
         "board_frame_": C("board_frame", h("#26272A"), 0.35, metal=0.6),
         "magnet_": C("magnet_rim", h("#EDEBE6"), 0.35, coat=0.4),
@@ -858,8 +973,8 @@ def apply_materials():
     # The soccer ball's two panels, the magnet board and its magnets.
     import room as RM
 
-    if get("obj_ball"):
-        me = get("obj_ball").data
+    if get("ball_skin"):
+        me = get("ball_skin").data
         me.materials.clear()
         for m in (C("ball_white", h("#F1F0EC"), 0.45, coat=0.3), C("ball_black", h("#161618"), 0.45, coat=0.3)):
             me.materials.append(m)
@@ -906,8 +1021,8 @@ def apply_materials():
         if screen:  # the clip's quad: dark glass where it shows at all (Cycles never draws it)
             screen.data.materials.clear()
             screen.data.materials.append(dark_glass)
-    if get("deco_mug"):
-        M.remap(get("deco_mug"), {"material": C("ceramic", h("#E9E1D3"), 0.25, coat=0.5)})
+    if get("obj_mug"):
+        M.remap(get("obj_mug"), {"material": C("ceramic", h("#E9E1D3"), 0.25, coat=0.5)})
 
 
 def car_part(obj, mat):
@@ -973,6 +1088,7 @@ def main():
     build_board(objs)
     build_cameras(cams)
     apply_materials()
+    make_room_movers(objs)  # joined once each part has its material
     build_lights()
     key_clips()
     Path(a.out).parent.mkdir(parents=True, exist_ok=True)

@@ -33,7 +33,7 @@ ITEMS = {
     "car": "obj_car",
     "ball": "obj_ball",
     "board": "obj_board",
-    "mug": "deco_mug",  # Coffee
+    "mug": "obj_mug",  # Coffee
 }
 
 
