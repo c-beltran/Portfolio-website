@@ -6,9 +6,9 @@ import art from './opened-art.json';
 import bounds from './bounds-seat.json';
 
 /**
- * The opened-object stills (design 2026-11-19 §5.5, §6): a Cycles render of each object that comes
+ * The opened-object stills: a Cycles render of each object that comes
  * forward, in its opened pose, cut out on transparency, ≤ 150 kB a file; and the patch that hides
- * the object on the Tier 1 still while it is out (≤ 40 kB a file, my call), both loaded on demand.
+ * the object on the Tier 1 still while it is out (≤ 40 kB a file), both loaded on demand.
  */
 const DIR = join(process.cwd(), 'public/opened');
 const KB = 1024;

@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { meshKey } from '../../components/scene/moverParts';
 
 /**
- * The movers (design 2026-11-19 §4.2, §6): the kit case and the phone export on their own, with
+ * The movers: the kit case and the phone export on their own, with
  * their hierarchy and clips, so the live scene can bring them forward. Read from the GLB's JSON
  * chunk, without three.
  */
@@ -40,7 +40,7 @@ const parentOf = (g: Gltf, name: string) => {
 describe('movers.glb', () => {
   const g = gltf('scene/movers.glb');
 
-  // The live kit's lid drew black (2026-11-21): gltf-transform's quantize can't rescale an animated
+  // The live kit's lid once drew black: gltf-transform's quantize can't rescale an animated
   // node, so it moves kit_lid's mesh into an unnamed child, which three's GLTFLoader names after the
   // mesh with a suffix ("kit_lid_1", checked by loading this file): no name the lookup knew.
   it("every mesh takes its baked material, even one the optimizer moved into its part's child", () => {
@@ -85,6 +85,12 @@ describe('scene.glb', () => {
   it('no longer holds the movers', () => {
     const names = gltf('scene/scene.glb').nodes.map((n) => n.name ?? '');
     expect(names.filter((n) => /^(kit|phone|obj_kit|obj_phone)/.test(n))).toEqual([]);
+  });
+  // the water glass is gone, so its glass and water meshes go too
+  it('holds exactly the baked groups and the sky, with no glass or water', () => {
+    const g = gltf('scene/scene.glb');
+    const meshNodes = g.nodes.filter((n) => n.mesh !== undefined).map((n) => n.name ?? '');
+    expect(meshNodes.sort()).toEqual(['desk', 'monitor', 'props', 'room', 'screen', 'sky']);
   });
 });
 

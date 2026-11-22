@@ -1,5 +1,5 @@
 """
-Writes content/scene/cameras.json (M3b): every scene camera's eye, target, lens, sensor width and
+Writes content/scene/cameras.json: every scene camera's eye, target, lens, sensor width and
 shift, in three.js axes (Y up): Blender (x, y, z) -> three (x, z, -y). The live scene and the
 Cycles clips both read it, so they frame the same.
 

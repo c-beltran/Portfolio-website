@@ -4,7 +4,7 @@ import { CAREER_START, yearsSince } from '../../lib/dates';
 /** e2e runs against out/; set the same NEXT_PUBLIC_VERCEL_ENV the build used. */
 const production = process.env.NEXT_PUBLIC_VERCEL_ENV === 'production';
 
-// The header lives on /classic (and 404) since the desk fills the window (design 2026-11-19 §3.1).
+// The header lives on /classic (and 404) since the desk fills the window.
 test.describe('header', () => {
   test('the desk has no header: it fills the window', async ({ page }) => {
     await page.goto('/');
@@ -45,8 +45,8 @@ test.describe('header', () => {
     const resume = page.getByRole('banner').getByRole('link', { name: 'Download résumé' });
     await expect(resume).toHaveCount(0);
     await expect(page.getByRole('banner')).toContainText(
-      production ? 'Carlos Beltran' : '[TODO: Q15 résumé PDF]',
+      production ? 'Carlos Beltran' : '[TODO: résumé PDF]',
     );
-    if (production) await expect(page.getByRole('banner')).not.toContainText('[TODO: Q15');
+    if (production) await expect(page.getByRole('banner')).not.toContainText('[TODO: résumé');
   });
 });

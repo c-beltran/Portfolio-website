@@ -12,6 +12,7 @@ import {
   historyLength,
   hotspot,
   panOf,
+  onScreen,
   panelTitle,
   path,
 } from './desk';
@@ -19,6 +20,8 @@ import {
 test.describe('still desk hotspots', () => {
   for (const obj of DESK_OBJECTS) {
     test(`clicking the ${obj.id} opens ${obj.label}`, async ({ page }) => {
+      const v = page.viewportSize()!;
+      test.skip(!onScreen(obj.id, v.width, v.height), 'off screen until 13:5 (room.spec.ts)');
       await gotoDesk(page, '/');
       await hotspot(page, obj.id).click();
       expect(path(page)).toBe(`/${obj.slug}`);
@@ -43,7 +46,7 @@ test.describe('still desk hotspots', () => {
     await gotoDesk(page, '/');
     await hotspot(page, 'kit').click();
     const after = await historyLength(page);
-    // On a phone the sheet now covers the kit (phase 2 brings it forward): click the element itself.
+    // On a phone the sheet now covers the kit: click the element itself.
     await hotspot(page, 'kit').evaluate((el) => (el as HTMLElement).click());
     expect(await historyLength(page)).toBe(after);
     expect(path(page)).toBe('/potaflow');
@@ -98,9 +101,7 @@ test.describe('still desk hotspots', () => {
     await expect(drawerButton(page, 'Experience')).toBeFocused();
   });
 
-  test('a same-tick burst of clicks keeps only the latest navigation pending (M1 queue)', async ({
-    page,
-  }) => {
+  test('a same-tick burst of clicks keeps only the latest navigation pending', async ({ page }) => {
     await gotoDesk(page, '/');
     await page.evaluate(() => {
       for (const id of ['badge', 'monitor', 'kit', 'kit'])
@@ -124,17 +125,20 @@ test.describe('still desk hotspots', () => {
   test('tapping any label hits its own object', async ({ page }) => {
     await gotoDesk(page, '/');
     const misses = await page.evaluate(() =>
-      [...document.querySelectorAll<HTMLElement>('button.hotspot .sticker')].flatMap((label) => {
-        const own = label.closest<HTMLElement>('button.hotspot')!.dataset.item;
-        label.scrollIntoView({ block: 'center', inline: 'center', behavior: 'instant' });
-        const r = label.getBoundingClientRect();
-        return [0.2, 0.5, 0.8].flatMap((fx) => {
-          const hit = document
-            .elementFromPoint(r.left + r.width * fx, r.top + r.height / 2)
-            ?.closest<HTMLElement>('button.hotspot')?.dataset.item;
-          return hit === own ? [] : [`${own} label at ${fx}: hit ${hit ?? 'felt'}`];
-        });
-      }),
+      // an ultrawide-only object's label is display: none until it shows
+      [...document.querySelectorAll<HTMLElement>('button.hotspot .sticker')]
+        .filter((label) => label.getClientRects().length > 0)
+        .flatMap((label) => {
+          const own = label.closest<HTMLElement>('button.hotspot')!.dataset.item;
+          label.scrollIntoView({ block: 'center', inline: 'center', behavior: 'instant' });
+          const r = label.getBoundingClientRect();
+          return [0.2, 0.5, 0.8].flatMap((fx) => {
+            const hit = document
+              .elementFromPoint(r.left + r.width * fx, r.top + r.height / 2)
+              ?.closest<HTMLElement>('button.hotspot')?.dataset.item;
+            return hit === own ? [] : [`${own} label at ${fx}: hit ${hit ?? 'felt'}`];
+          });
+        }),
     );
     expect(misses).toEqual([]);
   });
@@ -158,12 +162,13 @@ test.describe('still desk hotspots', () => {
         const centred =
           Math.abs(ox! - (el as HTMLElement).offsetWidth / 2) < 1 &&
           Math.abs(oy! - (el as HTMLElement).offsetHeight / 2) < 1;
-        return { left: s.left, top: s.top, moved: s.transform !== 'none', centred };
+        const shown = el.getClientRects().length > 0; // the ball is display: none until 13:5
+        return { left: s.left, top: s.top, moved: s.transform !== 'none', centred, shown };
       }),
     );
     expect(placements.length).toBe(DESK_OBJECTS.length + 1); // the sections and the lamp
-    for (const p of placements)
-      expect(p).toEqual({ left: '0px', top: '0px', moved: true, centred: true });
+    for (const { shown, ...p } of placements)
+      if (shown) expect(p).toEqual({ left: '0px', top: '0px', moved: true, centred: true });
   });
 
   test('the desk shows no digits except the badge year', async ({ page }) => {
@@ -207,8 +212,8 @@ test.describe('still desk hotspots', () => {
   });
 });
 
-// Spec §3.1 / M3b B3: every object is clickable at its own place in the render, in the smallest
-// windows: a 568×320 landscape phone and a 320×480 portrait one (Review Focus 4). An object off to
+// Every object is clickable at its own place in the render, in the smallest
+// windows: a 568×320 landscape phone and a 320×480 portrait one. An object off to
 // the side of a portrait window is scrolled to first, as a visitor would swipe to it.
 for (const viewport of [
   { width: 568, height: 320 },
@@ -218,6 +223,7 @@ for (const viewport of [
     test.use({ viewport });
     for (const id of INTERACTIVE) {
       test(`opens ${id}`, async ({ page }) => {
+        test.skip(!onScreen(id, viewport.width, viewport.height), 'off screen until 13:5');
         await gotoDesk(page, '/');
         await hotspot(page, id).evaluate((el) =>
           el.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'instant' }),

@@ -6,7 +6,7 @@ const NUMBER = String.raw`\d[\d,]*(?:\.\d+)?k?\+?%?`;
 const NUMBER_WORD = String.raw`(?:one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty)`;
 
 /**
- * A number (not glued to an identifier like Q21/P05, not a year) before a stat word, with up to
+ * A number (not glued to an identifier like P05, not a year) before a stat word, with up to
  * two words between: "5 design directions", "61% of commits", "1.5k commits", "five directions".
  */
 const NUMBER_BEFORE = new RegExp(

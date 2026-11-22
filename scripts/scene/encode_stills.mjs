@@ -1,4 +1,4 @@
-// Tier 1 stills from the seat (M3c phase 1): crops each approved master render (never committed)
+// Tier 1 stills from the seat: crops each master render (never committed)
 // through framing.ts into the committed public/stills set: one crop per wide band (b0…) and the
 // portrait strip (p), at a 900 px and a 1600 px safe height (the master's own, so nothing is
 // upscaled). Names: seat-<crop>-<mode>-<width>.<avif|webp>. Budgets: content/scene/stills.test.ts.

@@ -1,5 +1,5 @@
-// The hover glow's rings (Carlos, 2026-11-20; on the edges only, 2026-11-21: "the glow should be on
-// the edges not the item"): from render_masks.py's silhouettes, per clickable item, a soft ring
+// The hover glow's rings, on the edges only:
+// from render_masks.py's silhouettes, per clickable item, a soft ring
 // around it — its silhouette blurred, kept only outside the silhouette, so the object itself is
 // never lit — as white-on-alpha WebP at a quarter of the master. The monitor's screen splits into
 // its two halves at the CV half's left edge (bounds-seat.json quads.screen_right): How I build
@@ -15,7 +15,19 @@ const SRC = process.argv[2] ?? join(homedir(), 'Portfolio-assets/renders/masks')
 const OUT = 'public/glow';
 const BLUR = 5; // px at a quarter of the master: ~20 px of glow at full size
 const GAIN = 1.8;
-const ITEMS = ['kit', 'phone', 'badge', 'photo', 'notepad', 'card', 'lightbar'];
+const ITEMS = [
+  'kit',
+  'phone',
+  'badge',
+  'photo',
+  'notepad',
+  'card',
+  'lightbar',
+  'car',
+  'ball',
+  'board',
+  'mug',
+];
 
 mkdirSync(OUT, { recursive: true });
 

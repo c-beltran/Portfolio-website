@@ -4,7 +4,7 @@ import { useGLTF, useTexture } from '@react-three/drei';
 import { Canvas, useThree } from '@react-three/fiber';
 import { Suspense, useCallback, useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
-import { bakedMaterial, glassMaterial } from './materials';
+import { bakedMaterial } from './materials';
 import { Movers } from './Movers';
 import type { OpenedId } from '@/content/opened';
 import { CAMERAS, type Vec3 } from '@/content/scene/cameras';
@@ -15,7 +15,7 @@ import { hfov } from './transition';
 
 const GROUPS = ['room', 'desk', 'monitor', 'props', 'screen', 'sky'] as const;
 type Group = (typeof GROUPS)[number];
-/** The objects that come forward (design 2026-11-19 §4.2), in their own GLB (Movers.tsx). */
+/** The objects that come forward, in their own GLB (Movers.tsx). */
 const MOVERS = ['kit', 'phone'] as const;
 type Mover = (typeof MOVERS)[number];
 // The phone's dark glass, under the clip quad: the residual corrects it toward the still.
@@ -27,18 +27,15 @@ const PROBE = ['/scene/bake/probe-day.webp', '/scene/bake/probe-lamp.webp'];
  * The view-dependent layer over the bake (materials.ts), tuned against the Tier 1 still with
  * scripts/scene/measure/match.mjs: which groups reflect the probe, and how strongly.
  */
-// Measured (docs/private/design/m3b/match): the desk's sheen helps in day; in lamp the probe
+// Measured: the desk's sheen helps in day; in lamp the probe
 // mirrors the lit screens where the still shows none, and on the props it costs more than it gives.
 type Glossy = { gloss: string; strength: number; strengthLamp: number };
 const GLOSSY: Partial<Record<Group, Glossy>> = {
   desk: { gloss: '/scene/bake/gloss-desk.webp', strength: 2, strengthLamp: 0 },
 };
-// Dark and mostly clear: through the glass the still shows the dark desk, a rim of reflection.
-const GLASS = { tint: '#1c2128', fill: 0.15, strength: 1 };
-const WATER = { tint: '#1a2633', fill: 0.45, strength: 0.8 };
 
 /**
- * Points a camera through the seat (design 2026-11-19 §3): the full frustum is the seat's master
+ * Points a camera through the seat: the full frustum is the seat's master
  * render, `view` the window cut out of it (framing.ts viewOffset, fullW × fullH px, the window at
  * x, y), plus Blender's lens shift, a fraction of the larger side (the master's width): +x right,
  * +y up. The rig and the residual's projection both use it, so they can't drift apart.
@@ -122,8 +119,6 @@ function Scene({
         ];
       }),
     ) as Record<Group, THREE.ShaderMaterial>;
-    const see = (o: typeof GLASS) =>
-      glassMaterial(probe, new THREE.Color(o.tint), o.fill, o.strength);
     const m0 = urls.length - 2 * MOVERS.length;
     const moving = Object.fromEntries(
       MOVERS.map((m, i) => [
@@ -136,7 +131,7 @@ function Scene({
     ) as Record<Mover, THREE.ShaderMaterial>;
     const glassTex = flat(PHONE_GLASS);
     const phoneScreen = bakedMaterial(glassTex, glassTex, { residual, opened: true });
-    return { ...baked, ...moving, phoneScreen, glass: see(GLASS), water: see(WATER) };
+    return { ...baked, ...moving, phoneScreen };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [textures]);
 
@@ -144,24 +139,13 @@ function Scene({
     scene.traverse((o) => {
       if (!(o instanceof THREE.Mesh)) return;
       const g = (o.name in materials ? o.name : o.parent?.name) as keyof typeof materials;
-      const m = materials[g] ?? materials.glass;
-      if (g === 'glass' || g === 'water') {
-        // Each is one upright cylinder: its normal is radial from the vertical axis.
-        o.geometry.computeBoundingBox();
-        const c = o.geometry.boundingBox!.getCenter(new THREE.Vector3());
-        o.updateWorldMatrix(true, false);
-        m.uniforms.center!.value = c.applyMatrix4(o.matrixWorld);
-        o.renderOrder = g === 'water' ? 1 : 2; // water inside the glass
-      }
-      o.material = m;
+      // an unknown mesh takes the props bake (the water glass, its last special case, went in 2b)
+      o.material = materials[g] ?? materials.props;
     });
     invalidate();
     onReady();
   }, [scene, materials, invalidate, onReady]);
-  const statics = useMemo(
-    () => [...GROUPS.map((g) => materials[g]), materials.glass, materials.water],
-    [materials],
-  );
+  const statics = useMemo(() => GROUPS.map((g) => materials[g]), [materials]);
 
   // Day ↔ lamp cross-fade (0.6 s), rendering on demand only while it runs.
   const first = useRef(true);
@@ -176,7 +160,7 @@ function Scene({
       const k = Math.min(1, (performance.now() - start) / 600);
       const fade = from + (to - from) * k;
       for (const m of Object.values(materials)) m.uniforms.fade!.value = fade;
-      canvas.dataset.fade = fade.toFixed(2); // where the scene is between day and lamp (tests, M3c)
+      canvas.dataset.fade = fade.toFixed(2); // where the scene is between day and lamp (for tests)
       invalidate();
       if (k < 1) id = requestAnimationFrame(step);
     };
@@ -201,7 +185,7 @@ function flat(hex: string): THREE.Texture {
 }
 
 /**
- * The live seat (design 2026-11-19 §3): the seat camera framing the window exactly as the Tier 1
+ * The live seat: the seat camera framing the window exactly as the Tier 1
  * still does. The full frustum is the seat's master render; setViewOffset cuts the window out of
  * it with framing.ts viewOffset (the portrait pan included) plus Blender's lens shift. The glance
  * turns the camera a few degrees, and the DOM overlays (hotspots, the name) move by the matching

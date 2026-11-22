@@ -1,7 +1,7 @@
 """Pure helpers for bake.py (no bpy), so they can be unit-tested: scripts/scene/test_bake.py."""
 
-GROUPS = ("room", "desk", "monitor", "props", "screen", "glass", "water", "kit", "phone")
-# The objects that come forward (design 2026-11-19 §4.2): each bakes into its own atlas, at rest
+GROUPS = ("room", "desk", "monitor", "props", "screen", "kit", "phone")
+# The objects that come forward: each bakes into its own atlas, at rest
 # and opened, and exports on its own with its hierarchy and clip (bake.py export_movers).
 MOVERS = {"kit": "obj_kit", "phone": "obj_phone"}
 
@@ -27,10 +27,6 @@ def group_for(name: str, top: str, is_screen: bool) -> str:
         return "screen" if is_screen else "monitor"
     if top == "obj_lightbar":
         return "monitor"
-    if top == "deco_glass":
-        return "glass"
-    if top == "deco_water_glass":
-        return "water"
     return "props"
 
 

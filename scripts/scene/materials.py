@@ -1,7 +1,7 @@
 """
-Materials, generated screen images and lighting for the workspace scene (M3a, after the clay
-checkpoint). Imported by build_scene.py. Screens show neutral blocks only: no readable text,
-no logos (DESK_SPEC.md §2 privacy). The window shows the world, a pre-blurred gradient sky.
+Materials, generated screen images and lighting for the workspace scene.
+Imported by build_scene.py. Screens show neutral blocks only: no readable text,
+no logos. The window shows the world, a pre-blurred gradient sky.
 """
 
 import math
@@ -55,16 +55,6 @@ def srgb(h):
     return tuple(((v + 0.055) / 1.055) ** 2.4 if v > 0.04045 else v / 12.92 for v in c)
 
 
-def glass(name, tint=(1, 1, 1), rough=0.02, ior=1.45):
-    m = new_material(name)
-    b = bsdf_of(m)
-    b.inputs["Base Color"].default_value = (*tint, 1)
-    b.inputs["Transmission Weight"].default_value = 1.0
-    b.inputs["Roughness"].default_value = rough
-    b.inputs["IOR"].default_value = ior
-    return m
-
-
 def fine(m, scale=420.0):
     """Make a material's roughness variation fine-grained (no large mottling)."""
     for n in m.node_tree.nodes:
@@ -103,12 +93,6 @@ def photo_print(name):
     nt.links.new(sep.outputs["Y"], ramp.inputs["Fac"])
     nt.links.new(ramp.outputs["Color"], b.inputs["Base Color"])
     b.inputs["Roughness"].default_value = 0.35
-    return m
-
-
-def water(name):
-    m = glass(name, tint=(0.9, 0.96, 1.0), rough=0.0)
-    bsdf_of(m).inputs["IOR"].default_value = 1.33
     return m
 
 
@@ -195,7 +179,7 @@ def _save(name, px):
 
 def editor_image(w=3440, h=1440, seed=7):
     """Editor with a file tree and code-coloured line blocks on the left half; the right half is
-    a blank paper page, where the site lays Carlos's name in HTML (design 2026-11-19 §4.2: the
+    a blank paper page, where the site lays Carlos's name in HTML (the
     monitor's right half is his CV screen). No readable text in the image."""
     rng = np.random.default_rng(seed)
     px = np.zeros((h, w, 4))
@@ -245,9 +229,9 @@ def _dial(size):
 
 
 def gauge_face_image(size=1024):
-    """The gauge's face, after Carlos's (2026-11-21): white, a blue band under an arc of ticks
+    """The gauge's face, after Carlos's: white, a blue band under an arc of ticks
     across the top (movers.dial_ticks, about the needle's low pivot), and three small squares in
-    the hoses' red, blue and yellow. No numerals, no brand (design 2026-11-19 §4.2)."""
+    the hoses' red, blue and yellow. No numerals, no brand."""
     import movers as MV
 
     px, u, v, r = _dial(size)
@@ -279,6 +263,47 @@ def small_gauge_face_image(size=256):
     _segments(px, u, v, ticks, [0.03 if i % 5 == 0 else 0.018 for i in range(len(ticks))], ink)
     px[r > 1.0, :3] = np.array(srgb("#141416"))
     return _save("kit_minigauge_face", px)
+
+
+def _shape_mask(shape, u, v):
+    """Where a room.ICONS shape covers the grid (u, v), as a boolean array."""
+    kind = shape[0]
+    if kind == "circle":
+        _, cx, cy, r = shape
+        return (u - cx) ** 2 + (v - cy) ** 2 <= r * r
+    if kind == "ellipse":
+        _, cx, cy, rx, ry = shape
+        return ((u - cx) / rx) ** 2 + ((v - cy) / ry) ** 2 <= 1
+    if kind == "rect":
+        _, x0, y0, x1, y1 = shape
+        return (u >= x0) & (u <= x1) & (v >= y0) & (v <= y1)
+    pts = shape[1]
+    hit = np.zeros(u.shape, dtype=bool)
+    for (ax, ay), (bx, by) in zip(pts, pts[1:] + pts[:1]):
+        if ay == by:
+            continue
+        crosses = (ay > v) != (by > v)
+        hit ^= crosses & (u < ax + (v - ay) * (bx - ax) / (by - ay))
+    return hit
+
+
+def magnet_icon_image(place, size=256):
+    """A travel magnet's face: room.ICONS[place] drawn by colour_at's rules,
+    flat shapes on a coloured disc, the magnet's white rim outside it. No words."""
+    import room as RM
+
+    icon = RM.ICONS[place]
+    yy, xx = np.mgrid[0:size, 0:size]
+    u = (xx + 0.5) / size * 2 - 1
+    v = 1 - (yy + 0.5) / size * 2  # +v up, as the disc's UVs
+    px = np.zeros((size, size, 4))
+    px[..., 3] = 1
+    px[..., :3] = np.array(srgb("#EDEBE6"))
+    disc = u * u + v * v <= 1
+    px[disc, :3] = np.array(srgb(icon["bg"]))
+    for colour, shape in icon["layers"]:
+        px[disc & _shape_mask(shape, u, v), :3] = np.array(srgb(colour))
+    return _save(f"magnet_{place}", px)
 
 
 def printed(name, img, rough=0.6):

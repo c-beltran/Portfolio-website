@@ -1,4 +1,4 @@
-/** The turn-sideways hint's once-per-visit flag (design 2026-11-19 §3.5), in sessionStorage. */
+/** The turn-sideways hint's once-per-visit flag, in sessionStorage. */
 export const HINT_KEY = 'desk-hint-seen';
 /** Fired on window when the hint has gone (ended, tapped away, or skipped). */
 export const HINT_END = 'deskhintend';

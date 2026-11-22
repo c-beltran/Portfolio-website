@@ -1,6 +1,6 @@
 """
-The opened pose of each object that comes forward (design 2026-11-19 §4.1, §6 Cameras: "each
-object gets an opened pose, a pose for the object, not for the camera"). Pure Python, no bpy:
+The opened pose of each object that comes forward: a pose
+for the object, not for the camera. Pure Python, no bpy:
 python3 -I scripts/scene/test_opened.py.
 
 The canonical pose puts a mover's pivot d0 in front of the seat's eye, on its view axis, with its

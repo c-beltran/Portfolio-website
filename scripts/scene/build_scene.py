@@ -1,11 +1,11 @@
 """
-Builds Carlos's workspace scene headlessly (DESK_SPEC.md §2, §6; M3a).
+Builds Carlos's workspace scene headlessly.
 
     Blender -b --factory-startup --python scripts/scene/build_scene.py -- --out ~/Portfolio-assets/blend/workspace.blend
 
 Units are metres. +X is right, +Y is away from the camera (towards the wall), +Z is up.
 The desk top is at z = DESK_TOP. Interactive objects are named obj_*; decoration deco_*.
-Complex objects (keyboard, laptop, monitor, mouse, mug, glass, phone) are imported from glTF
+Complex objects (keyboard, laptop, monitor, mouse, mug, phone) are imported from glTF
 downloads pinned by sha256 in assets.json (checked by pins.py; the build stops on a missing or
 changed download). With --allow-proxy, a missing download becomes a true-size proxy block
 (named proxy_*), for reviewing layout and cameras only.
@@ -22,6 +22,7 @@ from mathutils import Matrix, Vector
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
+import room as RM  # noqa: E402  (where the car, the plant, the ball and the board go)
 ASSETS_DIR = Path.home() / "Portfolio-assets"
 DESK_TOP = 0.75
 
@@ -51,7 +52,7 @@ def box(name, size, loc, coll, rot=(0, 0, 0), bevel=0.002):
     o.name = name
     o.scale = size
     bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
-    # Origin stays at the box centre, with rotation kept on the object (M3b animates these).
+    # Origin stays at the box centre, with rotation kept on the object (they animate).
     o.location = (loc[0], loc[1], loc[2] + size[2] / 2)
     o.rotation_euler = [math.radians(a) for a in rot]
     if bevel:
@@ -286,8 +287,8 @@ def grid_mesh(name, verts, faces, coll):
 
 
 def build_kit(coll):
-    """The backflow test-kit case as a mover (design 2026-11-19 §4.2): a pivot at the case's centre
-    with today's rest pose; a base whose foam holds Carlos's kit (2026-11-21, his photos: the gauge
+    """The backflow test-kit case as a mover: a pivot at the case's centre
+    with today's rest pose; a base whose foam holds Carlos's kit (the gauge
     with its hoses, brass fittings and his screwdriver); and a lid hinged on the base's back top
     edge, lined with egg-crate foam. Every part is placed in the case's own frame (movers.py); the
     clip kit_open is keyed in key_clips()."""
@@ -359,6 +360,51 @@ def build_kit(coll):
     crate = under(grid_mesh("kit_lid_pad", *MV.egg_crate(pad["size"][0], pad["size"][1]), coll), lid)
     crate.location = pad["centre"]
     return kit
+
+
+def build_ball(coll):
+    """The soccer ball on the floor by the left wall: one smooth mesh of
+    white hexagons and black pentagons (room.soccer_ball), material 0 white, 1 black. No brand."""
+    import room as RM
+
+    verts, tris, black, _ = RM.soccer_ball(RM.BALL["r"])
+    me = bpy.data.meshes.new("obj_ball")
+    me.from_pydata(verts, [], tris)
+    for poly, b in zip(me.polygons, black):
+        poly.material_index = 1 if b else 0
+        poly.use_smooth = True
+    o = bpy.data.objects.new("obj_ball", me)
+    coll.objects.link(o)
+    o.location = RM.BALL["at"]
+    return o
+
+
+def build_board(coll):
+    """The magnet board on the back wall, left of the monitor: a painted
+    steel face in a dark frame (four boxes, no booleans), and a magnet per place, each a short
+    cylinder with its icon printed on a disc just in front, facing the room (-Y)."""
+    import room as RM
+
+    (cx, cy, cz), (w, h) = RM.BOARD["centre"], RM.BOARD["size"]
+    d, f = RM.BOARD["depth"], RM.BOARD["frame"]
+    board = bpy.data.objects.new("obj_board", None)
+    coll.objects.link(board)
+    parts = [box("board_face", (w, d, h), (cx, cy, cz - h / 2), coll, bevel=0.001)]
+    fy = cy - 0.002  # the frame stands a little proud of the face
+    for i, (sx, sz, x, z) in enumerate(((w, f, cx, cz + h / 2 - f), (w, f, cx, cz - h / 2), (f, h - 2 * f, cx - w / 2 + f / 2, cz - h / 2 + f), (f, h - 2 * f, cx + w / 2 - f / 2, cz - h / 2 + f))):
+        parts.append(box(f"board_frame_{i}", (sx, d + 0.004, sz), (x, fy, z), coll, bevel=0.002))
+    front = cy - d / 2
+    t = RM.MAGNET["t"]
+    for m in RM.board_layout():
+        (x, z), r = m["centre"], m["r"]
+        body = cylinder(f"magnet_{m['place']}", r, t, (x, front - t / 2, z), coll, rot=(90, 0, 0), verts=48, bevel=0.0012)
+        body.location = (x, front - t / 2, z)
+        face = disc(f"magnet_{m['place']}_face", r * 0.93, (x, front - t - 0.0003, z), coll)
+        face.rotation_euler = (math.radians(90), 0, 0)
+        parts += [body, face]
+    for o in parts:
+        set_parent(o, board)
+    return board
 
 
 def make_phone_mover(coll):
@@ -456,10 +502,20 @@ COMPLEX = {
     "mouse": dict(proxy=(0.065, 0.12, 0.04), rot=(0, 0, -90), width=0.065, at=(0.27, -0.08, DESK_TOP + 0.003)),
     "phone": dict(proxy=(0.072, 0.15, 0.008), rot=(-90, 0, 15), width=0.072, at=(0.17, 0.06, DESK_TOP + 0.003)),
     "mug": dict(proxy=(0.12, 0.09, 0.095), rot=(0, 0, 200), width=0.12, at=(0.48, -0.02, DESK_TOP)),
-    "glass": dict(proxy=(0.075, 0.075, 0.12), rot=(0, 0, 0), width=0.075, at=(0.4, 0.2, DESK_TOP)),
+    # The room (room.py): the scale-model Corolla, scaled by its length before the yaw
+    # and placed by its vertices (the window mesh's stale bounding box reaches below the tyres); the
+    # interior, the plates and the badges dropped. The plant, true size, on the window sill.
+    "car": dict(
+        proxy=(0.20, 0.08, 0.062), rot=(0, 0, -RM.CAR["heading_deg"]), length=RM.CAR["length"], at=(*RM.CAR["at"], DESK_TOP), by_vertices=True,
+        drop_meshes=("Cube.", "interior", "furniture", "dashboard", "steering", "fabric_high"),
+        # loose islands inside these boxes (the download's own coordinates) are the badges: the rear
+        # emblem, the front emblem (and its backing), and the TOYOTA lettering on the boot
+        badge_boxes=(((-0.07, 2.02, 0.87), (0.07, 2.10, 0.97)), ((-0.11, -2.13, 0.55), (0.11, -2.03, 0.72)), ((0.40, 1.92, 0.89), (0.62, 2.04, 0.97))),
+    ),
+    "plant": dict(proxy=(0.17, 0.19, 0.27), rot=(0, 0, 0), width=0.17, at=RM.PLANT["at"]),
 }
 # Interactive vs decoration naming for the complex objects.
-NAMES = {"monitor": "obj_monitor", "phone": "obj_phone"}
+NAMES = {"monitor": "obj_monitor", "phone": "obj_phone", "car": "obj_car"}
 
 
 def load_assets():
@@ -487,7 +543,7 @@ def level_rotation(objs):
     _, vecs = np.linalg.eigh(np.cov(c.T))  # ascending variance
     x, z = vecs[:, 2], vecs[:, 0]
     # eigh's eigenvector signs are arbitrary (they can differ between numpy/LAPACK builds), which
-    # would turn the model 180 degrees. Fix x: its largest component is negative (the approved look).
+    # would turn the model 180 degrees. Fix x: its largest component is negative (the intended look).
     if x[np.argmax(np.abs(x))] > 0:
         x = -x
     print("LEVEL x:", [round(float(v), 4) for v in x])
@@ -498,8 +554,52 @@ def level_rotation(objs):
     return m.to_quaternion()
 
 
+def vertex_bounds(objs):
+    """World bounds from the vertices themselves (a mesh's bound_box can be stale)."""
+    bpy.context.view_layer.update()
+    pts = [o.matrix_world @ v.co for o in objs if o.type == "MESH" for v in o.data.vertices]
+    lo = Vector((min(p.x for p in pts), min(p.y for p in pts), min(p.z for p in pts)))
+    hi = Vector((max(p.x for p in pts), max(p.y for p in pts), max(p.z for p in pts)))
+    return lo, hi
+
+
+def drop_badges(objs, boxes, largest=0.25):
+    """Delete the loose islands lying wholly inside any box (world coordinates at import), each
+    smaller than largest across: separate badge and lettering pieces, never a body panel."""
+    import bmesh
+
+    bpy.context.view_layer.update()
+    for o in [o for o in objs if o.type == "MESH"]:
+        mw = o.matrix_world
+        bm = bmesh.new()
+        bm.from_mesh(o.data)
+        bm.verts.ensure_lookup_table()
+        seen, doomed = set(), []
+        for v in bm.verts:
+            if v.index in seen:
+                continue
+            stack, isl = [v], []
+            while stack:
+                x = stack.pop()
+                if x.index in seen:
+                    continue
+                seen.add(x.index)
+                isl.append(x)
+                stack += [e.other_vert(x) for e in x.link_edges if e.other_vert(x).index not in seen]
+            pts = [mw @ x.co for x in isl]
+            lo = Vector([min(p[i] for p in pts) for i in range(3)])
+            hi = Vector([max(p[i] for p in pts) for i in range(3)])
+            if (hi - lo).length < largest and any(all(b0[i] <= lo[i] and hi[i] <= b1[i] for i in range(3)) for b0, b1 in boxes):
+                doomed += isl
+        if doomed:
+            bmesh.ops.delete(bm, geom=doomed, context="VERTS")
+            bm.to_mesh(o.data)
+            print(f"  {o.name}: dropped {len(doomed)} badge vertices")
+        bm.free()
+
+
 def import_or_proxy(key, coll, assets, allow_proxy=False):
-    from pins import PinError, verify_download
+    from pins import PinError, verify_download, verify_files
 
     cfg = COMPLEX[key]
     name = NAMES.get(key, f"deco_{key}")
@@ -507,7 +607,10 @@ def import_or_proxy(key, coll, assets, allow_proxy=False):
     try:
         if not entry:
             raise PinError(f"{key}: no model in assets.json")
-        path = verify_download(ASSETS_DIR / "downloads", entry["file"], entry["zip_sha256"])
+        if "files" in entry:  # a loose download (Poly Haven), each file pinned
+            path = verify_files(ASSETS_DIR / "downloads", entry["file"], entry["files"])
+        else:
+            path = verify_download(ASSETS_DIR / "downloads", entry["file"], entry["zip_sha256"])
     except PinError as e:
         if not allow_proxy:
             raise SystemExit(f"{e}\n(pass --allow-proxy to build with a placeholder block)")
@@ -519,45 +622,44 @@ def import_or_proxy(key, coll, assets, allow_proxy=False):
     bpy.ops.import_scene.gltf(filepath=str(path))
     new = [o for o in bpy.data.objects if o not in before]
     junk = set(cfg.get("drop_materials", ()))
-    for o in [o for o in new if o.type == "MESH" and any(m and m.name.split(".")[0] in junk for m in o.data.materials)]:
+    drop = cfg.get("drop_meshes", ())
+    for o in [o for o in new if o.type == "MESH" and (any(m and m.name.split(".")[0] in junk for m in o.data.materials) or any(d in o.name for d in drop))]:
         new.remove(o)
         bpy.data.objects.remove(o, do_unlink=True)
+    if cfg.get("badge_boxes"):
+        drop_badges(new, cfg["badge_boxes"])
     root = bpy.data.objects.new(name, None)
     coll.objects.link(root)
     for o in new:
         move_to(o, coll)
         if o.parent is None:
             o.parent = root
-    # 1. orient, 2. scale to the true width, 3. centre the footprint on its spot, base on the desk.
-    if cfg.get("level"):
+    bounds = vertex_bounds if cfg.get("by_vertices") else world_bounds
+    # 1. orient, 2. scale to the true width (or, before the yaw, the true length), 3. centre the
+    # footprint on its spot, base on the desk.
+    if "length" in cfg:
+        lo, hi = bounds(new)
+        s = cfg["length"] / max(1e-9, hi.x - lo.x, hi.y - lo.y)
+        root.rotation_euler = [math.radians(v) for v in cfg["rot"]]
+    elif cfg.get("level"):
         root.rotation_mode = "QUATERNION"
         root.rotation_quaternion = level_rotation(new)
     else:
         root.rotation_euler = [math.radians(v) for v in cfg["rot"]]
-    lo, hi = world_bounds(new)
-    s = cfg["width"] / max(1e-9, hi.x - lo.x)
+    if "length" not in cfg:
+        lo, hi = bounds(new)
+        s = cfg["width"] / max(1e-9, hi.x - lo.x)
     root.scale = (s, s, s)
-    lo, hi = world_bounds(new)
+    lo, hi = bounds(new)
     at = Vector(cfg["at"])
     root.location += Vector(((at.x - (lo.x + hi.x) / 2), (at.y - (lo.y + hi.y) / 2), at.z - lo.z))
     return root
 
 
-def add_water(key, coll, fill):
-    """A water volume inside an imported glass vessel: slightly narrower, filled to a fraction."""
-    root = bpy.data.objects.get(f"deco_{key}")
-    if not root:
-        return
-    lo, hi = world_bounds([o for o in root.children_recursive if o.type == "MESH"])
-    r = min(hi.x - lo.x, hi.y - lo.y) / 2 * 0.8
-    h = (hi.z - lo.z) * fill
-    w = cylinder(f"deco_water_{key}", r, h, ((lo.x + hi.x) / 2, (lo.y + hi.y) / 2, lo.z + 0.008), coll, verts=48, bevel=0)
-    w["role"] = "water"
-
-
 def set_dressing(coll):
-    """Coasters under the glass and mug, a short book stack, and cables: the clutter of a real desk."""
-    for key in ("glass", "mug"):
+    """A coaster under the mug, a short book stack, and cables: the clutter of a real desk. (No
+    water glass: the portrait behind it shows.)"""
+    for key in ("mug",):
         root = bpy.data.objects.get(f"deco_{key}")
         if root:
             lo, hi = world_bounds([o for o in root.children_recursive if o.type == "MESH"])
@@ -635,11 +737,11 @@ def build_cameras(coll):
         return o
 
     overview = cam("cam_overview", eye, target, 35, 36)
-    # Phone portrait (approved 2026-11-18, option B): its own camera, higher and steeper so the
+    # Phone portrait: its own camera, higher and steeper so the
     # desk's depth runs down the screen; a square frame with all eight objects in view.
     phone = cam("cam_phone", Vector((-0.03, -0.85, 1.75)), Vector((-0.06, 0.16, 0.85)), 19.5, 18)
     phone.data.shift_y = 0.033  # crop the floor, keep the light bar's label room
-    # Monitor close-up (M3b): straight in front of the screen's centre, at its height, far enough
+    # Monitor close-up: straight in front of the screen's centre, at its height, far enough
     # back that the screen fills about 80% of a 16:9 frame at 35 mm.
     mon = bpy.data.objects.get("obj_monitor")
     screen = [o for o in (mon.children_recursive if mon else []) if o.type == "MESH"
@@ -654,7 +756,7 @@ def build_cameras(coll):
     bpy.context.scene.camera = overview
 
 
-# The seat (design 2026-11-19 §3), approved by Carlos on 2026-11-20: his eye in his chair, 0.52 m
+# The seat: the eye in Carlos's chair, 0.52 m
 # back from the desk edge, in front of the keyboard. The camera renders the master (framing.py); its
 # axis is the safe frame's centre, so the safe frame lands on the master's bottom edge. Portrait
 # windows pan across the same master, so there is no portrait camera.
@@ -698,13 +800,16 @@ def apply_materials():
         "deco_lanyard": C("lanyard", h("#23314F"), 0.8),
         "obj_photo": C("photo_frame", h("#18181A"), 0.45),
         "deco_photo_print": M.photo_print("photo_print"),
+        "board_face": C("board_steel", h("#D3D5D7"), 0.4),
+        "board_frame_": C("board_frame", h("#26272A"), 0.35, metal=0.6),
+        "magnet_": C("magnet_rim", h("#EDEBE6"), 0.35, coat=0.4),
         "kit_lid_pad": foam,
         "kit_foam": foam,
         "kit_base": case,
         "kit_lid": case,
         "kit_handle": C("kit_handle", h("#141416"), 0.4),
         "kit_latch_": steel,
-        # Carlos's kit (2026-11-21, his photos): the gauge's white face in a black bezel, its
+        # Carlos's kit: the gauge's white face in a black bezel, its
         # aluminium manifold and red, blue and yellow knobs and hoses, brass fittings, and his
         # black-and-yellow screwdriver.
         "kit_gauge_face": M.printed("gauge_face", M.gauge_face_image(), 0.3),
@@ -727,7 +832,6 @@ def apply_materials():
         "deco_laptop_stand": C("aluminium", h("#B9BCC1"), 0.3, metal=1.0),
         "deco_wrist_rest": M.walnut("walnut"),
         "obj_lightbar": C("lightbar", h("#2E2F33"), 0.35, metal=0.8),
-        "deco_water_": M.water("water"),
         "deco_coaster_": C("cork", h("#9C7651"), 0.85, spread=0.08),
         "deco_book_0": C("book_cover_a", h("#2E3B33"), 0.7),
         "deco_book_1": C("book_cover_b", h("#C8B79A"), 0.75),
@@ -751,6 +855,40 @@ def apply_materials():
             o.data.materials.append(mat)
 
     get = bpy.data.objects.get
+    # The soccer ball's two panels, the magnet board and its magnets.
+    import room as RM
+
+    if get("obj_ball"):
+        me = get("obj_ball").data
+        me.materials.clear()
+        for m in (C("ball_white", h("#F1F0EC"), 0.45, coat=0.3), C("ball_black", h("#161618"), 0.45, coat=0.3)):
+            me.materials.append(m)
+        # the panels' slots, set once both materials exist (clearing them resets every face to 0)
+        _, _, black, _ = RM.soccer_ball(RM.BALL["r"])
+        for poly, b in zip(me.polygons, black):
+            poly.material_index = 1 if b else 0
+
+    for place in RM.BOARD_PLACES:
+        face = get(f"magnet_{place}_face")
+        if face:
+            m = M.printed(f"magnet_{place}", M.magnet_icon_image(place, 512 if place == RM.HOME else 256), 0.35)
+            M.bsdf_of(m).inputs["Coat Weight"].default_value = 0.4
+            face.data.materials.clear()
+            face.data.materials.append(m)
+    car = get("obj_car")
+    if car:
+        car_mats = {
+            "car_paint": C("car_paint", h("#9E1B1B"), 0.3, coat=1.0),
+            "car_glass": C("car_glass", h("#15181C"), 0.08, coat=1.0),
+            "car_tyre": C("car_tyre", h("#18181A"), 0.8),
+            "car_rim": C("car_rim", h("#B7BABE"), 0.3, metal=1.0),
+            "car_lamp_front": C("car_lamp_front", h("#DADDE0"), 0.1),
+            "car_lamp_rear": C("car_lamp_rear", h("#7A1414"), 0.2),
+            "car_trim": C("car_trim", h("#121214"), 0.5),
+        }
+        for o in [o for o in car.children_recursive if o.type == "MESH"]:
+            for i, slot in enumerate(o.material_slots):
+                o.material_slots[i].material = car_mats[car_part(o.name, slot.material.name if slot.material else "")]
     black = C("black_plastic", h("#111113"), 0.45)
     if get("obj_monitor"):
         M.remap(get("obj_monitor"), {"Wallpaper": M.emissive_image("screen_monitor", M.editor_image(), 1.0)}, default=black)
@@ -770,8 +908,26 @@ def apply_materials():
             screen.data.materials.append(dark_glass)
     if get("deco_mug"):
         M.remap(get("deco_mug"), {"material": C("ceramic", h("#E9E1D3"), 0.25, coat=0.5)})
-    if get("deco_glass"):
-        M.set_all(get("deco_glass"), M.glass("glass_blue", (0.82, 0.9, 1.0)))
+
+
+def car_part(obj, mat):
+    """The flat car_* material for one of the Corolla's parts, from its node and imported material
+    names (every image texture goes, so no badge or plate survives in one)."""
+    if "windows" in obj or mat.startswith("miror"):
+        return "car_glass"
+    if "wheels" in obj:
+        return "car_rim" if mat.startswith("main_paint") else "car_tyre"
+    if "frontlights" in obj:
+        return {"klosz": "car_lamp_front", "main_paint": "car_rim", "Material.014": "car_lamp_rear"}.get(mat.split("_0")[0], "car_trim")
+    if mat.startswith("main_paint"):
+        return "car_paint"
+    if mat.startswith("Material.005"):
+        return "car_lamp_rear"
+    if mat.startswith("Material.003"):
+        return "car_rim"
+    if mat.startswith("klosz"):
+        return "car_glass"
+    return "car_trim"
 
 
 def build_lights():
@@ -811,9 +967,10 @@ def main():
         import_or_proxy(key, objs, assets, a.allow_proxy)
     make_phone_mover(objs)
     build_laptop_stand(objs)
-    add_water("glass", objs, 0.55)
     set_dressing(objs)
     build_light_bar(objs)
+    build_ball(objs)
+    build_board(objs)
     build_cameras(cams)
     apply_materials()
     build_lights()

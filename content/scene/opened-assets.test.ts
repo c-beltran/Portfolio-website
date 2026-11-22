@@ -3,9 +3,9 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 /**
- * What an object that comes forward loads on demand (design 2026-11-19 §5.5, §6), never on the
- * first load: the phone's clip (≤ 1 MB, design §6), and each object's Tier 2 opened bakes, day plus
- * lamp, within 400 kB (my call, plan M3c-forward).
+ * What an object that comes forward loads on demand, never on the
+ * first load: the phone's clip (≤ 1 MB), and each object's Tier 2 opened bakes, day plus
+ * lamp, within 400 kB.
  */
 const BAKE = join(process.cwd(), 'public/opened/bake');
 const CAP = 400 * 1024;

@@ -32,7 +32,7 @@ async function urlFor(id: OpenedId, mode: Mode, cssWidth: number) {
 
 /**
  * Warms the art an object would show if it opened now (pointer over its hotspot, or focus on its
- * Sections button), so it is drawn as it comes out. Never on the first load (design §5.5, §6).
+ * Sections button), so it is drawn as it comes out. Never on the first load.
  */
 const warmed = new Set<string>();
 export function prefetchArt(id: string) {
@@ -48,8 +48,8 @@ export function prefetchArt(id: string) {
 }
 
 /**
- * Draws the opened render into a canvas sized to its box (design 2026-11-19 §6: "it is never the
- * page's largest element", which an <img> would be on a section route). Picks 800 or 1600 px by
+ * Draws the opened render into a canvas sized to its box, so it is never the
+ * page's largest element (an <img> would be, on a section route). Picks 800 or 1600 px by
  * the box and the pixel ratio, AVIF where it decodes; redraws on resize and on a mode change.
  */
 function useArtCanvas(id: OpenedId, mode: Mode) {
@@ -97,7 +97,7 @@ function useArtCanvas(id: OpenedId, mode: Mode) {
 type Props = { id: OpenedId; mode: Mode; leaving?: boolean };
 
 /**
- * The object that came forward (design 2026-11-19 §4.1): its opened render in a slot on its own
+ * The object that came forward: its opened render in a slot on its own
  * side of the window, the panel on the other (in portrait, above the panel). Decorative: the
  * panel carries the words, so it is hidden from assistive tech. A click on it keeps it out.
  */

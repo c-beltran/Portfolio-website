@@ -8,6 +8,7 @@ untrusted: member paths that would land outside the folder are refused.
 """
 
 import hashlib
+import json
 import zipfile
 from pathlib import Path, PurePosixPath
 
@@ -43,3 +44,31 @@ def verify_download(downloads: Path, file: str, sha256: str) -> Path:
     if not path.exists():
         raise PinError(f"{path}: not in the pinned zip")
     return path
+
+
+def verify_files(downloads: Path, file: str, files: dict) -> Path:
+    """A loose download (Poly Haven ships its glTF as separate files): every file in files (paths
+    relative to the glTF's folder, each with its sha256) must exist and match, and every buffer and
+    image the glTF names must be one of them. Returns the glTF's path."""
+    gltf = downloads / file
+    folder = gltf.parent
+    for rel, sha in files.items():
+        p = PurePosixPath(rel)
+        if p.is_absolute() or ".." in p.parts:
+            raise PinError(f"{rel!r}: unsafe path")
+        target = folder.joinpath(*p.parts)
+        if not target.exists():
+            raise PinError(f"{target}: missing (download it from the source in docs/ASSETS.md)")
+        digest = hashlib.sha256(target.read_bytes()).hexdigest()
+        if digest != sha:
+            raise PinError(f"{target}: sha256 {digest} differs from the pin {sha}")
+    name = PurePosixPath(file).name
+    if name not in files:
+        raise PinError(f"{name}: the glTF itself is not pinned")
+    doc = json.loads(gltf.read_text())
+    for kind in ("buffers", "images"):
+        for item in doc.get(kind, []):
+            uri = item.get("uri")
+            if uri and not uri.startswith("data:") and uri not in files:
+                raise PinError(f"{uri}: named by the glTF but not pinned")
+    return gltf

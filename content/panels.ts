@@ -2,7 +2,7 @@ import type { FactId } from './facts';
 import type { SectionSlug } from './objects';
 import type { Stats } from './stats.types';
 
-/** Every prose block is a draft until Carlos rewrites it in his own voice (spec §5). */
+/** Every prose block is a draft until Carlos rewrites it in his own voice. */
 export const DRAFT_MARK = '[DRAFT: Carlos to rewrite]';
 
 export type PanelBlock =
@@ -20,11 +20,13 @@ export type PanelBlock =
   | { kind: 'cv' }
   /** Pause/Play for the phone's clip (WCAG 2.2.2), components/panel/ClipControl.tsx. */
   | { kind: 'clip' }
+  /** The places Carlos has traveled to (facts.PLACES), as a list, citing the travel fact. */
+  | { kind: 'places'; fact: FactId }
   | { kind: 'todo'; text: string };
 
 const n = (value: number) => value.toLocaleString('en-US');
 
-/** Panel copy, ported from the approved mock with the M0 decisions applied. */
+/** Panel copy. */
 export const PANELS: Record<SectionSlug, PanelBlock[]> = {
   cv: [
     { kind: 'eyebrow', text: 'THE MONITOR · CV' },
@@ -85,7 +87,7 @@ export const PANELS: Record<SectionSlug, PanelBlock[]> = {
     },
     { kind: 'fact', fact: 'P02' },
     { kind: 'link', href: 'https://potaflow.com', label: 'Visit potaflow.com' },
-    { kind: 'todo', text: '[TODO: Q7 Potaflow screenshot from Carlos]' },
+    { kind: 'todo', text: '[TODO: Potaflow screenshot from Carlos]' },
   ],
   'power-walk': [
     { kind: 'eyebrow', text: 'THE PHONE · PROJECT 02' },
@@ -95,7 +97,7 @@ export const PANELS: Record<SectionSlug, PanelBlock[]> = {
       kind: 'todo',
       text: '[TODO: Power Walk screen recording from Carlos (the clip is a placeholder)]',
     },
-    { kind: 'todo', text: '[TODO: Q26 in development, not public yet: landing page to decide]' },
+    { kind: 'todo', text: '[TODO: in development, not public yet: landing page to decide]' },
     { kind: 'fact', fact: 'P04' },
     {
       kind: 'prose',
@@ -104,7 +106,7 @@ export const PANELS: Record<SectionSlug, PanelBlock[]> = {
       draft: true,
     },
     { kind: 'fact', fact: 'P05' },
-    { kind: 'todo', text: '[TODO: Q26 in-development badge + screenshot from Carlos]' },
+    { kind: 'todo', text: '[TODO: in-development badge + screenshot from Carlos]' },
   ],
   'this-site': [
     { kind: 'eyebrow', text: 'THE NOTEPAD · PROJECT 03' },
@@ -123,11 +125,55 @@ export const PANELS: Record<SectionSlug, PanelBlock[]> = {
         { label: 'Merged PRs', value: (s) => n(s.thisSite.mergedPRs) },
       ],
     },
-    { kind: 'todo', text: '[TODO: Q21 direction thumbnails]' },
+    { kind: 'todo', text: '[TODO: direction thumbnails]' },
   ],
   contact: [
     { kind: 'eyebrow', text: 'THE CARD · CONTACT' },
     { kind: 'title', text: 'Say hello', draft: true },
     { kind: 'links' },
+  ],
+  // The room: drafted only from Carlos's own words.
+  cars: [
+    { kind: 'eyebrow', text: 'THE MODEL CAR · CARS' },
+    { kind: 'title', text: 'I like to work on cars', draft: true },
+    {
+      kind: 'prose',
+      facts: ['H01', 'H02'],
+      text: 'Diagnosing them is one of my hobbies. I worked as a tech at Start Toyota of Bayside.',
+      draft: true,
+    },
+    { kind: 'list', facts: ['H01', 'H02'] },
+    { kind: 'todo', text: '[TODO: Carlos: your role and dates at Start Toyota of Bayside]' },
+  ],
+  soccer: [
+    { kind: 'eyebrow', text: 'THE BALL · SOCCER' },
+    { kind: 'title', text: 'Soccer is my favorite sport', draft: true },
+    {
+      kind: 'prose',
+      facts: ['H03'],
+      text: 'I played on my high school team, and I still play with friends.',
+      draft: true,
+    },
+    {
+      kind: 'todo',
+      text: '[TODO: Carlos: anything to add, such as your position or where you play now]',
+    },
+  ],
+  travel: [
+    { kind: 'eyebrow', text: 'THE MAGNET BOARD · TRAVEL' },
+    { kind: 'title', text: 'Places I have been', draft: true },
+    {
+      kind: 'prose',
+      facts: ['H05'],
+      text: 'The magnet in the middle is home: El Salvador, where my roots are.',
+      draft: true,
+    },
+    { kind: 'places', fact: 'H04' },
+    { kind: 'todo', text: '[TODO: Carlos: a line about travel in your own words]' },
+  ],
+  coffee: [
+    { kind: 'eyebrow', text: 'THE MUG · COFFEE' },
+    { kind: 'title', text: "I'm a coffee addict", draft: true },
+    { kind: 'todo', text: '[TODO: Carlos: anything to add, such as how you take it]' },
   ],
 };

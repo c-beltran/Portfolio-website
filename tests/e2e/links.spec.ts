@@ -23,7 +23,7 @@ test('without a résumé PDF, previews show a visible TODO instead of a dead lin
 }) => {
   test.skip(process.env.NEXT_PUBLIC_VERCEL_ENV === 'production', 'production shows nothing');
   await page.goto('/classic');
-  await expect(page.getByRole('banner')).toContainText('[TODO: Q15 résumé PDF]');
+  await expect(page.getByRole('banner')).toContainText('[TODO: résumé PDF]');
 });
 
 for (const route of ['/potaflow', '/power-walk', '/this-site']) {

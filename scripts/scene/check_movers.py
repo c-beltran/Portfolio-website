@@ -1,5 +1,5 @@
 """
-Checks the two movers in workspace.blend (design 2026-11-19 §4.2, §6 Animation):
+Checks the two movers in workspace.blend:
 
     Blender -b ~/Portfolio-assets/blend/workspace.blend --python scripts/scene/check_movers.py
 

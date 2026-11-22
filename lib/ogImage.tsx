@@ -3,7 +3,7 @@ import { TOKENS } from './theme';
 
 export const OG_SIZE = { width: 1200, height: 630 };
 
-/** Text-only share card in the day palette. No logos or marks (spec §2). */
+/** Text-only share card in the day palette. No logos or marks. */
 export function ogImage(subtitle: string): ImageResponse {
   const { bg, ink, inkMuted } = TOKENS.day;
   return new ImageResponse(

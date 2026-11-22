@@ -2,7 +2,7 @@ import { expect, test, type Locator, type Page } from './fixtures';
 import { clickFelt, drawerButton, gotoDesk, hotspot, panelTitle, path } from './desk';
 
 /**
- * Coming forward in Tier 1 (design 2026-11-19 §4.1; plan M3c-forward Task 4): the kit and the
+ * Coming forward in Tier 1: the kit and the
  * phone come out beside the panel while the desk dims behind them.
  */
 const main = (page: Page) => page.locator('main.desk');
@@ -208,7 +208,7 @@ test.describe('coming forward, wide windows', () => {
     await inSlot(page);
   });
 
-  test('closing keeps the art where it is while it fades (Review Focus 3)', async ({ page }) => {
+  test('closing keeps the art where it is while it fades', async ({ page }) => {
     // the phone: its slot is on the right, the side the default slot is not
     await gotoDesk(page, '/power-walk');
     await drawn(page);

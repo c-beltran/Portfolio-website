@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { describe, expect, it } from 'vitest';
-import { bakedMaterial, glassMaterial, setOpenedBake } from './materials';
+import { bakedMaterial, setOpenedBake } from './materials';
 
 const tex = () => new THREE.Texture();
 
@@ -26,17 +26,7 @@ describe('bakedMaterial', () => {
   });
 });
 
-describe('glassMaterial', () => {
-  it('is see-through, double-sided and writes no depth', () => {
-    const m = glassMaterial([tex(), tex()], new THREE.Color('#dfe8f5'), 0.1);
-    expect(m.transparent).toBe(true);
-    expect(m.depthWrite).toBe(false);
-    expect(m.side).toBe(THREE.DoubleSide);
-    expect(m.uniforms).toHaveProperty('fade');
-  });
-});
-
-describe('the residual (M3c: the live seat matches the still)', () => {
+describe('the residual (the live seat matches the still)', () => {
   const t = () => new THREE.Texture();
   it('adds the residual uniforms, weight 1 by default', () => {
     const m = bakedMaterial(t(), t(), {
@@ -70,7 +60,7 @@ describe('the residual (M3c: the live seat matches the still)', () => {
   });
 });
 
-describe('coming forward (phase 2): the dim and the opened bake', () => {
+describe('coming forward: the dim and the opened bake', () => {
   const t = () => new THREE.Texture();
 
   it('adds dim and openMix only when asked for', () => {
@@ -111,14 +101,6 @@ describe('coming forward (phase 2): the dim and the opened bake', () => {
     expect(m.fragmentShader).toContain('if (openDecode > 0.5) opened = sRGBTransferEOTF(opened);');
     setOpenedBake(m, t(), t());
     expect(m.uniforms.openDecode!.value).toBe(0);
-  });
-
-  it('dims the drinking glass and its water too (they are static)', () => {
-    const g = glassMaterial([t(), t()], new THREE.Color('#000'), 0.2);
-    expect(g.uniforms.dim!.value).toBe(0);
-    expect(g.fragmentShader).toContain(
-      'gl_FragColor.rgb = sRGBTransferEOTF(vec4(sRGBTransferOETF(gl_FragColor).rgb * (1.0 - 0.55 * dim), 1.0)).rgb;',
-    );
   });
 
   it('leaves the shader alone without them', () => {

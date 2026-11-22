@@ -1,14 +1,14 @@
-import { statSync } from 'node:fs';
+import { readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import sharp from 'sharp';
 import { describe, expect, it } from 'vitest';
 import { band, bandCount, master, portraitStrip, type Rect } from './framing';
 
-/** Tier 1 stills (spec §7: LCP ≤ 2.0 s on a mid phone). */
+/** Tier 1 stills (LCP ≤ 2.0 s on a mid phone). */
 const DIR = join(process.cwd(), 'public/stills');
 
 /**
- * The seat stills (M3c phase 1): crops of the master per wide band (b0…) and the portrait strip
+ * The seat stills: crops of the master per wide band (b0…) and the portrait strip
  * (p), at a 900 px and a 1600 px safe height (the master's own; nothing is upscaled).
  */
 const SAFE_PX = [900, 1600];
@@ -56,5 +56,57 @@ describe('Tier 1 seat stills', () => {
   it.each(SEAT_FILES)('$name fits its byte budget', ({ name, ext }) => {
     const limit = BUDGET[name] ?? (ext === 'avif' ? 350 * KB : 500 * KB);
     expect(statSync(join(DIR, name)).size).toBeLessThanOrEqual(limit);
+  });
+});
+
+/**
+ * The room, read out of the stills themselves: the ball by the
+ * left wall shows in the ultrawide crop, and the magnet board hangs left of the monitor in every
+ * crop. Boxes from bounds-seat.json, mapped into each crop by its band; measured from the
+ * extracted pixels (sharp's stats() ignores extract()).
+ */
+describe('the room', () => {
+  type B = { x0: number; y0: number; x1: number; y1: number };
+  const seat = JSON.parse(
+    readFileSync(join(process.cwd(), 'content/scene/bounds-seat.json'), 'utf8'),
+  ) as { objects: Record<string, B> };
+
+  /** Luma of every pixel in a box (master-normalised) of a band's crop. */
+  async function luma(file: string, r: Rect, b: B) {
+    const { data, info } = await sharp(join(DIR, file))
+      .removeAlpha()
+      .raw()
+      .toBuffer({ resolveWithObject: true });
+    const [W, H] = [info.width, info.height];
+    const x0 = Math.max(0, Math.floor(((b.x0 - r.x0) / (r.x1 - r.x0)) * W));
+    const x1 = Math.min(W, Math.ceil(((b.x1 - r.x0) / (r.x1 - r.x0)) * W));
+    const y0 = Math.max(0, Math.floor(((b.y0 - r.y0) / (r.y1 - r.y0)) * H));
+    const y1 = Math.min(H, Math.ceil(((b.y1 - r.y0) / (r.y1 - r.y0)) * H));
+    const out: number[] = [];
+    for (let y = y0; y < y1; y++)
+      for (let x = x0; x < x1; x++) {
+        const k = (y * W + x) * 3;
+        out.push(0.2126 * data[k]! + 0.7152 * data[k + 1]! + 0.0722 * data[k + 2]!);
+      }
+    return out;
+  }
+  const mean = (a: number[]) => a.reduce((s, v) => s + v, 0) / a.length;
+  const sd = (a: number[]) => Math.sqrt(mean(a.map((v) => (v - mean(a)) ** 2)));
+
+  it('the ball shows in the ultrawide still: its middle brighter than the floor round it', async () => {
+    const b = seat.objects.obj_ball!;
+    const [w, h] = [b.x1 - b.x0, b.y1 - b.y0];
+    const middle = { x0: b.x0 + w / 4, y0: b.y0 + h / 4, x1: b.x1 - w / 4, y1: b.y1 - h / 4 };
+    // the floor one to two widths to its right (to its left is the lit wall, brighter than both)
+    const around = { x0: b.x1 + w, y0: b.y0 + h / 4, x1: b.x1 + 2 * w, y1: b.y1 - h / 4 };
+    const r = band(bandCount() - 1);
+    const inside = mean(await luma('seat-b2-day-3200.webp', r, middle));
+    const floor = mean(await luma('seat-b2-day-3200.webp', r, around));
+    expect(inside - floor).toBeGreaterThanOrEqual(30);
+  });
+
+  it('the board hangs on the wall: its magnets break up the plain wall', async () => {
+    const values = await luma('seat-b1-day-1890.webp', band(1), seat.objects.obj_board!);
+    expect(sd(values)).toBeGreaterThanOrEqual(15);
   });
 });

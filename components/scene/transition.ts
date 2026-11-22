@@ -4,7 +4,7 @@ import { CAMERAS, type SceneCamera, type Vec3 } from '@/content/scene/cameras';
 export const MOVE_MS = 900;
 export const easeOutCubic = (t: number) => 1 - (1 - t) ** 3;
 
-/** The seat at rest (every window shape, design 2026-11-19 §3.2), or leaned in to the monitor. */
+/** The seat at rest (every window shape), or leaned in to the monitor. */
 export type View = 'rest' | 'monitor';
 
 export function cameraFor(view: View): SceneCamera {

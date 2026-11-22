@@ -21,7 +21,7 @@ const focusBelongsToDesk = () =>
 
 /**
  * The desk's selection IS the URL. Next 16 keeps usePathname in sync with raw
- * history.pushState and popstate (verified in the M0 spike), including when Next restores a
+ * history.pushState and popstate (verified in a spike), including when Next restores a
  * saved router tree on Back from another route, so the selection can never disagree with the URL.
  */
 export function useDeskState() {

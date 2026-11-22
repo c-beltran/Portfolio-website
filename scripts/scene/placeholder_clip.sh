@@ -1,5 +1,5 @@
 #!/bin/sh
-# A PLACEHOLDER for the Power Walk clip on the phone's screen (design 2026-11-19 §4.2), until Carlos
+# A PLACEHOLDER for the Power Walk clip on the phone's screen, until Carlos
 # sends a screen recording: abstract moving gradients, no text, no audio. Replace
 # public/clips/power-walk.mp4 (and its poster) with the real recording, encoded the same way.
 #

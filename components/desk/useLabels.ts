@@ -4,7 +4,7 @@ import { HINT_END, hintShowing } from './hint';
 import { nearby } from './nearby';
 
 /**
- * Labels appear where you look (design 2026-11-19 §3.3), on the desk layer:
+ * Labels appear where you look, on the desk layer:
  * - mouse and pen: the label of the object nearest the pointer (data-near on its hotspot), within
  *   max(90px, 12% of the window's shorter side), checked once per animation frame;
  * - touch (hover: none): every label for 2 s on arrival, or as the turn-sideways hint ends, and

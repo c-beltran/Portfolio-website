@@ -6,6 +6,8 @@ import {
   labelFocusCss,
   LAYOUT,
   PORTRAIT,
+  ULTRAWIDE_ONLY,
+  ultrawideOnlyCss,
   type DeskItemId,
 } from './deskLayout';
 import { DESK_OBJECTS } from './objects';
@@ -23,6 +25,10 @@ const ITEMS: DeskItemId[] = [
   'phone',
   'notepad',
   'card',
+  'car',
+  'ball',
+  'board',
+  'mug',
   'lightbar',
 ];
 /** Front object first: the smaller, nearer one stacks over the one behind it. */
@@ -31,6 +37,7 @@ const IN_FRONT: [DeskItemId, DeskItemId][] = [
   ['lightbar', 'cv'],
   ['photo', 'cv'],
   ['badge', 'kit'],
+  ['car', 'photo'],
 ];
 /** Pixels per safe height in a W×H window. */
 const uFor = (W: number, H: number) => H / ((visible(W / H).y1 - visible(W / H).y0) * master().h);
@@ -91,6 +98,22 @@ describe('hotspotVars', () => {
   });
 });
 
+describe('ultrawideOnlyCss (the ball shows in ultrawide windows only)', () => {
+  it('lists the ball alone', () => {
+    expect([...ULTRAWIDE_ONLY]).toEqual(['ball']);
+  });
+
+  it("holds back only the ball's glow and label, never its target", () => {
+    const css = ultrawideOnlyCss();
+    const hidden = css.slice(0, css.indexOf('display: none;'));
+    expect(hidden.startsWith('@media not all and (min-aspect-ratio: 11/5) {')).toBe(true);
+    expect(hidden).toContain(".hotspot[data-item='ball'] .sticker");
+    expect(hidden).toContain(".desk-glow[data-item='ball']");
+    expect(hidden).not.toMatch(/\.hotspot\[data-item='ball'\]\s*[,{]/);
+    expect(css.match(/data-item='([a-z]+)'/g)!.every((m) => m.includes('ball'))).toBe(true);
+  });
+});
+
 describe('labelFocusCss', () => {
   it("shows an object's label while its Sections button has keyboard focus (and the lamp's)", () => {
     const css = labelFocusCss();
@@ -104,7 +127,7 @@ describe('labelFocusCss', () => {
     expect(css).toMatch(/\{\s*opacity: 1;\s*\}$/);
   });
 
-  it('glows the object too (the hover glow, Carlos 2026-11-20)', () => {
+  it('glows the object too (the hover glow)', () => {
     const css = labelFocusCss();
     for (const o of DESK_OBJECTS)
       expect(css).toContain(

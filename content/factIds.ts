@@ -18,6 +18,15 @@ export const FACT_IDS = [
   'P05',
   'P06',
   'ABOUT',
+  // cars, the dealership, soccer, travel
+  'H01',
+  'H02',
+  'H03',
+  'H04',
+  // home
+  'H05',
+  // the mug
+  'H06',
 ] as const;
 
 export type FactId = (typeof FACT_IDS)[number];

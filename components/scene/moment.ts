@@ -1,7 +1,7 @@
 import { MOVE_MS } from './transition';
 
 /**
- * Where an object is in its coming-forward moment (design 2026-11-19 §4.1): travel from its place
+ * Where an object is in its coming-forward moment: travel from its place
  * on the desk to the slot (0–1), and its clip (the lid opening, the phone turning; 0–1). Both are
  * linear in time; the caller eases the travel (easeOutCubic) when it poses the object.
  */
@@ -20,7 +20,7 @@ const clamp01 = (x: number) => (x < EPS ? 0 : x > 1 - EPS ? 1 : x);
 /**
  * One step of the moment. Opening: the object travels for MOVE_MS (0.9 s), then its clip plays over
  * clipMs. Closing: travel and clip fold back together over MOVE_MS. Either way it moves on from
- * wherever it is, so a reversal mid-move never jumps (Review Focus 3).
+ * wherever it is, so a reversal mid-move never jumps.
  */
 export function stepMoment(m: Moment, open: boolean, dtMs: number, clipMs: number): Moment {
   const dt = Math.min(Math.max(dtMs, 0), MAX_STEP_MS);

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { DIM_LEVEL, OPENED_IDS, artOf, artSrc, openedFor, patchSrc, sideOf } from './opened';
 
-/** The objects that come forward (design 2026-11-19 §4.1, §4.2; phase 2: the kit and the phone). */
+/** The objects that come forward. */
 describe('opened objects', () => {
   it('are the kit and the phone', () => {
     expect(OPENED_IDS).toEqual(['kit', 'phone']);

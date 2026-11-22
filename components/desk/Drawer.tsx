@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { DESK_OBJECTS, type SectionSlug } from '@/content/objects';
+import { useMotion } from '@/lib/useMotion';
 import { useTheme } from '@/lib/useTheme';
 import { prefetchArt } from './Opened';
 
@@ -9,12 +10,13 @@ type Props = {
 };
 
 /**
- * Every desk object mirrored as a real button, plus the lamp (spec §3.4; design 2026-11-19 §5.4).
+ * Every desk object mirrored as a real button, plus the motion pause and the lamp.
  * The keyboard and screen-reader path: out of sight until something in it has focus, then a card
  * at the top left. The hotspots stay out of the tab order.
  */
 export function Drawer({ selected, onOpen }: Props) {
   const { theme, toggle } = useTheme();
+  const motion = useMotion();
 
   // The last input: the card shows for keyboard focus only (globals.css, the Sections list).
   useEffect(() => {
@@ -50,6 +52,18 @@ export function Drawer({ selected, onOpen }: Props) {
             </button>
           </li>
         ))}
+        {motion.ready && (
+          <li className="drawer__motion">
+            <button
+              type="button"
+              className="drawer__button"
+              aria-pressed={motion.paused}
+              onClick={motion.toggle}
+            >
+              Pause motion
+            </button>
+          </li>
+        )}
         <li>
           <button
             type="button"

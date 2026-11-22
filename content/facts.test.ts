@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import type { Direction, RepoStats, Stats } from './stats.types';
-import { facts, renderFact, statsFootnote, tenSecondFacts, yearsSince, type FactId } from './facts';
+import {
+  facts,
+  renderFact,
+  statsFootnote,
+  tenSecondFacts,
+  yearsSince,
+  type FactId,
+  PLACES,
+} from './facts';
 
 const repo = (o: Partial<RepoStats> = {}): RepoStats => ({
   commits: 1000,
@@ -46,6 +54,45 @@ function makeStats(
 const ids = Object.keys(facts) as FactId[];
 const renderAll = (s: Stats) => ids.map((id) => renderFact(id, s));
 
+describe('the room', () => {
+  it('H01–H04 render in his words, with no number (no year or title he did not give)', () => {
+    for (const id of ['H01', 'H02', 'H03', 'H04', 'H05'] as FactId[]) {
+      expect(renderFact(id).length, id).toBeGreaterThan(10);
+      expect(renderFact(id), id).not.toMatch(/\d/);
+    }
+  });
+
+  it('H05 says where he is from: El Salvador, his native roots', () => {
+    expect(renderFact('H05')).toContain('El Salvador');
+  });
+
+  it('H06 says coffee addict', () => {
+    expect(renderFact('H06')).toMatch(/coffee addict/i);
+    expect(renderFact('H06')).not.toMatch(/\d/);
+  });
+
+  it('H02 names the dealership', () => {
+    expect(renderFact('H02')).toContain('Start Toyota of Bayside');
+  });
+
+  it('H04 names his eight places in his order', () => {
+    expect(PLACES).toEqual([
+      'Egypt',
+      'Italy',
+      'Colombia',
+      'Guatemala',
+      'Canada',
+      'Mexico',
+      'Puerto Rico',
+      'Aruba',
+    ]);
+    const h04 = renderFact('H04');
+    const at = PLACES.map((p) => h04.indexOf(p));
+    expect(at.every((i) => i >= 0)).toBe(true);
+    expect([...at].sort((a, b) => a - b)).toEqual(at);
+  });
+});
+
 describe('facts', () => {
   it('never contains the retired F05', () => {
     expect(ids).not.toContain('F05');
@@ -69,7 +116,7 @@ describe('facts', () => {
 
   it('P06 shows a TODO with no directions, never a zero count', () => {
     const empty = renderFact('P06', makeStats());
-    expect(empty).toContain('[TODO: Q21');
+    expect(empty).toContain('[TODO: directions');
     expect(empty).not.toContain('across');
     expect(empty).not.toContain('0 directions');
   });
@@ -136,7 +183,7 @@ describe('statsFootnote', () => {
     expect(note).toContain('2026-11-13');
   });
 
-  it('defines co-authored as a message that credits Claude (Q22)', () => {
+  it('defines co-authored as a message that credits Claude', () => {
     expect(statsFootnote(makeStats())).toContain('credits Claude as co-author');
   });
 });

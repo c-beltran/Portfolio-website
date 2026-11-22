@@ -10,7 +10,7 @@ export type TokenName =
   | 'linkHover'
   | 'focus'
   | 'accent'
-  // The desk (M2). Decorative, except stickerInk on sticker, which is text.
+  // The desk. Decorative, except stickerInk on sticker, which is text.
   | 'wood'
   | 'felt'
   | 'feltLine'
@@ -21,14 +21,14 @@ export type TokenName =
   | 'dusk'
   | 'pool'
   | 'scrawl'
-  // The monitor's right half (M3c): the rendered paper page under the HTML name, sampled from the
+  // The monitor's right half: the rendered paper page under the HTML name, sampled from the
   // seat stills (the paper is light in both modes, so the ink is dark in both).
   | 'screenPaper'
   | 'screenInk';
 
 export const THEME_STORAGE_KEY = 'desk-theme';
 
-/** Day is from the mock; lamp is ours (Q17: the mock is not the art target). */
+/** The day and lamp palettes. */
 export const TOKENS: Record<ThemeName, Record<TokenName, string>> = {
   day: {
     bg: '#EEF0EC',

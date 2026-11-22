@@ -26,7 +26,7 @@ export function summarizeMergedPRs(
   };
 }
 
-/** Branches whose PRs only promote already-merged work into the release branch (Q23). */
+/** Branches whose PRs only promote already-merged work into the release branch. */
 const PROMOTION_HEADS = new Set(['development', 'develop']);
 const RELEASE_BASES = new Set(['main', 'master']);
 

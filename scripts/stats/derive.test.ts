@@ -115,7 +115,7 @@ describe('assertNotTruncated', () => {
 });
 
 describe('isPromotionPR', () => {
-  it('flags PRs that only promote the development branch into main (Q23)', () => {
+  it('flags PRs that only promote the development branch into main', () => {
     expect(isPromotionPR({ headRefName: 'development', baseRefName: 'main' })).toBe(true);
     expect(isPromotionPR({ headRefName: 'develop', baseRefName: 'main' })).toBe(true);
     expect(isPromotionPR({ headRefName: 'development', baseRefName: 'master' })).toBe(true);

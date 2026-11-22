@@ -1,14 +1,14 @@
 """
-Renders the live scene's reflection probe (M3b Part C): an equirectangular Cycles panorama from
+Renders the live scene's reflection probe: an equirectangular Cycles panorama from
 above the desk's centre, per mode, through the same colour management as the bakes. The live
-shader looks it up along the reflected view ray for the desk's sheen, the phone's glass and the
-drinking glass (Cycles bakes are view-independent; spec §6 allows no real-time reflections).
+shader looks it up along the reflected view ray for the desk's sheen and the phone's glass (Cycles
+bakes are view-independent).
 
     Blender -b --factory-startup ~/Portfolio-assets/blend/workspace.blend --python scripts/scene/probe.py -- \
         [--out-dir ~/Portfolio-assets/bake] [--samples 256] [--modes day,lamp]
 
 The camera looks along +Y (towards the window wall), up +Z: the image centre is +Y, its top is up.
-Glass and water are hidden (they would fill the view). Never saves the .blend. Outputs
+Never saves the .blend. Outputs
 <out-dir>/probe-<mode>.png at 1024x512.
 """
 
@@ -26,7 +26,7 @@ import render as R  # noqa: E402
 ASSETS = Path.home() / "Portfolio-assets"
 AT = (0.0, 0.15, 0.95)  # metres, Blender axes: over the desk's centre, 20 cm above the top
 SIZE = (1024, 512)
-HIDE = ("deco_glass", "deco_water_glass")
+HIDE = ()  # the drinking glass and its water are gone
 
 
 def args():

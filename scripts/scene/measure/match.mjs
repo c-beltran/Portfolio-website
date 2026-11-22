@@ -1,5 +1,5 @@
-// How closely the live seat (?tier=2) matches the Tier 1 still at the moment it takes over (M3b
-// Part C; M3c phase 1 frames). Prints mean absolute difference and the share of clearly-off
+// How closely the live seat (?tier=2) matches the Tier 1 still at the moment it takes over.
+// Prints mean absolute difference and the share of clearly-off
 // channels per frame, and writes a sheet per frame (live | still | difference ×4) plus match.json.
 // Never committed. Target: meanAbs ≤ 6 and over40 ≤ 3% on every frame.
 // Serves the built export itself on a spare port (and stops it), unless given a base URL.

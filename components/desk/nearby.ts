@@ -1,5 +1,5 @@
 /**
- * The object whose centre is nearest the point, within the radius (design 2026-11-19 §3.3, labels
+ * The object whose centre is nearest the point, within the radius (labels
  * where you look); null when none is that close. Ties go to the first key.
  */
 export function nearby(

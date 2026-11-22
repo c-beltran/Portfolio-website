@@ -4,7 +4,7 @@
 //   node scripts/scene/encode_bake.mjs <bake dir> <out dir> [quality] [--only p1,p2] [--skip p1,p2]
 //
 // --only / --skip keep or drop files by name prefix (the movers' opened bakes go to their own,
-// on-demand folder: design 2026-11-19 §6).
+// on-demand folder).
 import { mkdirSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import sharp from 'sharp';

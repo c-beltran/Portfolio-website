@@ -59,7 +59,7 @@ function mergedPRs(dir: string, search?: string): PR[] {
   if (search) args.push('--search', search);
   const prs = JSON.parse(run('gh', args)) as PR[];
   assertNotTruncated(prs.length, search ? SEARCH_LIMIT : PR_LIMIT, `merged PRs in ${dir}`);
-  // Only PRs that carry real changes count; development → main promotions don't (Q23).
+  // Only PRs that carry real changes count; development → main promotions don't.
   return prs.filter((pr) => !isPromotionPR(pr));
 }
 

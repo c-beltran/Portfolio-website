@@ -11,7 +11,7 @@ const SRC = '/clips/power-walk.mp4';
 export const CLIP_POSTER = '/clips/power-walk-poster.webp';
 
 /**
- * Power Walk on the opened phone's screen (design 2026-11-19 §4.2): muted, looped, laid onto the
+ * Power Walk on the opened phone's screen: muted, looped, laid onto the
  * screen quad of the render (opened-art.json) by an affine fit, near exact because the screen faces
  * the eye. Like the opened art, it is drawn on a canvas: a <video> or its poster would become the
  * page's largest paint on /power-walk. The <video> stays in the page at 1 px as the source (the

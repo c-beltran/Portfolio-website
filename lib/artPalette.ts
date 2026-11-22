@@ -1,5 +1,5 @@
 /**
- * Fixed colours of the placeholder desk art (M2). Objects keep their own colours in both themes;
+ * Fixed colours of the placeholder desk art. Objects keep their own colours in both themes;
  * lamp mode dims them with one multiply overlay (TOKENS.dusk). Every pair used for text is listed
  * in ART_TEXT_PAIRS and contrast-tested under that dim (lib/artPalette.test.ts).
  */

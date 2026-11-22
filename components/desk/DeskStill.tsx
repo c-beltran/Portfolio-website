@@ -29,6 +29,7 @@ import { Hotspot } from './Hotspot';
 import { MonitorName } from './MonitorName';
 import { prefetchArt } from './Opened';
 import { CENTRE_SCRIPT, panOf, setPan } from './pan';
+import { Steam } from './Steam';
 import { useLabels } from './useLabels';
 
 type Props = {
@@ -62,7 +63,7 @@ const srcSet = (c: Crop, mode: string, ext: string) =>
 const sizes = (c: Crop) => sizesFor((c.rect.x1 - c.rect.x0) * M.w, c.portrait);
 
 /**
- * The approved Cycles render from the seat: the crop of the master this window shape shows
+ * The Cycles render from the seat: the crop of the master this window shape shows
  * (framingCss places it), AVIF with a WebP fallback.
  */
 /** Which crop a still's URL is (seat-<crop>-<mode>-<width>). */
@@ -159,8 +160,7 @@ function DeskPatch({ id, mode }: { id: OpenedId; mode: 'day' | 'lamp' }) {
 }
 
 /**
- * The hover glow (Carlos, 2026-11-20: a slight glow instead of a rectangle; 2026-11-21: on the
- * edges, not the item): a soft warm ring just outside the object's silhouette, never on the object,
+ * The hover glow: a soft warm ring just outside the object's silhouette, never on the object,
  * from masks rendered from the seat (scripts/scene/render_masks.py, encode_glow.mjs). It sits just
  * before its hotspot, so CSS lights it from that hotspot's hover and open state (globals.css), and
  * follows the glance.
@@ -239,7 +239,7 @@ function useKeptPan(ref: RefObject<HTMLDivElement | null>) {
 }
 
 /**
- * Tier 1: the still desk, seen from the seat (design 2026-11-19 §3). It fills the window; portrait
+ * Tier 1: the still desk, seen from the seat. It fills the window; portrait
  * windows scroll sideways across it. First paint, the reduced-motion and no-WebGL experience, and
  * the layer the live scene swaps in over. Every state is CSS on aria-pressed and the theme, so a
  * statically rendered section route paints already selected.
@@ -276,7 +276,7 @@ export function DeskStill({ selected, onOpen, onClose }: Props) {
     return () => window.removeEventListener('load', idle);
   }, []);
 
-  // Clicking the desk away from any object goes back to the desk (spec §2). While an object is out
+  // Clicking the desk away from any object goes back to the desk. While an object is out
   // the hotspots take no clicks (globals.css), so the whole dimmed desk closes it.
   const onLayerClick = (e: MouseEvent<HTMLDivElement>) => {
     if (!(e.target as Element).closest('button.hotspot')) onClose();
@@ -319,6 +319,7 @@ export function DeskStill({ selected, onOpen, onClose }: Props) {
           </div>
           <LiveLayer open={opened} />
           <div className="desk-still__overlay">
+            {glow && <Steam />}
             <MonitorName />
           </div>
         </div>

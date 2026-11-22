@@ -5,8 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { INTERACTIVE } from '../deskLayout';
 
 /**
- * The hover glow (Carlos, 2026-11-20: a slight glow instead of the rectangle; 2026-11-21: on the
- * edges, not the item): per clickable item, a soft ring just outside its silhouette, from the seat
+ * The hover glow: per clickable item, a soft ring just outside its silhouette, from the seat
  * at a quarter of the master (scripts/scene/render_masks.py, encode_glow.mjs). Alpha masks, loaded
  * after the page. glow.spec.ts checks the ring never lights the object.
  */

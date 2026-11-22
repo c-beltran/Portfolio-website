@@ -1,4 +1,4 @@
-// Encodes render_opened.py's outputs for Tier 1 (design 2026-11-19 §5.5, §6), and writes their
+// Encodes render_opened.py's outputs for Tier 1, and writes their
 // framing to content/scene/opened-art.json.
 //
 //   node scripts/scene/encode_opened.mjs [renders dir]   (default ~/Portfolio-assets/renders/opened)

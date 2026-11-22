@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { facts, RETIRED_FACT_IDS, type FactId } from './facts';
+import { facts, PLACES, RETIRED_FACT_IDS, type FactId } from './facts';
 import { deskDescription, DESK_OBJECTS, objectBySlug, SECTION_SLUGS } from './objects';
 import { PANELS, type PanelBlock } from './panels';
 import statsJson from './stats.json';
@@ -10,7 +10,7 @@ const allBlocks: PanelBlock[] = Object.values(PANELS).flat();
 
 function idsOf(block: PanelBlock): string[] {
   if (block.kind === 'prose' || block.kind === 'list') return block.facts;
-  if (block.kind === 'fact') return [block.fact];
+  if (block.kind === 'fact' || block.kind === 'places') return [block.fact];
   return [];
 }
 
@@ -25,6 +25,8 @@ function textOf(block: PanelBlock): string {
       return `${block.label} ${block.href ?? ''}`;
     case 'links':
       return '';
+    case 'places':
+      return PLACES.join(' ');
     case 'stats':
       return block.items.map((i) => `${i.label} ${i.value(statsJson as Stats)}`).join(' ');
     default:
@@ -59,8 +61,8 @@ describe('panels', () => {
   });
 });
 
-describe('claims (checkpoint 2)', () => {
-  // Q24 (2026-11-17) confirmed "I write the spec" and "Nothing merges until I've read it".
+describe('claims', () => {
+  // "I write the spec" and "Nothing merges until I've read it" are confirmed claims.
   const UNBACKED = /I wrote|I review|I reviewed|tool of mine|licensed/i;
 
   it('makes no authorship or review claim the stats cannot back', () => {
@@ -106,10 +108,15 @@ describe('objects', () => {
       ['phone', 'power-walk'],
       ['notepad', 'this-site'],
       ['card', 'contact'],
+      // the room: last, after Contact
+      ['car', 'cars'],
+      ['ball', 'soccer'],
+      ['board', 'travel'],
+      ['mug', 'coffee'],
     ]);
   });
 
-  it('labels each object after the Workspace (spec §2; the monitor is two, design 2026-11-19 §4)', () => {
+  it('labels each object after the Workspace (the monitor is two)', () => {
     expect(objectBySlug('how-i-build')?.ariaLabel).toBe('Monitor, left screen: How I build');
     expect(objectBySlug('cv')?.ariaLabel).toBe('Monitor, right screen: Carlos Beltran, CV');
     expect(objectBySlug('potaflow')?.ariaLabel).toBe('Backflow test-kit case: Potaflow project');
@@ -125,14 +132,14 @@ describe('objects', () => {
   });
 });
 
-describe('answered questions (Q3, Q7, Q24, Q26)', () => {
+describe('settled claims', () => {
   const text = (slug: keyof typeof PANELS) => PANELS[slug].map(textOf).join(' ');
   const all = Object.keys(PANELS)
     .map((k) => text(k as keyof typeof PANELS))
     .join(' ');
 
-  it('makes no backflow credential claim and leaves no Q3 or Q24 TODO', () => {
-    expect(all).not.toMatch(/TODO: Q3|TODO: Q24|licensed|credential/i);
+  it('makes no backflow credential claim and leaves no TODO about one', () => {
+    expect(all).not.toMatch(/licensed|credential|TODO: confirm(:| review)/i);
   });
 
   it('restores the two confirmed claims on How I build', () => {
@@ -149,9 +156,41 @@ describe('answered questions (Q3, Q7, Q24, Q26)', () => {
     expect(link && 'href' in link && link.href).toBe('https://potaflow.com');
   });
 
-  it('marks Power Walk as in development, not public (Q26)', () => {
-    expect(text('power-walk')).toContain('TODO: Q26');
-    expect(text('power-walk')).not.toContain('TODO: Q7 confirm public name');
+  it('marks Power Walk as in development, not public', () => {
+    expect(text('power-walk')).toContain('TODO: in development');
+    expect(text('power-walk')).not.toContain('confirm public name');
+  });
+});
+
+describe('the room', () => {
+  const text = (slug: keyof typeof PANELS) => PANELS[slug].map(textOf).join(' ');
+  const prose = (slug: keyof typeof PANELS) => PANELS[slug].find((b) => b.kind === 'prose');
+
+  it('the Cars prose cites both car facts, and its TODO asks for his role and dates', () => {
+    expect(prose('cars') && idsOf(prose('cars')!)).toEqual(expect.arrayContaining(['H01', 'H02']));
+    const todo = PANELS.cars.find((b) => b.kind === 'todo');
+    expect(todo && textOf(todo)).toMatch(/Start Toyota of Bayside/);
+  });
+
+  it('Coffee says it in his words, and asks for the rest', () => {
+    expect(objectBySlug('coffee')?.metaFactId).toBe('H06');
+    expect(text('coffee')).toMatch(/coffee addict/i);
+    expect(text('coffee')).toContain('[TODO: Carlos');
+  });
+
+  it('the Soccer prose cites the soccer fact', () => {
+    expect(prose('soccer') && idsOf(prose('soccer')!)).toContain('H03');
+  });
+
+  it('Travel names home, El Salvador, the magnet in the middle', () => {
+    expect(prose('travel') && idsOf(prose('travel')!)).toContain('H05');
+    expect(text('travel')).toContain('El Salvador');
+  });
+
+  it('Travel lists his places from the travel fact', () => {
+    const places = PANELS.travel.find((b) => b.kind === 'places');
+    expect(places && idsOf(places)).toEqual(['H04']);
+    expect(text('travel')).toContain('Puerto Rico');
   });
 });
 

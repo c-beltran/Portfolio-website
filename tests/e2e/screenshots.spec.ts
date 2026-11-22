@@ -1,6 +1,6 @@
 import { test } from './fixtures';
 
-/** Review screenshots for the milestone report. Run only in CI's screenshot step (@screens). */
+/** Review screenshots. Run only in CI's screenshot step (@screens). */
 for (const theme of ['day', 'lamp'] as const) {
   for (const route of ['/', '/potaflow', '/classic']) {
     test(`@screens ${theme} ${route}`, async ({ page }, info) => {

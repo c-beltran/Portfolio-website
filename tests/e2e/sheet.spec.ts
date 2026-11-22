@@ -1,12 +1,15 @@
 import { expect, test, type Page } from './fixtures';
 import { desk, gotoDesk, hotspot, panelTitle, path } from './desk';
 
+/** WCAG 2.5.5's 44 CSS px, less float noise: a hotspot floored at exactly 44px can measure 43.99998 at a sub-pixel position. */
+const MIN_PX = 44 - 0.01;
+
 const panel = (page: Page) => page.locator('section.panel');
 
 /**
- * Where the open panel sits (design 2026-11-19 §3.2): a card at the right of wide windows, a
- * bottom sheet in portrait ones. In phase 1 it may cover the opened object; phase 2 brings the
- * object forward beside it.
+ * Where the open panel sits: a card at the right of wide windows, a
+ * bottom sheet in portrait ones. It may cover an object that opens in place; one that comes
+ * forward sits beside it.
  */
 async function panelPlace(page: Page): Promise<'card' | 'sheet' | 'other'> {
   const { W, H } = await page.evaluate(() => ({ W: innerWidth, H: innerHeight }));
@@ -86,7 +89,7 @@ test.describe('phone bottom sheet', () => {
     await expect(back).toBeInViewport();
   });
 
-  // An object that stays on the desk (phase 2: with the kit or the phone out, the dimmed desk is one
+  // An object that stays on the desk (with the kit or the phone out, the dimmed desk is one
   // close target instead; forward.spec).
   test('an object above the open sheet switches sections', async ({ page }) => {
     await gotoDesk(page, '/');
@@ -122,7 +125,7 @@ test.describe('phone bottom sheet', () => {
     ).toEqual([]);
     expect(await panel(page).evaluate((el) => getComputedStyle(el).transform)).toBe('none');
     // The open object glows (one that stays on the desk: the kit and the phone come forward
-    // instead). The glow replaced the ring (Carlos, 2026-11-20); its masks arrive after the page.
+    // instead). The glow replaced the ring; its masks arrive after the page.
     await expect
       .poll(() =>
         page
@@ -173,12 +176,12 @@ test.describe('phone bottom sheet', () => {
     }
     await page.setViewportSize({ width: 320, height: 640 });
     await gotoDesk(page, '/');
-    for (const b of await page.locator('button.hotspot').all()) {
+    for (const b of await page.locator('button.hotspot:visible').all()) {
       const box = (await b.boundingBox())!;
       expect(
         Math.min(box.width, box.height),
         (await b.getAttribute('data-item')) ?? '',
-      ).toBeGreaterThanOrEqual(44);
+      ).toBeGreaterThanOrEqual(MIN_PX);
     }
   });
 });
@@ -189,12 +192,12 @@ test.describe('landscape phones and small tablets', () => {
   test('the smallest landscape phone with toolbars keeps 44px targets', async ({ page }) => {
     await page.setViewportSize({ width: 568, height: 270 });
     await gotoDesk(page, '/');
-    for (const b of await page.locator('button.hotspot').all()) {
+    for (const b of await page.locator('button.hotspot:visible').all()) {
       const box = (await b.boundingBox())!;
       expect(
         Math.min(box.width, box.height),
         (await b.getAttribute('data-item')) ?? '',
-      ).toBeGreaterThanOrEqual(44);
+      ).toBeGreaterThanOrEqual(MIN_PX);
     }
   });
 
@@ -207,9 +210,9 @@ test.describe('landscape phones and small tablets', () => {
     test(`at ${w}×${h} the panel opens as a card at the right`, async ({ page }) => {
       await page.setViewportSize({ width: w, height: h });
       await gotoDesk(page, '/');
-      for (const b of await page.locator('button.hotspot').all()) {
+      for (const b of await page.locator('button.hotspot:visible').all()) {
         const box = (await b.boundingBox())!;
-        expect(Math.min(box.width, box.height)).toBeGreaterThanOrEqual(44);
+        expect(Math.min(box.width, box.height)).toBeGreaterThanOrEqual(MIN_PX);
       }
       await hotspot(page, 'kit').click();
       expect(path(page)).toBe('/potaflow');

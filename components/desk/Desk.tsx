@@ -8,6 +8,7 @@ import { Panel } from '../panel/Panel';
 import { DeskStill } from './DeskStill';
 import { Drawer } from './Drawer';
 import { markHintSeen } from './hint';
+import { MotionToggle } from './MotionToggle';
 import { Opened } from './Opened';
 import { TurnHint } from './TurnHint';
 
@@ -40,7 +41,7 @@ export function Desk() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => void (selected !== null && markHintSeen()), []);
   // Once the visitor changes what's open, opening and closing animate; a direct load paints still
-  // (spec §2: no animation on first load).
+  // (no animation on first load)
   const first = useRef(true);
   useEffect(() => {
     if (first.current) {
@@ -59,6 +60,7 @@ export function Desk() {
       <div className="desk__stage">
         <DeskStill selected={selected} onOpen={open} onClose={close} />
         <Drawer selected={selected} onOpen={open} />
+        <MotionToggle />
       </div>
       {shown.id && (
         <Opened
