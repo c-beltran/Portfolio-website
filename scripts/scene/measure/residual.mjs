@@ -43,11 +43,14 @@ async function capture(browser, mode) {
   await page.goto(`${BASE}/?tier=2&capture=master`);
   await page.locator('.desk-still__live[data-ready="true"]').waitFor({ timeout: 60_000 });
   await page.waitForTimeout(1500); // past the fade-in and the lamp cross-fade
-  const url = await page.locator('.desk-still__live canvas').evaluate((c) => c.toDataURL('image/png'));
+  const url = await page
+    .locator('.desk-still__live canvas')
+    .evaluate((c) => c.toDataURL('image/png'));
   await ctx.close();
   const png = Buffer.from(url.split(',')[1], 'base64');
   const meta = await sharp(png).metadata();
-  if (meta.width !== W || meta.height !== H) throw new Error(`capture is ${meta.width}×${meta.height}`);
+  if (meta.width !== W || meta.height !== H)
+    throw new Error(`capture is ${meta.width}×${meta.height}`);
   return sharp(png).removeAlpha().raw().toBuffer();
 }
 

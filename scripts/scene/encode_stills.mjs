@@ -16,7 +16,10 @@ const SAFE_PX = [900, 1600];
 // Tuned against the budgets (quality, not size): AVIF effort 9 is slow but small.
 export const QUALITY = { avif: 50, webp: 72 };
 
-const CROPS = [...Array.from({ length: bandCount() }, (_, i) => [`b${i}`, band(i)]), ['p', portraitStrip()]];
+const CROPS = [
+  ...Array.from({ length: bandCount() }, (_, i) => [`b${i}`, band(i)]),
+  ['p', portraitStrip()],
+];
 const m = master();
 
 mkdirSync(OUT, { recursive: true });
