@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { band, bandCount, bandMedia, master, PORTRAIT, portraitStrip } from './framing';
 import { framingCss } from './framingCss';
-import { DIM_LEVEL } from '../opened';
+import { DIM_LEVEL, LEAN_FEATHER } from '../opened';
 
 const css = framingCss();
 
@@ -70,6 +70,13 @@ describe('framingCss', () => {
 });
 
 describe('the dim while an object is out', () => {
+  it("feathers a lean-in's outer edge by LEAN_FEATHER, as globals.css masks it", () => {
+    const globals = readFileSync('app/globals.css', 'utf8');
+    const rule = globals.slice(globals.indexOf(".opened[data-kind='lean'] .opened__art {"));
+    const pct = Math.round(LEAN_FEATHER * 100);
+    expect(rule.slice(0, rule.indexOf('}'))).toContain(`#000 ${pct}%, #000 ${100 - pct}%`);
+  });
+
   it('is the same in Tier 1 (globals.css) as in the live shader (DIM_LEVEL)', () => {
     const globals = readFileSync('app/globals.css', 'utf8');
     expect(globals).toContain(`brightness(${DIM_LEVEL})`);

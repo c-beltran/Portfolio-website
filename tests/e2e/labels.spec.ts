@@ -49,10 +49,12 @@ test.describe('with a mouse', () => {
     await expect.poll(() => shown(page)).toEqual([]);
   });
 
-  test("the open object's label stays visible", async ({ page }) => {
-    await gotoDesk(page, '/experience');
-    await page.mouse.move(8, 10);
-    await expect.poll(() => shown(page)).toEqual(['badge']);
+  test('no object that came forward keeps its label', async ({ page }) => {
+    for (const url of ['/experience', '/about', '/this-site', '/contact', '/cv', '/how-i-build']) {
+      await gotoDesk(page, url);
+      await page.mouse.move(8, 10);
+      await expect.poll(() => shown(page), { message: url }).toEqual([]);
+    }
   });
 
   test('an object that came forward has no label on the desk', async ({ page }) => {

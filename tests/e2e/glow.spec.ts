@@ -82,9 +82,12 @@ test.describe('with a mouse', () => {
     }
   });
 
-  test('the open object keeps its glow instead of a ring', async ({ page }) => {
+  test('nothing glows while the badge is out', async ({ page }) => {
     await gotoDesk(page, '/experience');
-    await expect.poll(() => opacityOf(page, 'badge'), { timeout: 10_000 }).toBe(1);
+    await expect(glow(page, 'badge')).toHaveCount(1, { timeout: 10_000 });
+    await page.waitForTimeout(400);
+    expect(await opacityOf(page, 'badge')).toBe(0);
+    expect(await lit(page)).toEqual([]);
     expect(await hotspot(page, 'badge').evaluate((el) => getComputedStyle(el).boxShadow)).toBe(
       'none',
     );

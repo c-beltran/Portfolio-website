@@ -160,6 +160,15 @@ describe('settled claims', () => {
     expect(text('power-walk')).toContain('TODO: in development');
     expect(text('power-walk')).not.toContain('confirm public name');
   });
+
+  it('flags the placeholder photo and sketches that come forward', () => {
+    expect(text('about')).toContain(
+      '[TODO: Carlos: your framed photo (the print is a placeholder)]',
+    );
+    expect(text('this-site')).toContain(
+      '[TODO: Carlos: your sketches of the desk (the notepad shows placeholders)]',
+    );
+  });
 });
 
 describe('the room', () => {

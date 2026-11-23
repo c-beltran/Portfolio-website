@@ -43,6 +43,7 @@ export const PANELS: Record<SectionSlug, PanelBlock[]> = {
       text: 'Weekdays, I make an ad platform faster. I also build Potaflow.',
       draft: true,
     },
+    { kind: 'todo', text: '[TODO: Carlos: your framed photo (the print is a placeholder)]' },
   ],
   experience: [
     { kind: 'eyebrow', text: 'THE BADGE · EXPERIENCE' },
@@ -126,6 +127,10 @@ export const PANELS: Record<SectionSlug, PanelBlock[]> = {
       ],
     },
     { kind: 'todo', text: '[TODO: direction thumbnails]' },
+    {
+      kind: 'todo',
+      text: '[TODO: Carlos: your sketches of the desk (the notepad shows placeholders)]',
+    },
   ],
   contact: [
     { kind: 'eyebrow', text: 'THE CARD · CONTACT' },

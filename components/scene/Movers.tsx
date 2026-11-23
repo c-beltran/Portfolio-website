@@ -4,7 +4,7 @@ import { useGLTF } from '@react-three/drei';
 import { useFrame, useThree } from '@react-three/fiber';
 import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
-import { artOf, OPENED_IDS, type MoverId, type OpenedId } from '@/content/opened';
+import { artOf, type MoverId, type OpenedId } from '@/content/opened';
 import poses from '@/content/scene/opened-poses.json';
 import type { Vec3 } from '@/content/scene/cameras';
 import { setOpenedBake } from './materials';
@@ -13,9 +13,14 @@ import { blendPose, presentPose, projectedHeight, type Pose } from './present';
 import { easeOutCubic } from './transition';
 import { meshKey } from './moverParts';
 
-const PIVOT: Record<OpenedId, string> = { kit: 'obj_kit', phone: 'obj_phone' };
+/** The movers the live rig drives so far; any other open id counts as nothing open here. */
+const RIG_IDS = ['kit', 'phone'] as const;
+type RigId = (typeof RIG_IDS)[number];
+const rigOpen = (id: OpenedId | null): RigId | null =>
+  (RIG_IDS as readonly string[]).includes(id ?? '') ? (id as RigId) : null;
+const PIVOT: Record<RigId, string> = { kit: 'obj_kit', phone: 'obj_phone' };
 const CLIP_ID = 'power-walk-clip';
-const openBake = (id: OpenedId, mode: 'day' | 'lamp') => `/opened/bake/${id}-open-${mode}.webp`;
+const openBake = (id: RigId, mode: 'day' | 'lamp') => `/opened/bake/${id}-open-${mode}.webp`;
 
 type Mats = Record<MoverId | 'phoneScreen', THREE.ShaderMaterial>;
 type Mover = {
@@ -36,7 +41,7 @@ const poseOf = (o: THREE.Object3D): Pose => ({
   position: o.position.toArray() as Vec3,
   quaternion: o.quaternion.toArray() as Pose['quaternion'],
 });
-const hookName = (id: OpenedId) => `travel${id[0]!.toUpperCase()}${id.slice(1)}`;
+const hookName = (id: RigId) => `travel${id[0]!.toUpperCase()}${id.slice(1)}`;
 
 type Setup = {
   scene: THREE.Object3D;
@@ -48,7 +53,7 @@ type Setup = {
   renderer: THREE.WebGLRenderer;
   invalidate: () => void;
   /** The object already out when the scene mounts (a direct load): it starts out, unanimated. */
-  initial: OpenedId | null;
+  initial: RigId | null;
 };
 
 /**
@@ -57,9 +62,9 @@ type Setup = {
  */
 class MoverRig {
   private mixer: THREE.AnimationMixer;
-  private all: Record<OpenedId, Mover>;
-  private open: OpenedId | null;
-  private last: OpenedId | null;
+  private all: Record<RigId, Mover>;
+  private open: RigId | null;
+  private last: RigId | null;
   private raf = 0;
   private alive = true;
   private video: { el: HTMLVideoElement; tex: THREE.VideoTexture } | null = null;
@@ -69,7 +74,7 @@ class MoverRig {
     this.mixer = new THREE.AnimationMixer(s.scene);
     this.open = this.last = s.initial;
     this.all = Object.fromEntries(
-      OPENED_IDS.map((id) => {
+      RIG_IDS.map((id) => {
         const pivot = s.scene.getObjectByName(PIVOT[id])!;
         const clip = s.animations.find((a) => a.name === poses[id].clip)!;
         const action = this.mixer.clipAction(clip);
@@ -89,7 +94,7 @@ class MoverRig {
         };
         return [id, m];
       }),
-    ) as Record<OpenedId, Mover>;
+    ) as Record<RigId, Mover>;
     s.scene.traverse((o) => {
       const key = o instanceof THREE.Mesh ? meshKey(o.name, o.parent?.name) : undefined;
       if (key) (o as THREE.Mesh).material = s.materials[key];
@@ -101,7 +106,7 @@ class MoverRig {
   }
 
   /** What's open now: the moments move toward it on each animation frame until they settle. */
-  setOpen(open: OpenedId | null) {
+  setOpen(open: RigId | null) {
     this.open = open;
     if (open) {
       this.last = open;
@@ -116,7 +121,7 @@ class MoverRig {
       // Keep going until every mover has reached where it's headed (not "until a step changed
       // nothing": a frame's timestamp can precede the call, so the first step may be empty).
       let moving = false;
-      for (const id of OPENED_IDS) {
+      for (const id of RIG_IDS) {
         const m = this.all[id];
         m.moment = stepMoment(m.moment, this.open === id, dt, m.clipMs);
         const goal = this.open === id ? OUT : REST;
@@ -136,7 +141,7 @@ class MoverRig {
     this.s.canvas.dataset.textures = String(this.s.renderer.info.memory.textures);
     const c = this.s.canvas.getBoundingClientRect();
     const focalPx = (cam.projectionMatrix.elements[5]! * view.height) / 2;
-    for (const id of OPENED_IDS) {
+    for (const id of RIG_IDS) {
       const m = this.all[id];
       const box = document
         .querySelector<HTMLElement>(`.opened[data-id="${id}"]:not([data-leaving]) .opened__art`)
@@ -190,7 +195,7 @@ class MoverRig {
   private apply() {
     const { materials, statics, canvas } = this.s;
     let dim = 0;
-    for (const id of OPENED_IDS) {
+    for (const id of RIG_IDS) {
       const m = this.all[id];
       const k = easeOutCubic(m.moment.travel);
       dim = Math.max(dim, k);
@@ -214,7 +219,7 @@ class MoverRig {
   }
 
   /** The opened bake loads the first time its mover comes out (on demand). */
-  private loadBake(id: OpenedId) {
+  private loadBake(id: RigId) {
     const m = this.all[id];
     if (m.requested) return;
     m.requested = true;
@@ -307,7 +312,7 @@ export function Movers({
       canvas: gl.domElement,
       renderer: gl,
       invalidate,
-      initial: latest.current,
+      initial: rigOpen(latest.current),
     });
     rig.current = r;
     return () => {
@@ -318,7 +323,7 @@ export function Movers({
   useEffect(() => {
     if (latest.current === open) return;
     latest.current = open;
-    rig.current?.setOpen(open);
+    rig.current?.setOpen(rigOpen(open));
   }, [open]);
   useFrame((state) => rig.current?.fit(state.camera as THREE.PerspectiveCamera, state.size));
   return <primitive object={scene} />;

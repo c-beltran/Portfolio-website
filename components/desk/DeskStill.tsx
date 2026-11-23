@@ -9,7 +9,7 @@ import {
 } from 'react';
 import { PORTRAIT, type DeskItemId } from '@/content/deskLayout';
 import { deskDescription, DESK_OBJECTS, type SectionSlug } from '@/content/objects';
-import { artOf, openedFor, patchSrc, type OpenedId } from '@/content/opened';
+import { artOf, isMover, openedFor, patchSrc, type MoverId } from '@/content/opened';
 import {
   band,
   bandCount,
@@ -130,8 +130,8 @@ function DeskPhoto({ mode }: { mode: 'day' | 'lamp' }) {
  * isn't shown twice (scripts/scene/render_opened.py --patch). Placed in master percents like the
  * hotspots, its edges feathered into the still.
  */
-function DeskPatch({ id, mode }: { id: OpenedId; mode: 'day' | 'lamp' }) {
-  const { patch: r, patchWidths } = artOf(id);
+function DeskPatch({ id, mode }: { id: MoverId; mode: 'day' | 'lamp' }) {
+  const { patch: r, patchWidths } = artOf(id) as Required<ReturnType<typeof artOf>>;
   const set = (ext: 'avif' | 'webp') =>
     patchWidths.map((w) => `${patchSrc(id, mode, w, ext)} ${w}w`).join(', ');
   // Its share of the master's width at the window's scale, as the stills size theirs.
@@ -300,7 +300,9 @@ export function DeskStill({ selected, onOpen, onClose }: Props) {
             <div className="desk-still__art">
               <DeskPhoto mode="day" />
               <DeskPhoto mode="lamp" />
-              {opened && <DeskPatch id={opened} mode={theme === 'lamp' ? 'lamp' : 'day'} />}
+              {opened && isMover(opened) && (
+                <DeskPatch id={opened} mode={theme === 'lamp' ? 'lamp' : 'day'} />
+              )}
             </div>
             {DESK_OBJECTS.flatMap((o) => [
               glow && <DeskGlow key={`glow-${o.id}`} item={o.id} />,

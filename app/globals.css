@@ -746,7 +746,7 @@ html:has(.desk-still) body {
 }
 
 /*
- * ---- Coming forward: the kit and the phone (content/opened.ts). ----
+ * ---- Coming forward, or leaning in (content/opened.ts). ----
  * While one is out, .desk carries data-open and data-side (the side the object sits on): the still
  * dims and softens, the desk takes no hotspot clicks (any click on it puts the object back), the
  * object's render sits in a slot on its own side and the panel on the other; in portrait the
@@ -842,6 +842,18 @@ html:has(.desk-still) body {
 
 .opened__art {
   position: relative;
+}
+
+/* A lean-in has no silhouette: its outer edge feathers into the dimmed desk (LEAN_FEATHER). */
+.opened[data-kind='lean'] .opened__art {
+  -webkit-mask-image:
+    linear-gradient(to right, transparent, #000 6%, #000 94%, transparent),
+    linear-gradient(to bottom, transparent, #000 6%, #000 94%, transparent);
+  -webkit-mask-composite: source-in;
+  mask-image:
+    linear-gradient(to right, transparent, #000 6%, #000 94%, transparent),
+    linear-gradient(to bottom, transparent, #000 6%, #000 94%, transparent);
+  mask-composite: intersect;
 }
 
 /* The phone's clip, on its screen (PhoneClip.tsx places it), once the phone itself is drawn. */
@@ -1054,8 +1066,26 @@ html:has(.desk-still) body {
 }
 
 .steam[data-paused] .steam__wisp,
-.desk[data-open] .steam__wisp {
+.desk[data-open] .desk-still__overlay .steam__wisp {
   animation-play-state: paused;
+}
+
+/* While the mug is out, its steam goes with it (Opened.tsx): none rises from an empty coaster. */
+.desk[data-open='mug'] .desk-still__overlay .steam {
+  visibility: hidden;
+}
+
+/* Over the opened mug: no glance to follow, and a blur sized to the art, not the desk. */
+.opened .steam {
+  transform: none;
+}
+
+.opened .steam__wisp svg {
+  filter: blur(3px);
+}
+
+.opened__canvas:not([data-drawn]) ~ .steam {
+  visibility: hidden;
 }
 
 @keyframes steam-rise {

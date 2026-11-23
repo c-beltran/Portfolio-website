@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect, useRef, type CSSProperties } from 'react';
-import { artOf, artSrc, OPENED_IDS, sideOf, type OpenedId } from '@/content/opened';
+import { artOf, artSrc, isLean, OPENED_IDS, sideOf, type OpenedId } from '@/content/opened';
 import { PhoneClip } from './PhoneClip';
+import { Steam } from './Steam';
 
 type Mode = 'day' | 'lamp';
 
@@ -97,8 +98,9 @@ function useArtCanvas(id: OpenedId, mode: Mode) {
 type Props = { id: OpenedId; mode: Mode; leaving?: boolean };
 
 /**
- * The object that came forward: its opened render in a slot on its own
- * side of the window, the panel on the other (in portrait, above the panel). Decorative: the
+ * The object that came forward, or the face the view leaned in to: its render in a slot on its own
+ * side of the window, the panel on the other (in portrait, above the panel). A lean-in's edge
+ * feathers into the dimmed desk. Decorative: the
  * panel carries the words, so it is hidden from assistive tech. A click on it keeps it out.
  */
 export function Opened({ id, mode, leaving }: Props) {
@@ -110,6 +112,7 @@ export function Opened({ id, mode, leaving }: Props) {
       className="opened"
       aria-hidden="true"
       data-id={id}
+      data-kind={isLean(id) ? 'lean' : 'mover'}
       data-side={sideOf(id)}
       data-leaving={leaving || undefined}
     >
@@ -117,6 +120,7 @@ export function Opened({ id, mode, leaving }: Props) {
         <div className="opened__art" style={{ '--aspect': artOf(id).aspect } as CSSProperties}>
           <canvas ref={ref} className="opened__canvas" />
           {id === 'phone' && <PhoneClip leaving={leaving} />}
+          {id === 'mug' && <Steam at={artOf('mug').steam} />}
         </div>
       </div>
     </div>

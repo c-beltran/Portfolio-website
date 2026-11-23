@@ -7,7 +7,7 @@ import { useMotion } from '@/lib/useMotion';
 const MUG = seat.objects.obj_mug;
 const [W, H] = [MUG.x1 - MUG.x0, MUG.y1 - MUG.y0];
 // The cup's opening within the mug's box, which takes in the handle on the right.
-const STYLE = {
+const DESK = {
   '--sx': MUG.x0 + 0.46 * W,
   '--sy': MUG.y0 + 0.2 * H,
   '--sw': 0.56 * W,
@@ -21,11 +21,11 @@ const onVisibility = (f: () => void) => {
 
 /**
  * Steam over the mug: three soft wisps in the overlay
- * above the still and the live scene, following the glance. Only transform and opacity move. It
+ * above the still and the live scene, following the glance; or, with `at`, over the opened mug. Only transform and opacity move. It
  * mounts once the page is idle, and waits while paused, while an object is out (globals.css) and
  * while the tab is hidden.
  */
-export function Steam() {
+export function Steam({ at }: { at?: { x: number; y: number; w: number } } = {}) {
   const { paused } = useMotion();
   const hidden = useSyncExternalStore(
     onVisibility,
@@ -37,7 +37,13 @@ export function Steam() {
       className="steam"
       aria-hidden="true"
       data-paused={paused || hidden || undefined}
-      style={STYLE}
+      data-on={at ? 'opened' : 'desk'}
+      style={
+        at
+          ? // over the opened mug: from the cup's opening up to the top of its art
+            ({ '--sx': at.x, '--sy': at.y, '--sw': at.w, '--sh': at.y } as CSSProperties)
+          : DESK
+      }
     >
       {[0, 1, 2].map((i) => (
         <i key={i} className="steam__wisp">

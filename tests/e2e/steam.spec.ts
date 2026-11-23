@@ -6,7 +6,7 @@ import { drawerButton, gotoDesk, hotspot, path } from './desk';
  * Steam over the mug. It moves for as long as the desk is up, so it carries a pause (WCAG 2.2.2): a corner
  * button for the pointer and a Sections entry for the keyboard and screen readers, one state.
  */
-const steam = (page: Page) => page.locator('.steam');
+const steam = (page: Page) => page.locator('.desk-still__overlay .steam');
 const control = (page: Page) => page.locator('.motion-toggle');
 const states = (page: Page) =>
   steam(page).evaluate((el) => [
