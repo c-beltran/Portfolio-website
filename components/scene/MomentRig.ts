@@ -1,7 +1,9 @@
 import * as THREE from 'three';
 import {
   artOf,
+  isLean,
   isMover,
+  LEAN_FEATHER,
   LEAN_IDS,
   MOVER_IDS,
   OPENED_IDS,
@@ -207,8 +209,44 @@ export class MomentRig {
       m.pivot.position.fromArray(pose.position);
       m.pivot.quaternion.fromArray(pose.quaternion);
     }
+    this.fitLean(c);
     this.placeFace(cam, c);
     this.writeSettled();
+  }
+
+  /** The open lean-in's art box: data-fit, and the hole it keeps in the dim (drawing-buffer px). */
+  private fitLean(c: DOMRect) {
+    const id = this.open && isLean(this.open) ? this.open : null;
+    const box = id
+      ? document
+          .querySelector<HTMLElement>(`.opened[data-id="${id}"]:not([data-leaving]) .opened__art`)
+          ?.getBoundingClientRect()
+      : undefined;
+    const dpr = this.s.renderer.getPixelRatio();
+    const hole = new THREE.Vector4(0, 0, 0, 0);
+    let feather = 0;
+    if (box && box.height > 0) {
+      this.s.canvas.dataset.fit = box.height.toFixed(1);
+      const H = c.height;
+      hole.set(
+        (box.left - c.left) * dpr,
+        (H - (box.bottom - c.top)) * dpr,
+        (box.right - c.left) * dpr,
+        (H - (box.top - c.top)) * dpr,
+      );
+      feather = LEAN_FEATHER * Math.min(box.width, box.height) * dpr;
+    }
+    for (const mat of this.dimmed()) {
+      (mat.uniforms.dimClear!.value as THREE.Vector4).copy(hole);
+      mat.uniforms.dimFeather!.value = feather;
+    }
+  }
+
+  private dimmed(): THREE.ShaderMaterial[] {
+    const { materials, statics } = this.s;
+    return [...statics, ...MOVER_IDS.map((id) => materials[id]), materials.phoneScreen].filter(
+      (m) => m.uniforms.dimClear,
+    );
   }
 
   dispose() {
@@ -216,7 +254,10 @@ export class MomentRig {
     cancelAnimationFrame(this.raf);
     this.dropVideo();
     this.clearFace();
-    for (const s of this.s.statics) s.uniforms.dim!.value = 0;
+    for (const s of this.s.statics) {
+      s.uniforms.dim!.value = 0;
+      if (s.uniforms.residualWeight) s.uniforms.residualWeight.value = 1;
+    }
   }
 
   /**
@@ -257,15 +298,15 @@ export class MomentRig {
     this.facePlaced = false;
   }
 
-  /** data-settled: the open mover, once it is out and its face (if any) is laid on it. */
+  /**
+   * data-settled: the open mover, once it is out and its face (if any) is laid on it; or the open
+   * lean-in, once the camera has arrived.
+   */
   private writeSettled() {
     const id = this.open;
+    const out = !!id && this.moments[id].travel === 1 && this.moments[id].clip === 1;
     const ok =
-      !!id &&
-      isMover(id) &&
-      this.moments[id].travel === 1 &&
-      this.moments[id].clip === 1 &&
-      (!this.movers[id].facePart || this.facePlaced);
+      out && (isLean(id!) || (isMover(id!) && (!this.movers[id].facePart || this.facePlaced)));
     if (ok) this.s.canvas.dataset.settled = id;
     else delete this.s.canvas.dataset.settled;
   }
@@ -295,7 +336,12 @@ export class MomentRig {
     for (const id of OPENED_IDS)
       canvas.dataset[`travel${cap(id)}`] = this.moments[id].travel.toFixed(2);
     materials.phoneScreen.uniforms.openMix!.value = this.video ? this.moments.phone.clip : 0;
-    for (const s of statics) s.uniforms.dim!.value = dims.statics;
+    // The seat's residual holds only from the seat: it fades as the view leans in.
+    const lean = Math.max(0, ...LEAN_IDS.map((id) => eased[id]));
+    for (const s of statics) {
+      s.uniforms.dim!.value = dims.statics;
+      if (s.uniforms.residualWeight) s.uniforms.residualWeight.value = 1 - lean;
+    }
     this.mixer.update(0);
     const shown = this.open ?? this.last ?? 'kit';
     canvas.dataset.open = this.open ?? '';

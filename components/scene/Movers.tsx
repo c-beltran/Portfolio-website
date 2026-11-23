@@ -2,7 +2,7 @@
 
 import { useGLTF } from '@react-three/drei';
 import { useFrame, useThree } from '@react-three/fiber';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, type RefObject } from 'react';
 import * as THREE from 'three';
 import type { OpenedId } from '@/content/opened';
 import { MomentRig, type Mats } from './MomentRig';
@@ -20,9 +20,12 @@ export function Movers({
   open,
   materials,
   statics,
+  rigRef,
 }: {
   open: OpenedId | null;
   materials: Mats;
+  /** Where the camera (LiveScene's Rig) finds the rig, for the lean-ins. */
+  rigRef?: RefObject<MomentRig | null>;
   /** The static scene's materials: each has a `dim` uniform. */
   statics: THREE.ShaderMaterial[];
 }) {
@@ -43,11 +46,13 @@ export function Movers({
       initial: latest.current,
     });
     rig.current = r;
+    if (rigRef) rigRef.current = r;
     return () => {
       r.dispose();
       rig.current = null;
+      if (rigRef) rigRef.current = null;
     };
-  }, [scene, animations, materials, statics, gl, invalidate]);
+  }, [scene, animations, materials, statics, gl, invalidate, rigRef]);
   useEffect(() => {
     if (latest.current === open) return;
     latest.current = open;
