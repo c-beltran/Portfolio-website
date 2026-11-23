@@ -1022,7 +1022,24 @@ html:has(.desk-still) body {
 }
 
 .desk[data-animate] .opened__canvas:not([data-drawn]) ~ .opened__face,
-.desk:has(.desk-still__live[data-ready='true']) .opened__face {
+.desk:has(.desk-still__live[data-ready='true'] canvas:not([data-settled])) .opened__face {
+  visibility: hidden;
+}
+
+/* In the live preview a face is laid on the live object (MomentRig, data-live) once it settles,
+   and fades in. */
+.opened__face[data-live] {
+  animation: face-in 0.2s ease-out;
+}
+
+@keyframes face-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* The opened mug's steam waits for the live mug to settle. */
+.desk:has(.desk-still__live[data-ready='true'] canvas:not([data-settled='mug'])) .opened .steam {
   visibility: hidden;
 }
 

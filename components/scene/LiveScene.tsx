@@ -126,11 +126,12 @@ function Scene({
         bakedMaterial(textures[m0 + 2 * i]!, textures[m0 + 2 * i + 1]!, {
           residual,
           opened: true,
+          dim: true,
         }),
       ]),
     ) as Record<Mover, THREE.ShaderMaterial>;
     const glassTex = flat(PHONE_GLASS);
-    const phoneScreen = bakedMaterial(glassTex, glassTex, { residual, opened: true });
+    const phoneScreen = bakedMaterial(glassTex, glassTex, { residual, opened: true, dim: true });
     return { ...baked, ...moving, phoneScreen };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [textures]);

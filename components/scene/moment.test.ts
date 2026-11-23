@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { OUT, REST, stepMoment, type Moment } from './moment';
+import { MOVER_IDS } from '@/content/opened';
+import { dimsFor, OUT, REST, stepMoment, type Moment } from './moment';
 import { MOVE_MS } from './transition';
 
 /** The coming-forward timeline: 0.9 s of travel, then the clip. */
@@ -53,5 +54,47 @@ describe('stepMoment', () => {
   it('stays put once settled', () => {
     expect(stepMoment(REST, false, 16, CLIP)).toEqual(REST);
     expect(stepMoment(OUT, true, 16, CLIP)).toEqual(OUT);
+  });
+});
+
+describe('a moment with no clip', () => {
+  const step = (m: Moment, open: boolean) => stepMoment(m, open, 50, 0);
+  it('has its clip at 0 until the travel arrives, then at 1, and folds both together', () => {
+    let m = REST;
+    while (m.travel < 1) {
+      expect(m.clip).toBe(0);
+      m = step(m, true);
+    }
+    expect(m).toEqual(OUT);
+    m = step(m, false);
+    expect(m.clip).toBeCloseTo(m.travel, 9);
+    expect(m.travel).toBeLessThan(1);
+  });
+});
+
+describe('dimsFor', () => {
+  it('dims the room and every other mover by the one that is out, never that one', () => {
+    const d = dimsFor({ kit: 1 });
+    expect(d.statics).toBe(1);
+    expect(d.movers.kit).toBe(0);
+    for (const id of MOVER_IDS) if (id !== 'kit') expect(d.movers[id]).toBe(1);
+  });
+
+  it('dims nothing when nothing is out', () => {
+    const d = dimsFor({});
+    expect(d.statics).toBe(0);
+    for (const id of MOVER_IDS) expect(d.movers[id]).toBe(0);
+  });
+
+  it('dims two movers half out each by the other', () => {
+    const d = dimsFor({ kit: 0.5, phone: 0.3 });
+    expect(d.statics).toBe(0.5);
+    expect(d.movers.kit).toBe(0.3);
+    expect(d.movers.phone).toBe(0.5);
+    expect(d.movers.mug).toBe(0.5);
+  });
+
+  it('dims the movers while the view leans in', () => {
+    expect(dimsFor({ cv: 1 }).movers.badge).toBe(1);
   });
 });

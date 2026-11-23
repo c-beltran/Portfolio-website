@@ -5,6 +5,13 @@ import { bakedMaterial, setOpenedBake } from './materials';
 const tex = () => new THREE.Texture();
 
 describe('bakedMaterial', () => {
+  it("gives a mover's material the dim uniform when asked", () => {
+    const t = new THREE.Texture();
+    const m = bakedMaterial(t, t, { opened: true, dim: true });
+    expect(m.uniforms.dim?.value).toBe(0);
+    expect(m.fragmentShader).toContain('uniform float dim;');
+  });
+
   it('is the plain baked shader by default', () => {
     const m = bakedMaterial(tex(), tex());
     expect(Object.keys(m.uniforms).sort()).toEqual(['day', 'fade', 'lamp']);

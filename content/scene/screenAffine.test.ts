@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import art from './opened-art.json';
 import seat from './bounds-seat.json';
 import { master } from './framing';
-import { homography, NAME_REGION, screenAffine, type Pt } from './screenAffine';
+import { homography, NAME_REGION, quadMatrix3d, screenAffine, type Pt } from './screenAffine';
 
 const QUAD = seat.quads.screen_right as Pt[];
 const M = master();
@@ -84,5 +84,48 @@ describe('screenAffine', () => {
     expect(f.w).toBeCloseTo(0.2, 12);
     expect(f.h).toBeCloseTo(0.2, 12);
     expect([f.x, f.y]).toEqual([0.2, 0.2]);
+  });
+});
+
+describe('quadMatrix3d', () => {
+  /** Apply a CSS matrix3d (column-major) to (x, y, 0, 1). */
+  const apply = (m: string, x: number, y: number): Pt => {
+    const v = m.slice('matrix3d('.length, -1).split(',').map(Number);
+    const X = v[0]! * x + v[4]! * y + v[12]!;
+    const Y = v[1]! * x + v[5]! * y + v[13]!;
+    const W = v[3]! * x + v[7]! * y + v[15]!;
+    return [X / W, Y / W];
+  };
+
+  it('maps the box corners onto the quad', () => {
+    const quad: Pt[] = [
+      [12, 30],
+      [180, 22],
+      [205, 140],
+      [4, 128],
+    ];
+    const m = quadMatrix3d(160, 100, quad);
+    const corners: Pt[] = [
+      [0, 0],
+      [160, 0],
+      [160, 100],
+      [0, 100],
+    ];
+    corners.forEach(([x, y], i) => {
+      const [gx, gy] = apply(m, x, y);
+      expect(Math.abs(gx - quad[i]![0])).toBeLessThan(1e-6);
+      expect(Math.abs(gy - quad[i]![1])).toBeLessThan(1e-6);
+    });
+  });
+
+  it('gives a box mapped onto itself the identity', () => {
+    expect(
+      quadMatrix3d(80, 50, [
+        [0, 0],
+        [80, 0],
+        [80, 50],
+        [0, 50],
+      ]),
+    ).toBe('matrix3d(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1)');
   });
 });

@@ -15,8 +15,8 @@ export const NAME_REGION: Region = { s0: 0.08, t0: 0.1, s1: 0.92, t1: 0.32 };
 
 const WHOLE: Region = { s0: 0, t0: 0, s1: 1, t1: 1 };
 
-/** The projective map of the unit square (s, t) onto the quad (Heckbert's square-to-quad). */
-export function homography(quad: Pt[]): (s: number, t: number) => Pt {
+/** The coefficients of the unit square's projective map onto the quad (Heckbert's square-to-quad). */
+function squareToQuad(quad: Pt[]) {
   const [[x0, y0], [x1, y1], [x2, y2], [x3, y3]] = quad as [Pt, Pt, Pt, Pt];
   const [dx1, dx2, dx3] = [x1 - x2, x3 - x2, x0 - x1 + x2 - x3];
   const [dy1, dy2, dy3] = [y1 - y2, y3 - y2, y0 - y1 + y2 - y3];
@@ -28,10 +28,30 @@ export function homography(quad: Pt[]): (s: number, t: number) => Pt {
     h = (dx1 * dy3 - dx3 * dy1) / det;
   }
   const [a, b, d, e] = [x1 - x0 + g * x1, x3 - x0 + h * x3, y1 - y0 + g * y1, y3 - y0 + h * y3];
+  return { a, b, d, e, g, h, x0, y0 };
+}
+
+/** The projective map of the unit square (s, t) onto the quad. */
+export function homography(quad: Pt[]): (s: number, t: number) => Pt {
+  const { a, b, d, e, g, h, x0, y0 } = squareToQuad(quad);
   return (s, t) => {
     const w = g * s + h * t + 1;
     return [(a * s + b * t + x0) / w, (d * s + e * t + y0) / w];
   };
+}
+
+/**
+ * The CSS matrix3d (column-major, px) that maps a w × h box's corners (0,0), (w,0), (w,h), (0,h)
+ * onto the quad (TL, TR, BR, BL): a face laid exactly on a live object, perspective and all.
+ */
+export function quadMatrix3d(w: number, h: number, quad: Pt[]): string {
+  const { a, b, d, e, g, h: k, x0, y0 } = squareToQuad(quad);
+  const n = (v: number) => {
+    const r = Number(v.toPrecision(12));
+    return Object.is(r, -0) ? 0 : r;
+  };
+  const m = [a / w, d / w, 0, g / w, b / h, e / h, 0, k / h, 0, 0, 1, 0, x0, y0, 0, 1];
+  return `matrix3d(${m.map(n).join(', ')})`;
 }
 
 /**

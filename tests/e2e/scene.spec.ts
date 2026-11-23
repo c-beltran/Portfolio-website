@@ -28,7 +28,7 @@ const canvasAspect = (page: Page) =>
 test('capture=master without tier=2 mounts nothing', async ({ page }) => {
   await gotoDesk(page, '/?capture=master');
   await page.waitForTimeout(500);
-  await expect(page.locator('.desk-still canvas')).toHaveCount(0);
+  await expect(page.locator('.desk-still__live canvas')).toHaveCount(0);
 });
 
 test('without the flag, no three.js loads', async ({ page }) => {
@@ -39,7 +39,7 @@ test('without the flag, no three.js loads', async ({ page }) => {
   await gotoDesk(page, '/');
   await page.waitForLoadState('networkidle');
   await page.waitForTimeout(500); // past browser idle
-  await expect(page.locator('.desk-still canvas')).toHaveCount(0);
+  await expect(page.locator('.desk-still__live canvas')).toHaveCount(0);
   expect(scene).toEqual([]);
   expect(await page.evaluate(() => '__THREE__' in window)).toBe(false);
 });
@@ -180,7 +180,7 @@ test.describe('?tier=2 without WebGL', () => {
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(500);
     await expect(page.locator('.desk-still__photo--day img')).toBeVisible();
-    await expect(page.locator('.desk-still canvas')).toHaveCount(0);
+    await expect(page.locator('.desk-still__live canvas')).toHaveCount(0);
     expect(errors).toEqual([]);
   });
 });
@@ -207,7 +207,7 @@ test('?tier=2 falls back to the still when a scene asset fails to load', async (
   await page.waitForTimeout(1500);
   await expect(page.locator('.desk-still__photo--day img')).toBeVisible();
   await expect(page.locator('button.hotspot')).toHaveCount(DESK_OBJECTS.length + 1);
-  await expect(page.locator('.desk-still canvas')).toHaveCount(0);
+  await expect(page.locator('.desk-still__live canvas')).toHaveCount(0);
   await hotspot(page, 'kit').click();
   expect(path(page)).toBe('/potaflow');
 });
