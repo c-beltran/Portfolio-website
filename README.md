@@ -2,7 +2,7 @@
 
 Carlos Beltran's portfolio, built with AI agents: a desk seen from the chair, where each object opens a part of the story. Pick up the test kit for Potaflow, the phone for Power Walk, or the mug for coffee.
 
-> **Work in progress.** The desk and all its sections work. The close-up moments and the live 3D view are still being built (see [status](#status)).
+> **Work in progress.** The desk, all its sections and their close-up moments work. The live 3D view is still being built (see [status](#status)).
 
 ## How it's built with agents
 
@@ -58,7 +58,8 @@ pnpm e2e                                    # browser tests against the build (C
 
 - [x] The desk, its twelve sections and the Classic page
 - [x] The test kit and phone come forward
-- [ ] Every other section's object comes forward or zooms in
+- [x] Every other section's object comes forward or zooms in, with real HTML on the badge, the card and both monitor halves
+- [x] The terminal on the monitor loops, under the same pause as the steam
 - [ ] The live desk becomes the default on capable devices. Until then, its timing tests fail on CI's CPU-only renderer.
 - [ ] Final copy, photos and recordings (marked `DRAFT` and `TODO` for now)
 
