@@ -21,11 +21,12 @@ type Entry = {
   pivot: [number, number];
   screen?: [number, number][];
 };
-const ART = art as unknown as Record<'kit' | 'phone', Entry>;
-const OBJ = { kit: 'obj_kit', phone: 'obj_phone' } as const;
+const MOVERS = ['kit', 'phone', 'badge', 'photo', 'notepad', 'card', 'car', 'ball', 'mug'] as const;
+const LEANS = ['monitor', 'cv', 'board'] as const;
+const ART = art as unknown as Record<string, Entry>;
 
-describe.each(['kit', 'phone'] as const)('the opened %s', (id) => {
-  const a = ART[id];
+describe.each(MOVERS)('the opened %s', (id) => {
+  const a = ART[id]!;
 
   it('has its framing', () => {
     expect(a.aspect).toBeGreaterThan(0.3);
@@ -60,7 +61,7 @@ describe.each(['kit', 'phone'] as const)('the opened %s', (id) => {
   it('its patch covers its spot on the desk', () => {
     const b = (
       bounds.objects as Record<string, { x0: number; y0: number; x1: number; y1: number }>
-    )[OBJ[id]]!;
+    )[`obj_${id}`]!;
     expect(a.patch.x0).toBeLessThanOrEqual(b.x0);
     expect(a.patch.y0).toBeLessThanOrEqual(b.y0);
     expect(a.patch.x1).toBeGreaterThanOrEqual(b.x1);
@@ -80,9 +81,46 @@ describe.each(['kit', 'phone'] as const)('the opened %s', (id) => {
   }
 });
 
-describe('the phone screen', () => {
-  it('is a convex quad inside the art', () => {
-    const q = ART.phone.screen!;
+describe.each(LEANS)('the %s lean-in', (id) => {
+  const a = ART[id]!;
+
+  it('has its framing, and no patch: nothing moves', () => {
+    expect(a.aspect).toBeGreaterThan(0.8);
+    expect(a.aspect).toBeLessThan(1.6);
+    expect(a.widths).toEqual([800, 1600]);
+    expect(a.patch).toBeUndefined();
+  });
+
+  it('shows what it zooms to across most of the art', () => {
+    const q = a.screen!;
+    const area =
+      Math.abs(
+        q.reduce((n, p, i) => {
+          const r = q[(i + 1) % 4]!;
+          return n + p[0] * r[1] - r[0] * p[1];
+        }, 0),
+      ) / 2;
+    expect(area).toBeGreaterThanOrEqual(0.7);
+  });
+
+  for (const mode of ['day', 'lamp'])
+    for (const w of [800, 1600])
+      for (const ext of ['avif', 'webp']) {
+        const name = `${id}-${mode}-${w}.${ext}`;
+        it(`${name} is opaque, ${w} px wide, ≤ 150 kB`, async () => {
+          const p = join(DIR, name);
+          expect(existsSync(p), name).toBe(true);
+          const m = await sharp(p).metadata();
+          expect(m.hasAlpha).toBe(false);
+          expect(m.width).toBe(w);
+          expect(statSync(p).size).toBeLessThanOrEqual(150 * KB);
+        });
+      }
+});
+
+describe.each(['phone', 'badge', 'card', 'monitor', 'cv', 'board'])('the %s screen quad', (id) => {
+  it('is convex, inside the art, clockwise from its top-left', () => {
+    const q = ART[id]!.screen!;
     expect(q).toHaveLength(4);
     for (const [s, t] of q) {
       expect(s).toBeGreaterThanOrEqual(0);
@@ -90,11 +128,23 @@ describe('the phone screen', () => {
       expect(t).toBeGreaterThanOrEqual(0);
       expect(t).toBeLessThanOrEqual(1);
     }
-    // convex, one winding: every turn has the same sign
     const turns = q.map((p, i) => {
       const [a, b, c] = [p, q[(i + 1) % 4]!, q[(i + 2) % 4]!];
       return (b[0] - a[0]) * (c[1] - b[1]) - (b[1] - a[1]) * (c[0] - b[0]);
     });
-    expect(turns.every((t) => t > 0) || turns.every((t) => t < 0)).toBe(true);
+    expect(turns.every((t) => t > 0)).toBe(true); // clockwise with y down
+    const sum = q.map(([s, t]) => s + t);
+    expect(Math.min(...sum)).toBe(sum[0]);
+  });
+});
+
+describe('the opened mug', () => {
+  it('knows where its coffee is, for the steam', () => {
+    const s = (ART.mug! as Entry & { steam?: { x: number; y: number; w: number } }).steam!;
+    for (const v of [s.x, s.y]) {
+      expect(v).toBeGreaterThan(0);
+      expect(v).toBeLessThan(1);
+    }
+    expect(s.w).toBeGreaterThan(0.1);
   });
 });
