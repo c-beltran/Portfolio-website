@@ -41,7 +41,7 @@ export function Steam({ at }: { at?: { x: number; y: number; w: number } } = {})
       style={
         at
           ? // over the opened mug: from the cup's opening up to the top of its art
-            ({ '--sx': at.x, '--sy': at.y, '--sw': at.w, '--sh': at.y } as CSSProperties)
+            ({ '--sx': at.x, '--sy': at.y, '--sw': at.w * 0.55, '--sh': at.y } as CSSProperties)
           : DESK
       }
     >

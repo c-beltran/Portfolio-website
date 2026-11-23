@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, type CSSProperties } from 'react';
 import { artOf, artSrc, isLean, OPENED_IDS, sideOf, type OpenedId } from '@/content/opened';
+import { OpenedFace } from './OpenedFace';
 import { PhoneClip } from './PhoneClip';
 import { Steam } from './Steam';
 
@@ -119,6 +120,7 @@ export function Opened({ id, mode, leaving }: Props) {
       <div className="opened__slot">
         <div className="opened__art" style={{ '--aspect': artOf(id).aspect } as CSSProperties}>
           <canvas ref={ref} className="opened__canvas" />
+          <OpenedFace id={id} />
           {id === 'phone' && <PhoneClip leaving={leaving} />}
           {id === 'mug' && <Steam at={artOf('mug').steam} />}
         </div>

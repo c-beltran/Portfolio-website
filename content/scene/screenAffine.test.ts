@@ -1,3 +1,5 @@
+import { FACE_IDS } from '../faces';
+import { isLean, LEAN_REGION } from '../opened';
 import { describe, expect, it } from 'vitest';
 import art from './opened-art.json';
 import seat from './bounds-seat.json';
@@ -59,6 +61,21 @@ describe('screenAffine', () => {
     const br = q[2]!;
     const err = Math.hypot((got[0] - br[0]) * m.w, (got[1] - br[1]) * m.h);
     expect(err / Math.hypot(f.w, f.h)).toBeLessThan(0.01);
+  });
+
+  it("each face's affine fit is within 1% (movers) or 3% (lean-ins) of its box's diagonal at the fourth corner", () => {
+    for (const id of FACE_IDS) {
+      const a = (art as unknown as Record<string, { aspect: number; screen: Pt[] }>)[id]!;
+      const lean = isLean(id);
+      const r = lean ? LEAN_REGION : { s0: 0, t0: 0, s1: 1, t1: 1 };
+      const m = { w: a.aspect, h: 1 };
+      const f = screenAffine(a.screen, m, r);
+      const [p, q, c, d] = f.matrix;
+      const got: Pt = [(f.x + p * f.w + c * f.h) / m.w, (f.y + q * f.w + d * f.h) / m.h];
+      const br = homography(a.screen)(r.s1, r.t1);
+      const err = Math.hypot((got[0] - br[0]) * m.w, (got[1] - br[1]) * m.h);
+      expect(err / Math.hypot(f.w, f.h), id).toBeLessThan(lean ? 0.03 : 0.01);
+    }
   });
 
   it('gives an axis-aligned square the identity matrix', () => {

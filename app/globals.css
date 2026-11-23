@@ -1008,6 +1008,205 @@ html:has(.desk-still) body {
 }
 
 /*
+ * ---- Faces: the words on an opened object (components/desk/OpenedFace.tsx). ----
+ * A box on the face of the render, bent onto it by the matrix faceBox() gives, and a size
+ * container: text is in cqh with a 12px floor. Server-rendered, so a direct load paints it; after
+ * a visitor's open it waits for the render to be drawn. Each face's paper and ink are fixed pairs
+ * at 4.5:1 or more in both themes.
+ */
+.opened__face {
+  position: absolute;
+  transform-origin: 0 0;
+  container-type: size;
+  overflow: hidden;
+}
+
+.desk[data-animate] .opened__canvas:not([data-drawn]) ~ .opened__face,
+.desk:has(.desk-still__live[data-ready='true']) .opened__face {
+  visibility: hidden;
+}
+
+.face {
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  padding: 5cqh 6cqw;
+  display: flex;
+  flex-direction: column;
+  gap: 2.5cqh;
+  font-size: max(12px, 5cqh);
+  line-height: 1.25;
+}
+
+.face p,
+.face ul {
+  margin: 0;
+}
+
+.face ul {
+  padding: 0;
+  list-style: none;
+}
+
+.face__todo {
+  font-style: italic;
+  opacity: 0.85;
+}
+
+.face__link {
+  display: inline-flex;
+  align-items: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 0.6em;
+  border-radius: 6px;
+  color: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
+.face--badge {
+  background: #f7f7f5;
+  color: #15191c;
+  font-size: max(12px, 3.6cqh);
+}
+
+.face--badge .face__heading {
+  font-weight: 800;
+  font-size: max(13px, 5cqh);
+}
+
+.face--card {
+  background: #f4f1ea;
+  color: #15191c;
+  justify-content: center;
+}
+
+.face__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 1em;
+}
+
+.face--cv {
+  background: var(--screen-paper);
+  color: var(--screen-ink);
+  font-size: max(12px, 4cqh);
+}
+
+.face__name {
+  font-family: var(--font-display), var(--font-inter), sans-serif;
+  font-weight: 900;
+  font-size: max(18px, 10cqh);
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.face__title {
+  font-weight: 600;
+}
+
+.face__facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2em 0.9em;
+  font-weight: 600;
+}
+
+.face__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 1em;
+  margin-top: auto;
+}
+
+/* A small screen drops the summary: the panel carries it. */
+@container (max-height: 300px) {
+  .face__summary {
+    display: none;
+  }
+}
+
+.face--build {
+  background: #1e1f22;
+  color: #e8e6e3;
+  font-family: var(--font-mono, ui-monospace), monospace;
+  font-size: max(12px, 3.4cqh);
+  gap: 1.6cqh;
+}
+
+.face__check {
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+}
+
+.face__check::before {
+  content: '';
+  flex: none;
+  width: 0.7em;
+  height: 0.7em;
+  border-radius: 50%;
+  background: #3fb950;
+}
+
+.face__replay {
+  display: grid;
+  gap: 1cqh;
+}
+
+.face__replay i {
+  display: block;
+  height: max(4px, 1.6cqh);
+  width: calc(90% - var(--i) * 9%);
+  border-radius: 2px;
+  background: rgb(232 230 227 / 0.35);
+}
+
+/* After a visitor's open: amber until the face shows, then green 0.6 s apart from 0.3 s; the six
+   replay rows appear 0.5 s apart. All done by 4.5 s. */
+.face--build[data-state='waiting'] .face__check::before {
+  background: #e3a33a;
+}
+
+.face--build[data-state='waiting'] .face__replay i {
+  opacity: 0;
+}
+
+.face--build[data-state='running'] .face__check::before {
+  animation: check-green 0.2s calc(0.3s + var(--i) * 0.6s) both;
+}
+
+.face--build[data-state='running'] .face__replay i {
+  animation: replay-row 0.3s calc(1.2s + var(--i) * 0.5s) both;
+}
+
+@keyframes check-green {
+  from {
+    background: #e3a33a;
+  }
+
+  to {
+    background: #3fb950;
+  }
+}
+
+@keyframes replay-row {
+  from {
+    opacity: 0;
+  }
+}
+
+/* Small faces keep the checks and drop the replay rows: the panel tells the story. */
+@container (max-height: 300px) {
+  .face__replay {
+    display: none;
+  }
+}
+
+/*
  * ---- Steam over the mug, and the pause that WCAG 2.2.2 asks of motion that
  * never ends. Placed in master fractions from the mug's bounds (Steam.tsx); it follows the glance.
  * Only transform and opacity animate. None of it exists under reduced motion. ----
@@ -1081,7 +1280,12 @@ html:has(.desk-still) body {
 }
 
 .opened .steam__wisp svg {
-  filter: blur(3px);
+  filter: blur(5px);
+}
+
+.opened .steam__wisp path {
+  stroke: rgb(255 246 234 / 0.32);
+  stroke-width: 6;
 }
 
 .opened__canvas:not([data-drawn]) ~ .steam {
