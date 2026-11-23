@@ -67,3 +67,19 @@ export function blendCam(a: CamState, b: CamState, k: number): CamState {
 export function leanCamera(seat: CamState, leans: { state: CamState; k: number }[]): CamState {
   return leans.reduce((cam, l) => blendCam(cam, l.state, l.k), seat);
 }
+
+/**
+ * The lean-ins on their way, in the order they were last opened (oldest first). The fold is
+ * order-dependent, so the order must not change mid-move: closing one never reorders it.
+ */
+export function foldOrder<T extends { id: LeanId }>(
+  leans: T[],
+  openedAt: Record<LeanId, number>,
+): T[] {
+  return [...leans].sort((a, b) => openedAt[a.id] - openedAt[b.id]);
+}
+
+/** Which lean-in the dim's hole follows: the latest on its way, at its own eased travel. */
+export function holeOf<T extends { id: LeanId; k: number }>(ordered: T[]): T | null {
+  return ordered.at(-1) ?? null;
+}

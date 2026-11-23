@@ -176,6 +176,8 @@ export function bakedMaterial(day: THREE.Texture, lamp: THREE.Texture, opts: Pro
       // A lean-in's art box (drawing-buffer px, y up) left undimmed, feathered by dimFeather px.
       dimClear: { value: new THREE.Vector4(0, 0, 0, 0) },
       dimFeather: { value: 0 },
+      // How open the hole is (its lean-in's eased travel), so it fades in and out with the move.
+      dimClearK: { value: 0 },
     });
   if (opts.opened)
     Object.assign(uniforms, {
@@ -198,7 +200,12 @@ export function bakedMaterial(day: THREE.Texture, lamp: THREE.Texture, opts: Pro
       : ['uniform float fade;']),
     ...(residual ? [RESIDUAL_GLSL] : []),
     ...(opts.dim
-      ? ['uniform float dim;', 'uniform vec4 dimClear;', 'uniform float dimFeather;']
+      ? [
+          'uniform float dim;',
+          'uniform vec4 dimClear;',
+          'uniform float dimFeather;',
+          'uniform float dimClearK;',
+        ]
       : []),
     ...(opts.opened
       ? [
@@ -238,7 +245,7 @@ export function bakedMaterial(day: THREE.Texture, lamp: THREE.Texture, opts: Pro
           '    vec2 p = gl_FragCoord.xy;',
           '    vec2 lo = smoothstep(dimClear.xy, dimClear.xy + dimFeather, p);',
           '    vec2 hi = 1.0 - smoothstep(dimClear.zw - dimFeather, dimClear.zw, p);',
-          '    dimHere *= 1.0 - lo.x * lo.y * hi.x * hi.y;',
+          '    dimHere *= 1.0 - dimClearK * lo.x * lo.y * hi.x * hi.y;',
           '  }',
           `  base.rgb = sRGBTransferEOTF(vec4(sRGBTransferOETF(base).rgb * (1.0 - ${(1 - DIM_LEVEL).toFixed(2)} * dimHere), 1.0)).rgb;`,
         ]

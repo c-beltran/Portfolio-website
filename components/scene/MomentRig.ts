@@ -14,6 +14,7 @@ import {
 import poses from '@/content/scene/opened-poses.json';
 import type { Vec3 } from '@/content/scene/cameras';
 import { quadMatrix3d, type Pt } from '@/content/scene/screenAffine';
+import { foldOrder, holeOf } from './lean';
 import { setOpenedBake } from './materials';
 import { dimsFor, OUT, REST, stepMoment, type Moment } from './moment';
 import { meshKey } from './moverParts';
@@ -76,6 +77,11 @@ export class MomentRig {
   private last: OpenedId | null;
   /** Whether the open mover's face (if it has one) is laid on it: part of data-settled. */
   private facePlaced = false;
+  /** When each lean-in was last opened (a counter): the camera folds them in this order. */
+  private openedAt: Record<LeanId, number> = { monitor: 0, cv: 0, board: 0 };
+  private opens = 0;
+  /** Each lean-in's last art box, kept for its way back once its slot has gone. */
+  private leanBoxes = new Map<LeanId, DOMRect>();
   private raf = 0;
   private alive = true;
   private video: { el: HTMLVideoElement; tex: THREE.VideoTexture } | null = null;
@@ -85,6 +91,7 @@ export class MomentRig {
   constructor(private s: Setup) {
     this.mixer = new THREE.AnimationMixer(s.scene);
     this.open = this.last = s.initial;
+    if (s.initial && isLean(s.initial)) this.openedAt[s.initial] = ++this.opens;
     this.moments = Object.fromEntries(
       OPENED_IDS.map((id) => [id, id === s.initial ? OUT : REST]),
     ) as Record<OpenedId, Moment>;
@@ -127,6 +134,7 @@ export class MomentRig {
     if (open) {
       this.last = open;
       if (isMover(open)) this.loadBake(open);
+      if (isLean(open)) this.openedAt[open] = ++this.opens;
     }
     this.syncVideo();
     cancelAnimationFrame(this.raf);
@@ -156,11 +164,14 @@ export class MomentRig {
     this.raf = requestAnimationFrame(tick);
   }
 
-  /** Each lean-in on its way: eased travel above 0, the one closing first, then the one opening. */
+  /** Each lean-in on its way (eased travel above 0), in the order they were last opened. */
   lean(): { id: LeanId; k: number }[] {
-    return LEAN_IDS.map((id) => ({ id, k: easeOutCubic(this.moments[id].travel) }))
-      .filter((l) => l.k > 0)
-      .sort((a, b) => Number(a.id === this.open) - Number(b.id === this.open));
+    return foldOrder(
+      LEAN_IDS.map((id) => ({ id, k: easeOutCubic(this.moments[id].travel) })).filter(
+        (l) => l.k > 0,
+      ),
+      this.openedAt,
+    );
   }
 
   /** Each rendered frame: fit every mover to its slot (.opened__art) through the live camera. */
@@ -214,19 +225,27 @@ export class MomentRig {
     this.writeSettled();
   }
 
-  /** The open lean-in's art box: data-fit, and the hole it keeps in the dim (drawing-buffer px). */
+  /**
+   * The lean-ins' art boxes: data-fit for the open one, and the hole in the dim (drawing-buffer px)
+   * over the latest lean-in on its way, opened as far as it has travelled, so it fades in and out
+   * with the move (a closing lean-in keeps its last box).
+   */
   private fitLean(c: DOMRect) {
-    const id = this.open && isLean(this.open) ? this.open : null;
-    const box = id
-      ? document
-          .querySelector<HTMLElement>(`.opened[data-id="${id}"]:not([data-leaving]) .opened__art`)
-          ?.getBoundingClientRect()
-      : undefined;
+    for (const id of LEAN_IDS) {
+      const box = document
+        .querySelector<HTMLElement>(`.opened[data-id="${id}"]:not([data-leaving]) .opened__art`)
+        ?.getBoundingClientRect();
+      if (box && box.height > 0) {
+        this.leanBoxes.set(id, box);
+        if (id === this.open) this.s.canvas.dataset.fit = box.height.toFixed(1);
+      }
+    }
+    const lean = holeOf(this.lean());
+    const box = lean ? this.leanBoxes.get(lean.id) : undefined;
     const dpr = this.s.renderer.getPixelRatio();
     const hole = new THREE.Vector4(0, 0, 0, 0);
     let feather = 0;
-    if (box && box.height > 0) {
-      this.s.canvas.dataset.fit = box.height.toFixed(1);
+    if (box) {
       const H = c.height;
       hole.set(
         (box.left - c.left) * dpr,
@@ -239,6 +258,7 @@ export class MomentRig {
     for (const mat of this.dimmed()) {
       (mat.uniforms.dimClear!.value as THREE.Vector4).copy(hole);
       mat.uniforms.dimFeather!.value = feather;
+      mat.uniforms.dimClearK!.value = box && lean ? lean.k : 0;
     }
   }
 

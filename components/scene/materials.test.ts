@@ -107,6 +107,9 @@ describe('coming forward: the dim and the opened bake', () => {
     expect((m.uniforms.dimClear!.value as THREE.Vector4).toArray()).toEqual([0, 0, 0, 0]);
     expect(m.uniforms.dimFeather!.value).toBe(0);
     expect(m.fragmentShader).toContain('uniform vec4 dimClear;');
+    // the hole opens and closes with its lean-in's travel, never all at once
+    expect(m.uniforms.dimClearK!.value).toBe(0);
+    expect(m.fragmentShader).toContain('dimHere *= 1.0 - dimClearK * lo.x * lo.y * hi.x * hi.y;');
     // a zero-area rect skips the hole: the whole frame dims
     expect(m.fragmentShader).toContain('if (dimClear.z > dimClear.x && dimClear.w > dimClear.y)');
   });

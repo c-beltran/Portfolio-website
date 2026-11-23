@@ -2,7 +2,15 @@ import * as THREE from 'three';
 import { describe, expect, it } from 'vitest';
 import { artOf, LEAN_IDS } from '@/content/opened';
 import { CAMERAS } from '@/content/scene/cameras';
-import { blendCam, leanCamera, leanView, type CamState, type ScreenBox } from './lean';
+import {
+  blendCam,
+  foldOrder,
+  holeOf,
+  leanCamera,
+  leanView,
+  type CamState,
+  type ScreenBox,
+} from './lean';
 
 /** Where a world point lands, in canvas CSS px, through a camera state. */
 function project(s: CamState, p: number[], canvas: ScreenBox): [number, number] {
@@ -84,5 +92,29 @@ describe('blending camera states', () => {
         { state: B, k: 1 },
       ]),
     ).toEqual(B);
+  });
+});
+
+describe('the order lean-ins fold in', () => {
+  it('keeps the order they were opened in, so closing one never reorders the blend', () => {
+    // the CV opened first, then How I build; then Esc: both are closing
+    const order = foldOrder(
+      [
+        { id: 'monitor', k: 0.7 },
+        { id: 'cv', k: 0.96 },
+      ],
+      { cv: 1, monitor: 2, board: 0 },
+    );
+    expect(order.map((l) => l.id)).toEqual(['cv', 'monitor']);
+  });
+
+  it("cuts the dim's hole for the latest lean-in, as far as it has come", () => {
+    expect(holeOf([])).toBeNull();
+    expect(
+      holeOf([
+        { id: 'cv', k: 0.96 },
+        { id: 'monitor', k: 0.3 },
+      ]),
+    ).toEqual({ id: 'monitor', k: 0.3 });
   });
 });
