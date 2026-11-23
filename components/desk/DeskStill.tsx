@@ -28,6 +28,7 @@ import { LiveLayer } from '@/components/scene/LiveLayer';
 import { Hotspot } from './Hotspot';
 import { MonitorName } from './MonitorName';
 import { prefetchArt } from './Opened';
+import { ScreenLoop } from './ScreenLoop';
 import { CENTRE_SCRIPT, panOf, setPan } from './pan';
 import { Steam } from './Steam';
 import { useLabels } from './useLabels';
@@ -323,6 +324,7 @@ export function DeskStill({ selected, onOpen, onClose }: Props) {
           <div className="desk-still__overlay">
             {glow && <Steam />}
             <MonitorName />
+            {glow && <ScreenLoop mode={theme === 'lamp' ? 'lamp' : 'day'} />}
           </div>
         </div>
       </div>

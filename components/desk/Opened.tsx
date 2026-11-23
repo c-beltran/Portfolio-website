@@ -12,7 +12,7 @@ type Mode = 'day' | 'lamp';
 const AVIF_PROBE =
   'data:image/avif;base64,AAAAHGZ0eXBhdmlmAAAAAG1pZjFhdmlmbWlhZgAAANZtZXRhAAAAAAAAACFoZGxyAAAAAAAAAABwaWN0AAAAAAAAAAAAAAAAAAAAACJpbG9jAAAAAERAAAEAAQAAAAAA+gABAAAAAAAAAB0AAAAjaWluZgAAAAAAAQAAABVpbmZlAgAAAAABAABhdjAxAAAAAA5waXRtAAAAAAABAAAAVmlwcnAAAAA4aXBjbwAAAAxhdjFDgSACAAAAABRpc3BlAAAAAAAAAAEAAAABAAAAEHBpeGkAAAAAAwgICAAAABZpcG1hAAAAAAAAAAEAAQOBAgMAAAAlbWRhdBIACgc4AAaQENBpMhAZQmMEwAA0AACQQM6Xt10S';
 let avif: Promise<boolean> | null = null;
-function avifOk(): Promise<boolean> {
+export function avifOk(): Promise<boolean> {
   avif ??= new Promise((resolve) => {
     const img = new Image();
     img.onload = () => resolve(img.naturalWidth === 1);

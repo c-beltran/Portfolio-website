@@ -1207,6 +1207,21 @@ html:has(.desk-still) body {
 }
 
 /*
+ * The terminal loop on the monitor's left half (ScreenLoop.tsx): placed on the master like the
+ * patch, and following the glance like the name.
+ */
+.screen-loop {
+  position: absolute;
+  left: calc(var(--px0) * 100%);
+  top: calc(var(--py0) * 100%);
+  width: calc(var(--pw) * 100%);
+  height: calc(var(--ph) * 100%);
+  display: block;
+  transform: translate(var(--gx, 0px), var(--gy, 0px));
+  pointer-events: none;
+}
+
+/*
  * ---- Steam over the mug, and the pause that WCAG 2.2.2 asks of motion that
  * never ends. Placed in master fractions from the mug's bounds (Steam.tsx); it follows the glance.
  * Only transform and opacity animate. None of it exists under reduced motion. ----
