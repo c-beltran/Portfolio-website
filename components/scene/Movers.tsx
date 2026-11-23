@@ -4,7 +4,7 @@ import { useGLTF } from '@react-three/drei';
 import { useFrame, useThree } from '@react-three/fiber';
 import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
-import { artOf, OPENED_IDS, type OpenedId } from '@/content/opened';
+import { artOf, OPENED_IDS, type MoverId, type OpenedId } from '@/content/opened';
 import poses from '@/content/scene/opened-poses.json';
 import type { Vec3 } from '@/content/scene/cameras';
 import { setOpenedBake } from './materials';
@@ -17,7 +17,7 @@ const PIVOT: Record<OpenedId, string> = { kit: 'obj_kit', phone: 'obj_phone' };
 const CLIP_ID = 'power-walk-clip';
 const openBake = (id: OpenedId, mode: 'day' | 'lamp') => `/opened/bake/${id}-open-${mode}.webp`;
 
-type Mats = Record<OpenedId | 'phoneScreen', THREE.ShaderMaterial>;
+type Mats = Record<MoverId | 'phoneScreen', THREE.ShaderMaterial>;
 type Mover = {
   pivot: THREE.Object3D;
   action: THREE.AnimationAction;

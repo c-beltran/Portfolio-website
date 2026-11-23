@@ -2,6 +2,20 @@ import { LAYOUT } from './deskLayout';
 import { DESK_OBJECTS, type SectionSlug } from './objects';
 import art from './scene/opened-art.json';
 
+/** The objects modeled and baked to come forward (scripts/scene/bake_logic.py MOVERS). */
+export const MOVER_IDS = [
+  'kit',
+  'phone',
+  'badge',
+  'photo',
+  'notepad',
+  'card',
+  'car',
+  'ball',
+  'mug',
+] as const;
+export type MoverId = (typeof MOVER_IDS)[number];
+
 /**
  * The objects that come forward: the kit case and the phone so far. The rest open their
  * section's panel in place.

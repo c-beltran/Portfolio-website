@@ -17,10 +17,19 @@ import math
 FILL = 0.8  # of a square frame's half-width, where an opened render's or a lean-in's farthest point sits
 
 # The axes are the pivot's local axes (build_scene.py): the kit's +Z is the inside of the case
-# and +Y its hinge side; the phone's +Z is out of the screen and +Y toward its top.
+# and +Y its hinge side; the phone's +Z is out of the screen and +Y toward its top; a flat thing's
+# +Z is out of its face. The car, ball and mug stand level (+Z up), so their tilt is from looking
+# straight down: the car's 70° is 20° above side-on, the mug's 35° looks into the coffee.
 PRESENT = {
     "kit": {"face": "+Z", "up": "+Y", "tilt_deg": 40, "d0": 0.42},
     "phone": {"face": "screen", "up": "long", "tilt_deg": 0, "d0": 0.30},
+    "badge": {"face": "+Z", "up": "+Y", "tilt_deg": 0, "d0": 0.22},
+    "photo": {"face": "+Z", "up": "+Y", "tilt_deg": 0, "d0": 0.36},
+    "notepad": {"face": "+Z", "up": "+Y", "tilt_deg": 40, "d0": 0.42},
+    "card": {"face": "+Z", "up": "+Y", "tilt_deg": 0, "d0": 0.22},
+    "car": {"face": "+Z", "up": "+Y", "tilt_deg": 70, "d0": 0.38},
+    "ball": {"face": "+Z", "up": "+Y", "tilt_deg": 0, "d0": 0.40},
+    "mug": {"face": "+Z", "up": "+Y", "tilt_deg": 35, "d0": 0.34},
 }
 AXES = {"+X": (1.0, 0.0, 0.0), "+Y": (0.0, 1.0, 0.0), "+Z": (0.0, 0.0, 1.0), "screen": (0.0, 0.0, 1.0), "long": (0.0, 1.0, 0.0)}
 

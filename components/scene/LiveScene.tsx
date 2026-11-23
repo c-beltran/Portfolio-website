@@ -6,18 +6,18 @@ import { Suspense, useCallback, useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { bakedMaterial } from './materials';
 import { Movers } from './Movers';
-import type { OpenedId } from '@/content/opened';
+import { MOVER_IDS, type MoverId, type OpenedId } from '@/content/opened';
 import { CAMERAS, type Vec3 } from '@/content/scene/cameras';
 import { master, viewOffset } from '@/content/scene/framing';
 import { panOf } from '@/components/desk/pan';
 import { glanceShift, glanceTarget, useGlance, type Glance } from './glance';
 import { hfov } from './transition';
 
-const GROUPS = ['room', 'desk', 'monitor', 'props', 'screen', 'sky'] as const;
+const GROUPS = ['room', 'desk', 'monitor', 'props', 'screen', 'board', 'sky'] as const;
 type Group = (typeof GROUPS)[number];
 /** The objects that come forward, in their own GLB (Movers.tsx). */
-const MOVERS = ['kit', 'phone'] as const;
-type Mover = (typeof MOVERS)[number];
+const MOVERS = MOVER_IDS;
+type Mover = MoverId;
 // The phone's dark glass, under the clip quad: the residual corrects it toward the still.
 const PHONE_GLASS = '#0b0c0e';
 const tex = (g: Group | Mover, mode: 'day' | 'lamp') => `/scene/bake/${g}-${mode}.webp`;
@@ -139,7 +139,7 @@ function Scene({
     scene.traverse((o) => {
       if (!(o instanceof THREE.Mesh)) return;
       const g = (o.name in materials ? o.name : o.parent?.name) as keyof typeof materials;
-      // an unknown mesh takes the props bake (the water glass, its last special case, went in 2b)
+      // an unknown mesh takes the props bake (no mesh needs one)
       o.material = materials[g] ?? materials.props;
     });
     invalidate();

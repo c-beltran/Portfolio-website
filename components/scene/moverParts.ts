@@ -1,6 +1,6 @@
-import type { OpenedId } from '@/content/opened';
+import type { MoverId } from '@/content/opened';
 
-export type MeshKey = OpenedId | 'phoneScreen';
+export type MeshKey = MoverId | 'phoneScreen';
 
 /** Each mover mesh's material: the rigid parts take their mover's bake; the clip quad is glass. */
 export const MESH: Record<string, MeshKey> = {
@@ -8,6 +8,14 @@ export const MESH: Record<string, MeshKey> = {
   kit_lid: 'kit',
   phone_body: 'phone',
   phone_screen: 'phoneScreen',
+  badge_card: 'badge',
+  photo_frame: 'photo',
+  notepad_block: 'notepad',
+  notepad_page: 'notepad',
+  card_body: 'card',
+  car_body: 'car',
+  ball_skin: 'ball',
+  mug_body: 'mug',
 };
 
 /**
