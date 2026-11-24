@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { renderFact, statsFootnote, tenSecondFacts, PLACES } from '@/content/facts';
 import { headerSummary, LINKS, RESUME_TODO, showResume, showResumeTodo } from '@/content/links';
 import type { SectionSlug } from '@/content/objects';
-import { DRAFT_MARK, PANELS, type PanelBlock } from '@/content/panels';
+import { DRAFT_MARK, panelBlocks, type PanelBlock } from '@/content/panels';
 import statsJson from '@/content/stats.json';
 import { ClipControl } from './ClipControl';
 import type { Stats } from '@/content/stats.types';
@@ -124,10 +124,11 @@ function hasProjectStats(blocks: PanelBlock[]): boolean {
   return blocks.some((b) => b.kind === 'stats' || (b.kind === 'fact' && STAT_FACTS.has(b.fact)));
 }
 
-type Props = { slug: SectionSlug | null; onClose: () => void };
+/** via: what opened the section, when not its own object (the diploma, for the CV). */
+type Props = { slug: SectionSlug | null; via?: string | null; onClose: () => void };
 
 /** The section panel. Stays outside any canvas; announced politely. */
-export function Panel({ slug, onClose }: Props) {
+export function Panel({ slug, via, onClose }: Props) {
   if (slug === null) {
     return (
       <section className="panel panel--empty" aria-live="polite" aria-label="Section">
@@ -142,10 +143,10 @@ export function Panel({ slug, onClose }: Props) {
           Back to desk
         </button>
       </div>
-      {PANELS[slug].map((block, i) => (
+      {panelBlocks(slug, via).map((block, i) => (
         <Block key={i} block={block} />
       ))}
-      {hasProjectStats(PANELS[slug]) && (
+      {hasProjectStats(panelBlocks(slug)) && (
         <p className="panel__footnote">
           <small>{statsFootnote()}</small>
         </p>

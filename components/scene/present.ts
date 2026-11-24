@@ -79,3 +79,14 @@ export function projectedHeight(
     .project(cam);
   return Math.hypot(((a.x - b.x) * view.width) / 2, ((a.y - b.y) * view.height) / 2);
 }
+
+/** A pose turned by `q` (world axes) about the world point `centre`: an object spun in place. */
+export function spunPose(pose: Pose, centre: Vec3, q: THREE.Quaternion): Pose {
+  const c = new THREE.Vector3(...centre);
+  const position = new THREE.Vector3(...pose.position).sub(c).applyQuaternion(q).add(c);
+  const rotation = q.clone().multiply(new THREE.Quaternion(...pose.quaternion));
+  return {
+    position: position.toArray() as Vec3,
+    quaternion: rotation.toArray() as Pose['quaternion'],
+  };
+}

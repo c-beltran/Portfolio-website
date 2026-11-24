@@ -17,7 +17,7 @@ import {
 
 /** The objects that come forward, and the ones the view leans in to. */
 describe('opened objects', () => {
-  it('are all twelve: nine that come forward, then three to lean in to', () => {
+  it('are all thirteen: nine that come forward, then four to lean in to', () => {
     expect(OPENED_IDS).toEqual([
       'kit',
       'phone',
@@ -31,6 +31,7 @@ describe('opened objects', () => {
       'monitor',
       'cv',
       'board',
+      'diploma',
     ]);
     expect(OPENED_IDS.filter(isMover)).toEqual(MOVER_IDS);
   });
@@ -86,7 +87,7 @@ describe('opened objects', () => {
   });
 
   it('lay HTML on a face inside the art', () => {
-    for (const id of ['phone', 'badge', 'card', 'monitor', 'cv', 'board'] as const) {
+    for (const id of ['phone', 'badge', 'card', 'monitor', 'cv', 'board', 'diploma'] as const) {
       const f = faceBox(id);
       const [l, t, w, h] = [f.left, f.top, f.width, f.height].map(parseFloat) as number[];
       expect(l).toBeGreaterThanOrEqual(0);
@@ -103,5 +104,14 @@ describe('opened objects', () => {
 
   it('dim the desk to 0.45', () => {
     expect(DIM_LEVEL).toBe(0.45);
+  });
+});
+
+describe('the diploma', () => {
+  it('openedFor picks the diploma only when asked', () => {
+    expect(openedFor('cv')).toBe('cv');
+    expect(openedFor('cv', 'diploma')).toBe('diploma');
+    expect(openedFor('travel', 'diploma')).toBe('board');
+    expect(openedFor('cv', 'nonsense')).toBe('cv');
   });
 });

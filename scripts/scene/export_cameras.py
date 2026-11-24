@@ -24,6 +24,7 @@ CAMERAS = {
     "monitor": "cam_monitor",
     "cv": "cam_cv",
     "board": "cam_board",
+    "diploma": "cam_diploma",
     "seat": "cam_seat",
 }
 # The target is a point on the view axis this far ahead (the scene's targets are 1-1.5 m away).
@@ -41,6 +42,11 @@ def main():
     a = p.parse_args(argv)
     out = {}
     shows = screen_geo.lean_corners(bpy.context.evaluated_depsgraph_get())
+    if "diploma" in shows:
+        # its camera frames the whole frame; what the page lays the degree on is its paper
+        import room
+
+        shows["diploma"] = [Vector(c) for c in room.diploma_paper_corners()]
     for key, name in CAMERAS.items():
         o = bpy.data.objects[name]
         if o.data.sensor_fit != "HORIZONTAL":

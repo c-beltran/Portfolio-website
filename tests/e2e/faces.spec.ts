@@ -239,3 +239,22 @@ test.describe('faces, no JavaScript', () => {
     await ctx.close();
   });
 });
+
+test.describe('the diploma face', () => {
+  test.use({ viewport: { width: 1280, height: 800 } });
+  for (const theme of ['day', 'lamp'] as const)
+    test(`shows the degree on its paper, in ${theme}`, async ({ page }) => {
+      if (theme === 'lamp') await atNight(page);
+      await gotoDesk(page, '/');
+      await page.locator('.hotspot[data-item="diploma"]').click();
+      const f = face(page, 'diploma');
+      await expect(f).toBeVisible();
+      await expect(f.locator('.face')).toHaveText(
+        /Queens College\s*The City University of New York\s*Bachelor of Science\s*Computer Science\s*May 2019/,
+      );
+      const fits = await f
+        .locator('.face')
+        .evaluate((el) => el.scrollHeight <= el.clientHeight + 1);
+      expect(fits).toBe(true);
+    });
+});

@@ -84,4 +84,16 @@ def lean_corners(depsgraph):
         out["cv"] = half_corners(monitor, depsgraph, "right")
     if get("board_face"):
         out["board"] = board_corners(get("board_face"), depsgraph)
+    if get("obj_diploma"):
+        out["diploma"] = diploma_corners()
     return out
+
+
+def diploma_corners():
+    """The diploma's frame, outside edge, on its front face, TL TR BR BL: the lean-in frames it
+    whole (the page lays the degree on its paper, room.diploma_paper_corners)."""
+    import room
+
+    (cx, cy, cz), (w, h) = room.DIPLOMA["centre"], room.DIPLOMA["size"]
+    y = cy - room.DIPLOMA["depth"] / 2
+    return [Vector(c) for c in ((cx - w / 2, y, cz + h / 2), (cx + w / 2, y, cz + h / 2), (cx + w / 2, y, cz - h / 2), (cx - w / 2, y, cz - h / 2))]

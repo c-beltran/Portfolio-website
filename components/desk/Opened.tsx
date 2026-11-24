@@ -1,10 +1,34 @@
 'use client';
 
-import { useEffect, useRef, type CSSProperties } from 'react';
+import {
+  lazy,
+  Suspense,
+  useEffect,
+  useRef,
+  useState,
+  type ComponentType,
+  type CSSProperties,
+} from 'react';
 import { artOf, artSrc, isLean, OPENED_IDS, sideOf, type OpenedId } from '@/content/opened';
 import { OpenedFace } from './OpenedFace';
 import { PhoneClip } from './PhoneClip';
+import { SpinTarget } from './SpinTarget';
 import { Steam } from './Steam';
+import { isSpin } from '@/lib/spin/spin';
+import { liveOver } from '@/lib/weather/hold';
+
+/** If the 3D view's code can't be fetched, the picture simply stays: it reports the failure. */
+function NoSpinView({ onFail }: { onFail: () => void }) {
+  useEffect(() => onFail(), [onFail]);
+  return null;
+}
+type SpinViewProps = Parameters<typeof import('./SpinView').default>[0];
+/** The spinnable object in 3D: loaded (three.js with it) only when a visitor first grabs one. */
+const SpinView = lazy<ComponentType<SpinViewProps>>(() =>
+  import('./SpinView').catch(() => ({
+    default: NoSpinView,
+  })),
+);
 
 type Mode = 'day' | 'lamp';
 
@@ -106,25 +130,52 @@ type Props = { id: OpenedId; mode: Mode; leaving?: boolean };
  */
 export function Opened({ id, mode, leaving }: Props) {
   const ref = useArtCanvas(id, mode);
+  // The still view's spin: off until the first grab, then loading, then the 3D object over the
+  // picture (or the picture stays, if it can't load). The live view draws its own.
+  const [spin3d, setSpin3d] = useState<'off' | 'loading' | 'ready' | 'failed'>('off');
   return (
-    // Its own side, not the desk's: the desk drops data-side the moment it closes, while this art
-    // fades out for 300 ms where it was.
-    <div
-      className="opened"
-      aria-hidden="true"
-      data-id={id}
-      data-kind={isLean(id) ? 'lean' : 'mover'}
-      data-side={sideOf(id)}
-      data-leaving={leaving || undefined}
-    >
-      <div className="opened__slot">
-        <div className="opened__art" style={{ '--aspect': artOf(id).aspect } as CSSProperties}>
-          <canvas ref={ref} className="opened__canvas" />
-          <OpenedFace id={id} />
-          {id === 'phone' && <PhoneClip leaving={leaving} />}
-          {id === 'mug' && <Steam at={artOf('mug').steam} />}
+    <>
+      {/* Its own side, not the desk's: the desk drops data-side the moment it closes, while this
+          art fades out for 300 ms where it was. */}
+      <div
+        className="opened"
+        aria-hidden="true"
+        data-id={id}
+        data-kind={isLean(id) ? 'lean' : 'mover'}
+        data-side={sideOf(id)}
+        data-leaving={leaving || undefined}
+        data-spun={spin3d === 'ready' || undefined}
+      >
+        <div className="opened__slot">
+          <div className="opened__art" style={{ '--aspect': artOf(id).aspect } as CSSProperties}>
+            <canvas ref={ref} className="opened__canvas" />
+            <OpenedFace id={id} />
+            {id === 'phone' && <PhoneClip leaving={leaving} />}
+            {id === 'mug' && <Steam at={artOf('mug').steam} />}
+          </div>
         </div>
       </div>
-    </div>
+      {isSpin(id) && (
+        <SpinTarget
+          id={id}
+          side={sideOf(id)}
+          leaving={leaving}
+          onFirstInput={() => {
+            if (!liveOver(document.querySelector('.desk'))) setSpin3d('loading');
+          }}
+        >
+          {(spin3d === 'loading' || spin3d === 'ready') && (
+            <Suspense fallback={null}>
+              <SpinView
+                id={id}
+                mode={mode}
+                onReady={() => setSpin3d('ready')}
+                onFail={() => setSpin3d('failed')}
+              />
+            </Suspense>
+          )}
+        </SpinTarget>
+      )}
+    </>
   );
 }

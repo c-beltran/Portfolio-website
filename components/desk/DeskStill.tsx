@@ -11,6 +11,7 @@ import {
 } from 'react';
 import { PORTRAIT, type DeskItemId } from '@/content/deskLayout';
 import { deskDescription, DESK_OBJECTS, type SectionSlug } from '@/content/objects';
+import { WALL_PIECES } from '@/content/wall';
 import { artOf, isMover, openedFor, patchSrc, type MoverId } from '@/content/opened';
 import {
   band,
@@ -45,7 +46,9 @@ const WeatherWindow = lazy(() =>
 
 type Props = {
   selected: SectionSlug | null;
-  onOpen: (slug: SectionSlug) => void;
+  /** What opened the section, when not its own object (content/wall.ts). */
+  via?: string | null;
+  onOpen: (slug: SectionSlug, via?: string) => void;
   onClose: () => void;
 };
 
@@ -263,9 +266,9 @@ function useKeptPan(ref: RefObject<HTMLDivElement | null>) {
  * the layer the live scene swaps in over. Every state is CSS on aria-pressed and the theme, so a
  * statically rendered section route paints already selected.
  */
-export function DeskStill({ selected, onOpen, onClose }: Props) {
+export function DeskStill({ selected, via, onOpen, onClose }: Props) {
   const { lamp, render, toggleLamp } = useLight();
-  const opened = openedFor(selected);
+  const opened = openedFor(selected, via);
   // The glow's masks load once the page is idle, like the lamp render: never on the first load.
   const [glow, setGlow] = useState(false);
   // The weather is asked for once the page is idle, with the glow: never on the first load.
@@ -337,9 +340,21 @@ export function DeskStill({ selected, onOpen, onClose }: Props) {
                 item={o.id}
                 slug={o.slug}
                 label={o.label}
-                pressed={selected === o.slug}
+                pressed={selected === o.slug && !via}
                 onClick={() => onOpen(o.slug)}
                 onIntent={() => prefetchArt(o.id)}
+              />,
+            ])}
+            {WALL_PIECES.flatMap((w) => [
+              glow && <DeskGlow key={`glow-${w.id}`} item={w.id} />,
+              <Hotspot
+                key={w.id}
+                item={w.id}
+                slug={w.opens}
+                label={w.label}
+                pressed={selected === w.opens && via === w.id}
+                onClick={() => onOpen(w.opens, w.id)}
+                onIntent={() => prefetchArt(w.id)}
               />,
             ])}
             {glow && <DeskGlow item="lightbar" />}

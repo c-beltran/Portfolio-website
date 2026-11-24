@@ -103,7 +103,7 @@ describe('the order lean-ins fold in', () => {
         { id: 'monitor', k: 0.7 },
         { id: 'cv', k: 0.96 },
       ],
-      { cv: 1, monitor: 2, board: 0 },
+      { cv: 1, monitor: 2, board: 0, diploma: 0 },
     );
     expect(order.map((l) => l.id)).toEqual(['cv', 'monitor']);
   });

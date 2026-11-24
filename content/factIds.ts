@@ -27,6 +27,8 @@ export const FACT_IDS = [
   'H05',
   // the mug
   'H06',
+  // the diploma
+  'E01',
 ] as const;
 
 export type FactId = (typeof FACT_IDS)[number];

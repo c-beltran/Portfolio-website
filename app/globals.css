@@ -806,11 +806,112 @@ html:has(.desk-still) body {
   opacity: 0;
 }
 
-.opened {
+.opened,
+.spin-layer {
   position: fixed;
   inset: 0;
   z-index: 10;
   pointer-events: none;
+}
+
+/* What the visitor grabs to spin the car, the ball or the mug (SpinTarget.tsx): laid out as the
+   art, over it, and invisible; a drag on it never scrolls or zooms the page. */
+.spin-layer {
+  z-index: 11;
+}
+
+.spin-target {
+  display: block;
+  position: relative;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: grab;
+  touch-action: none;
+}
+
+.spin-target[data-spin='moving'] {
+  cursor: grabbing;
+}
+
+.spin-target:focus-visible {
+  outline: 2px solid var(--focus, currentColor);
+  outline-offset: 4px;
+  border-radius: 8px;
+}
+
+/* On close the spun object fades out with the art, easing home as it goes. */
+.spin-layer[data-leaving] {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease-out;
+}
+
+.spin-layer[data-leaving] .spin-target {
+  pointer-events: none;
+}
+
+/* The 3D object (SpinView.tsx), in the art's box: it fades in over the picture, which fades out. */
+.spin-view {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease-out;
+}
+
+.spin-view[data-spin-ready] {
+  opacity: 1;
+}
+
+.opened[data-spun] .opened__canvas[data-drawn] {
+  opacity: 0;
+  transition: opacity 0.15s ease-out;
+}
+
+/* The steam rises from the mug as it rests: not from one being turned over. */
+.opened[data-spun] .steam {
+  display: none;
+}
+
+.spin-hint {
+  position: absolute;
+  left: 50%;
+  bottom: 8%;
+  margin: 0;
+  padding: 6px 12px;
+  border-radius: 999px;
+  transform: translateX(-50%);
+  background: rgba(12, 10, 8, 0.62);
+  color: #f4efe6;
+  font-size: 0.85rem;
+  pointer-events: none;
+  animation: spin-hint 3s ease both;
+}
+
+@keyframes spin-hint {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  10%,
+  80% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spin-view,
+  .opened[data-spun] .opened__canvas[data-drawn],
+  .spin-layer[data-leaving] {
+    transition: none;
+  }
+
+  .spin-hint {
+    animation: none;
+  }
 }
 
 .opened__slot {
@@ -829,7 +930,8 @@ html:has(.desk-still) body {
   right: calc(32px + var(--panel-w) + env(safe-area-inset-right));
 }
 
-.opened[data-side='right'] .opened__slot {
+.opened[data-side='right'] .opened__slot,
+.spin-layer[data-side='right'] .opened__slot {
   left: calc(32px + var(--panel-w) + env(safe-area-inset-left));
   right: calc(16px + env(safe-area-inset-right));
 }
@@ -962,7 +1064,8 @@ html:has(.desk-still) body {
 
 /* Portrait (content/scene/framing.ts PORTRAIT): the object in the top 42dvh, the panel below. */
 @media (max-aspect-ratio: 6/5) {
-  .opened[data-side] .opened__slot {
+  .opened[data-side] .opened__slot,
+  .spin-layer[data-side] .opened__slot {
     top: calc(8px + env(safe-area-inset-top));
     bottom: auto;
     left: calc(8px + env(safe-area-inset-left));
@@ -1110,6 +1213,56 @@ html:has(.desk-still) body {
   background: var(--screen-paper);
   color: var(--screen-ink);
   font-size: max(12px, 4cqh);
+}
+
+/*
+ * The diploma: a face over the top of its rendered paper, in the paper's own colour as rendered
+ * (the wall it hangs on is in shade, so its lines are cream, like gold lettering), set as a diploma.
+ * Sampled from public/opened/diploma-<mode>-800.webp.
+ */
+.face--diploma {
+  height: 76%;
+  padding: 7cqh 6cqw 0;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 1.2cqh;
+  background: #5d4534;
+  color: #f0e4cc;
+  font-family: Georgia, 'Times New Roman', serif;
+  text-align: center;
+  font-size: max(11px, 5cqh);
+  line-height: 1.15;
+}
+
+:root[data-theme='lamp'] .face--diploma {
+  background: #2a2115;
+  color: #eadcc2;
+}
+
+.face--diploma .face__college {
+  font-size: max(16px, 11cqh);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.face--diploma .face__system {
+  font-size: max(11px, 5cqh);
+  font-style: italic;
+  margin-bottom: 4cqh;
+}
+
+.face--diploma .face__degree {
+  font-size: max(13px, 7.5cqh);
+}
+
+.face--diploma .face__field {
+  font-size: max(14px, 9cqh);
+  font-weight: 700;
+}
+
+.face--diploma .face__date {
+  margin-top: 2cqh;
+  font-size: max(11px, 5cqh);
 }
 
 .face__name {

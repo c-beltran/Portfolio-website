@@ -32,9 +32,9 @@ function useShown(open: OpenedId | null): { id: OpenedId | null; leaving: boolea
 
 /** The desk, shared by "/" and "/[section]": the still desk, its drawer, and the panel. */
 export function Desk() {
-  const { selected, open, close } = useDeskState();
+  const { selected, via, open, close } = useDeskState();
   const { render } = useLight();
-  const opened = openedFor(selected);
+  const opened = openedFor(selected, via);
   const shown = useShown(opened);
   const main = useRef<HTMLElement>(null);
   // The turn-sideways hint is for arriving on the desk: a direct load of a section skips it.
@@ -58,12 +58,12 @@ export function Desk() {
       data-side={opened ? sideOf(opened) : undefined}
     >
       <div className="desk__stage">
-        <DeskStill selected={selected} onOpen={open} onClose={close} />
+        <DeskStill selected={selected} via={via} onOpen={open} onClose={close} />
         <Drawer selected={selected} onOpen={open} />
         <MotionToggle />
       </div>
       {shown.id && <Opened key={shown.id} id={shown.id} mode={render} leaving={shown.leaving} />}
-      <Panel slug={selected} onClose={close} />
+      <Panel slug={selected} via={via} onClose={close} />
       {selected === null && <TurnHint />}
     </main>
   );

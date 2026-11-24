@@ -3,8 +3,9 @@
 # The objects that come forward: each bakes into its own atlas, at rest
 # and opened, and exports on its own with its hierarchy and clip (bake.py export_movers).
 MOVERS = {m: f"obj_{m}" for m in ("kit", "phone", "badge", "photo", "notepad", "card", "car", "ball", "mug")}
-# The statics' atlases (the board has its own, so the magnets read close up), then the movers'.
-STATICS = ("room", "desk", "monitor", "props", "screen", "board")
+# The statics' atlases (the board and the diploma have their own, so they read close up), then the
+# movers'.
+STATICS = ("room", "desk", "monitor", "props", "screen", "board", "diploma")
 GROUPS = STATICS + tuple(MOVERS)
 
 # Objects lifted in the bake only (metres), where two faces share a plane that a depth buffer
@@ -31,6 +32,8 @@ def group_for(name: str, top: str, is_screen: bool) -> str:
         return "monitor"
     if top == "obj_board":
         return "board"
+    if top == "obj_diploma":
+        return "diploma"
     return "props"
 
 

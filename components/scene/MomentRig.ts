@@ -18,7 +18,9 @@ import { foldOrder, holeOf } from './lean';
 import { setOpenedBake } from './materials';
 import { dimsFor, OUT, REST, stepMoment, type Moment } from './moment';
 import { meshKey } from './moverParts';
-import { blendPose, presentPose, projectedHeight, type Pose } from './present';
+import { spinLive } from '@/lib/spin/live';
+import { isSpin } from '@/lib/spin/spin';
+import { blendPose, presentPose, projectedHeight, spunPose, type Pose } from './present';
 import { easeOutCubic } from './transition';
 
 const CLIP_ID = 'power-walk-clip';
@@ -67,7 +69,8 @@ export type Setup = {
  * screen's video and the faces laid on the live badge and card. Movers drives it from effects
  * (setOpen) and from each rendered frame (fit). Test hooks on the canvas, written here: data-open,
  * data-travel and data-clip (the open or last moved), data-travel-<id> for all twelve, data-dim
- * and data-dim-<mover>, data-settled, data-fit, data-open-mix and data-textures.
+ * and data-dim-<mover>, data-settled, data-fit, data-open-mix, data-textures, and data-spin and
+ * data-spin-turn (the visitor's spin: turning or at rest, and how far it is turned, in radians).
  */
 export class MomentRig {
   private mixer: THREE.AnimationMixer;
@@ -78,7 +81,7 @@ export class MomentRig {
   /** Whether the open mover's face (if it has one) is laid on it: part of data-settled. */
   private facePlaced = false;
   /** When each lean-in was last opened (a counter): the camera folds them in this order. */
-  private openedAt: Record<LeanId, number> = { monitor: 0, cv: 0, board: 0 };
+  private openedAt: Record<LeanId, number> = { monitor: 0, cv: 0, board: 0, diploma: 0 };
   private opens = 0;
   /** Each lean-in's last art box, kept for its way back once its slot has gone. */
   private leanBoxes = new Map<LeanId, DOMRect>();
@@ -87,6 +90,9 @@ export class MomentRig {
   private video: { el: HTMLVideoElement; tex: THREE.VideoTexture } | null = null;
   private ray = new THREE.Vector3();
   private corner = new THREE.Vector3();
+  /** Each spinnable's centre in its own axes: it spins about that, not about its pivot. */
+  private centres = new Map<MoverId, THREE.Vector3>();
+  private unspin: () => void;
 
   constructor(private s: Setup) {
     this.mixer = new THREE.AnimationMixer(s.scene);
@@ -120,6 +126,21 @@ export class MomentRig {
     s.scene.traverse((o) => {
       const key = o instanceof THREE.Mesh ? meshKey(o.name, o.parent?.name) : undefined;
       if (key) (o as THREE.Mesh).material = s.materials[key];
+    });
+    for (const id of MOVER_IDS) {
+      if (!isSpin(id)) continue;
+      const pivot = this.movers[id].pivot;
+      pivot.updateMatrixWorld(true);
+      const centre = new THREE.Box3().setFromObject(pivot).getCenter(new THREE.Vector3());
+      this.centres.set(id, pivot.worldToLocal(centre));
+    }
+    // A spin redraws the scene; data-spin tells tests whether it is still turning.
+    this.unspin = spinLive.subscribe(() => {
+      const live = spinLive.get();
+      s.canvas.dataset.spin = live && !live.spin.atRest ? 'moving' : 'rest';
+      const w = live ? Math.min(1, Math.abs(live.spin.q[3])) : 1;
+      s.canvas.dataset.spinTurn = (2 * Math.acos(w)).toFixed(2);
+      s.invalidate();
     });
     if (s.initial && isMover(s.initial)) this.loadBake(s.initial);
     this.syncVideo();
@@ -216,7 +237,11 @@ export class MomentRig {
         if (id === (this.open ?? this.last)) this.s.canvas.dataset.fit = box.height.toFixed(1);
       }
       const k = easeOutCubic(this.moments[id].travel);
-      const pose = k > 0 && m.present ? blendPose(m.rest, m.present, k) : m.rest;
+      let pose = k > 0 && m.present ? blendPose(m.rest, m.present, k) : m.rest;
+      const live = spinLive.get();
+      const local = this.centres.get(id);
+      if (k > 0 && local && live?.id === id)
+        pose = this.spun(pose, local, new THREE.Quaternion(...live.spin.q), cam);
       m.pivot.position.fromArray(pose.position);
       m.pivot.quaternion.fromArray(pose.quaternion);
     }
@@ -269,7 +294,31 @@ export class MomentRig {
     );
   }
 
+  /**
+   * A pose turned by the visitor's spin: the spin is in screen axes, so it is carried into the
+   * pivot's parent's axes through the camera, and turns the object about its own centre.
+   */
+  private spun(
+    pose: Pose,
+    local: THREE.Vector3,
+    q: THREE.Quaternion,
+    cam: THREE.PerspectiveCamera,
+  ) {
+    const parent = this.movers.car.pivot.parent;
+    const toParent = parent
+      ? parent.getWorldQuaternion(new THREE.Quaternion()).invert()
+      : new THREE.Quaternion();
+    const view = toParent.multiply(cam.getWorldQuaternion(new THREE.Quaternion()));
+    const world = view.clone().multiply(q).multiply(view.clone().invert());
+    const centre = local
+      .clone()
+      .applyQuaternion(new THREE.Quaternion(...pose.quaternion))
+      .add(new THREE.Vector3(...pose.position));
+    return spunPose(pose, centre.toArray() as Vec3, world);
+  }
+
   dispose() {
+    this.unspin();
     this.alive = false;
     cancelAnimationFrame(this.raf);
     this.dropVideo();

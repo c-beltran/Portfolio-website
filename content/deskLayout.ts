@@ -8,7 +8,7 @@ import seatBounds from './scene/bounds-seat.json' with { type: 'json' };
  * live scene line up. One layout for every window shape: the framing CSS (content/scene/framingCss)
  * places the master, and the hotspots sit on it in master percents.
  */
-export type DeskItemId = DeskObject['id'] | 'lightbar';
+export type DeskItemId = DeskObject['id'] | 'lightbar' | 'diploma';
 /** Percent of the master's width (x, w) and height (y, h). */
 export type Box = { x: number; y: number; w: number; h: number };
 
@@ -17,7 +17,10 @@ const BOUNDS = seatBounds as SceneBounds;
 /** Portrait windows, which pan across the safe frame (framing.ts). */
 export { PORTRAIT } from './scene/framing';
 
-/** The clickable items: the section objects (the monitor is two) plus the light bar. */
+/**
+ * The clickable items: the section objects (the monitor is two), the light bar, and the diploma (a
+ * wall piece that opens the CV, content/wall.ts).
+ */
 export const INTERACTIVE: readonly DeskItemId[] = [
   'cv',
   'photo',
@@ -33,6 +36,7 @@ export const INTERACTIVE: readonly DeskItemId[] = [
   'board',
   'mug',
   'lightbar',
+  'diploma',
 ];
 
 /**
@@ -55,6 +59,7 @@ export const HOTSPOT_STACK: Record<DeskItemId, number> = {
   ball: 2,
   board: 1,
   mug: 2,
+  diploma: 1,
 };
 
 /** Seen only in ultrawide windows: the ball lies by the left wall. */

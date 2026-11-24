@@ -2,6 +2,7 @@ import { expect, test } from './fixtures';
 import { INTERACTIVE, LAYOUT } from '../../content/deskLayout';
 import { master, viewOffset } from '../../content/scene/framing';
 import { DESK_OBJECTS } from '../../content/objects';
+import { WALL_PIECES } from '../../content/wall';
 import { titleFor } from '../../lib/deskRoutes';
 import {
   atNight,
@@ -174,7 +175,7 @@ test.describe('still desk hotspots', () => {
         return { left: s.left, top: s.top, moved: s.transform !== 'none', centred, shown };
       }),
     );
-    expect(placements.length).toBe(DESK_OBJECTS.length + 1); // the sections and the lamp
+    expect(placements.length).toBe(DESK_OBJECTS.length + 1 + WALL_PIECES.length); // the sections, the lamp and the wall
     for (const { shown, ...p } of placements)
       if (shown) expect(p).toEqual({ left: '0px', top: '0px', moved: true, centred: true });
   });
@@ -250,10 +251,85 @@ for (const viewport of [
           await expect(hotspot(page, id)).toHaveAttribute('aria-pressed', 'true');
           return;
         }
-        const obj = DESK_OBJECTS.find((o) => o.id === id)!;
-        await expect.poll(() => path(page)).toBe(`/${obj.slug}`);
+        const slug =
+          DESK_OBJECTS.find((o) => o.id === id)?.slug ??
+          WALL_PIECES.find((w) => w.id === id)!.opens;
+        await expect.poll(() => path(page)).toBe(`/${slug}`);
         await expect(hotspot(page, id)).toHaveAttribute('aria-pressed', 'true');
       });
     }
   });
 }
+
+test.describe('the diploma', () => {
+  test.use({ viewport: { width: 1280, height: 800 } });
+  const opened = (page: import('@playwright/test').Page) =>
+    page.locator('.opened:not([data-leaving])').getAttribute('data-id');
+
+  test('the diploma leans in and opens the CV', async ({ page }) => {
+    await gotoDesk(page, '/');
+    await hotspot(page, 'diploma').click();
+    await expect.poll(() => path(page)).toBe('/cv');
+    await expect.poll(() => opened(page)).toBe('diploma');
+    await expect(page.locator('.panel__eyebrow')).toHaveText('THE DIPLOMA · CV');
+    await expect(page.locator('section.panel [data-fact-id="E01"]')).toContainText('May 2019');
+    await expect(hotspot(page, 'diploma')).toHaveAttribute('aria-pressed', 'true');
+    await expect(hotspot(page, 'cv')).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  test('history restores the diploma or the monitor, whichever was opened', async ({ page }) => {
+    await gotoDesk(page, '/');
+    await hotspot(page, 'diploma').click();
+    await expect.poll(() => opened(page)).toBe('diploma');
+    await drawerButton(page, 'CV').press('Enter');
+    await expect.poll(() => opened(page)).toBe('cv');
+    await expect(page.locator('.panel__eyebrow')).toHaveText('THE MONITOR · CV');
+    await page.goBack();
+    await expect.poll(() => opened(page)).toBe('diploma');
+    await page.goForward();
+    await expect.poll(() => opened(page)).toBe('cv');
+    await page.goBack();
+    await page.goBack();
+    await expect.poll(() => path(page)).toBe('/');
+  });
+
+  for (const leave of ['Escape', 'Back', 'drawer'] as const)
+    test(`leaving by ${leave}, the diploma is what leaves: the monitor never shows`, async ({
+      page,
+    }) => {
+      await gotoDesk(page, '/');
+      await hotspot(page, 'diploma').click();
+      await expect.poll(() => opened(page)).toBe('diploma');
+      await page.evaluate(() => {
+        const w = window as unknown as { seen: string[] };
+        w.seen = [];
+        const note = () => {
+          for (const el of document.querySelectorAll('.opened'))
+            w.seen.push(el.getAttribute('data-id') ?? '');
+          const eyebrow = document.querySelector('.panel__eyebrow')?.textContent;
+          if (eyebrow) w.seen.push(eyebrow);
+          if (document.querySelector('.hotspot[data-item="cv"][aria-pressed="true"]'))
+            w.seen.push('cv');
+        };
+        new MutationObserver(note).observe(document.body, {
+          subtree: true,
+          childList: true,
+          attributes: true,
+          characterData: true,
+        });
+      });
+      if (leave === 'Escape') await page.keyboard.press('Escape');
+      else if (leave === 'Back') await page.goBack();
+      else await drawerButton(page, 'About').press('Enter');
+      await expect.poll(() => path(page)).not.toBe('/cv');
+      await page.waitForTimeout(500);
+      const seen = await page.evaluate(() => (window as unknown as { seen: string[] }).seen);
+      expect(seen).not.toContain('cv');
+      expect(seen).not.toContain('THE MONITOR · CV');
+    });
+
+  test('a direct load of /cv leans in to the monitor', async ({ page }) => {
+    await gotoDesk(page, '/cv');
+    await expect.poll(() => opened(page)).toBe('cv');
+  });
+});

@@ -337,3 +337,57 @@ test.describe('coming forward live', () => {
     expect((await hook(page)).travel).toBe(1);
   });
 });
+
+test.describe('spinning live', () => {
+  test.skip(({ isMobile }) => isMobile, 'desktop preview');
+  test.slow();
+  // Reduced motion holds the window's weather still, so only the spin can change a frame (a drag
+  // still turns the object; it just doesn't coast).
+  test.use({ viewport: { width: 1280, height: 800 }, reducedMotion: 'reduce' });
+
+  const spinHook = (page: Page) =>
+    canvas(page).evaluate((c: HTMLCanvasElement) => ({
+      spin: c.dataset.spin ?? '',
+      turn: Number(c.dataset.spinTurn ?? NaN),
+    }));
+
+  test('?tier=2: the car spins on a drag and settles back on close', async ({ page }) => {
+    await gotoDesk(page, '/cars?tier=2');
+    await waitLive(page);
+    const target = page.locator('.spin-target[data-spin-for="car"]');
+    const box = (await target.boundingBox())!;
+    const [x, y] = [box.x + box.width / 2, box.y + box.height / 2];
+    await expect.poll(async () => (await hook(page)).clip, { timeout: LONG }).toBe(1);
+    const before = await page.screenshot({ clip: box });
+    // a settled scene draws the same frame twice: only the spin can change it
+    expect((await page.screenshot({ clip: box })).equals(before)).toBe(true);
+    await page.mouse.move(x, y);
+    await page.mouse.down();
+    await page.mouse.move(x + 100, y, { steps: 5 });
+    await page.mouse.move(x + 200, y, { steps: 5 });
+    await page.mouse.up();
+    await expect
+      .poll(async () => (await spinHook(page)).turn, { timeout: LONG })
+      .toBeGreaterThan(0.5);
+    await expect.poll(async () => (await spinHook(page)).spin, { timeout: LONG }).toBe('rest');
+    // the car itself turned on screen, not just the spin's state
+    expect((await page.screenshot({ clip: box })).equals(before)).toBe(false);
+    await page.keyboard.press('Escape');
+    await expect.poll(() => path(page)).toBe('/');
+    await expect.poll(async () => (await hook(page)).travel, { timeout: LONG }).toBe(0);
+    await drawerButton(page, 'Cars').press('Enter');
+    await expect.poll(async () => (await hook(page)).travel, { timeout: LONG }).toBe(1);
+    expect((await spinHook(page)).turn).toBe(0);
+  });
+
+  test('?tier=2: arrow keys turn the mug', async ({ page }) => {
+    await gotoDesk(page, '/coffee?tier=2');
+    await waitLive(page);
+    await page.locator('.spin-target[data-spin-for="mug"]').focus();
+    await page.keyboard.press('ArrowRight');
+    await page.keyboard.press('Shift+ArrowRight');
+    await expect
+      .poll(async () => (await spinHook(page)).turn, { timeout: LONG })
+      .toBeCloseTo(Math.PI / 3, 1);
+  });
+});

@@ -1,6 +1,7 @@
 import type { FactId } from './facts';
 import type { SectionSlug } from './objects';
 import type { Stats } from './stats.types';
+import { WALL_PIECES } from './wall';
 
 /** Every prose block is a draft until Carlos rewrites it in his own voice. */
 export const DRAFT_MARK = '[DRAFT: Carlos to rewrite]';
@@ -32,6 +33,7 @@ export const PANELS: Record<SectionSlug, PanelBlock[]> = {
     { kind: 'eyebrow', text: 'THE MONITOR · CV' },
     { kind: 'title', text: 'The short version', draft: true },
     { kind: 'cv' },
+    { kind: 'fact', fact: 'E01' },
   ],
   about: [
     { kind: 'eyebrow', text: 'THE PHOTO · ABOUT' },
@@ -193,3 +195,19 @@ export const PANELS: Record<SectionSlug, PanelBlock[]> = {
     { kind: 'todo', text: '[TODO: Carlos: anything to add, such as how you take it]' },
   ],
 };
+
+/** What a wall piece is called in the eyebrow of the section it opens. */
+const WALL_EYEBROW: Record<string, string> = { diploma: 'THE DIPLOMA' };
+
+/**
+ * A section's blocks, its eyebrow naming what opened it: the CV from the diploma reads
+ * "THE DIPLOMA · CV".
+ */
+export function panelBlocks(slug: SectionSlug, via?: string | null): PanelBlock[] {
+  const name = via ? WALL_EYEBROW[via] : undefined;
+  const piece = WALL_PIECES.find((w) => w.id === via);
+  if (!name || piece?.opens !== slug) return PANELS[slug];
+  return PANELS[slug].map((b) =>
+    b.kind === 'eyebrow' ? { kind: 'eyebrow', text: b.text.replace(/^[^·]+·/, `${name} ·`) } : b,
+  );
+}

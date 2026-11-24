@@ -17,13 +17,14 @@ const unit = (a: Vec3): Vec3 => {
 };
 const centroid = (q: Vec3[]) =>
   [0, 1, 2].map((i) => q.reduce((sum, p) => sum + p[i]!, 0) / q.length) as Vec3;
-const LEANS = ['monitor', 'cv', 'board'] as const;
+const LEANS = ['monitor', 'cv', 'board', 'diploma'] as const;
 
 describe('cameras.json', () => {
   it('has the overview, phone and seat cameras, and one per lean-in', () => {
     expect(Object.keys(CAMERAS).sort()).toEqual([
       'board',
       'cv',
+      'diploma',
       'monitor',
       'overview',
       'phone',
@@ -38,7 +39,9 @@ describe('cameras.json', () => {
     const [tl, tr, br, bl] = q as [Vec3, Vec3, Vec3, Vec3];
     expect(tl[0]).toBeLessThan(tr[0]); // top-left, top-right, bottom-right, bottom-left
     expect(tl[1]).toBeGreaterThan(bl[1]);
-    expect(Math.hypot(...sub(cam.eye, centroid(q)))).toBeCloseTo(0.45, 2);
+    // 0.45 m from what it frames; the diploma's paper sits 7 mm back inside its frame
+    const recess = id === 'diploma' ? 0.007 : 0;
+    expect(Math.hypot(...sub(cam.eye, centroid(q)))).toBeCloseTo(0.45 + recess, 2);
 
     const axis = unit(sub(cam.target, cam.eye));
     const normal = unit(cross(sub(br, tl), sub(bl, tr)));
@@ -54,7 +57,11 @@ describe('cameras.json', () => {
       const d = sub(p, cam.eye);
       return Math.max(Math.abs(dot(d, right)), Math.abs(dot(d, up))) / dot(d, axis) / half;
     });
-    expect(Math.abs(Math.max(...reach) - 0.8)).toBeLessThanOrEqual(0.01);
+    if (id === 'diploma') {
+      // the lens fits its whole frame to 0.8; the paper inside it reaches a little less far
+      expect(Math.max(...reach)).toBeGreaterThan(0.5);
+      expect(Math.max(...reach)).toBeLessThan(0.8);
+    } else expect(Math.abs(Math.max(...reach) - 0.8)).toBeLessThanOrEqual(0.01);
   });
 
   it('leans in to the left half for How I build and the right half for the CV', () => {

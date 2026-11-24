@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { facts, PLACES, RETIRED_FACT_IDS, type FactId } from './facts';
 import { deskDescription, DESK_OBJECTS, objectBySlug, SECTION_SLUGS } from './objects';
-import { PANELS, type PanelBlock } from './panels';
+import { PANELS, panelBlocks, type PanelBlock } from './panels';
 import statsJson from './stats.json';
 import type { Stats } from './stats.types';
 
@@ -242,5 +242,18 @@ describe("the window's weather, explained where the site describes itself", () =
       href: 'https://open-meteo.com/',
       label: 'Weather data by Open-Meteo.com (CC BY 4.0)',
     });
+  });
+});
+
+describe('the CV panel and the diploma', () => {
+  it('states the degree', () => {
+    expect(PANELS.cv).toContainEqual({ kind: 'fact', fact: 'E01' });
+  });
+
+  it('names what was opened in its eyebrow', () => {
+    const eyebrow = (via?: string) => panelBlocks('cv', via).find((b) => b.kind === 'eyebrow');
+    expect(eyebrow()).toEqual({ kind: 'eyebrow', text: 'THE MONITOR · CV' });
+    expect(eyebrow('diploma')).toEqual({ kind: 'eyebrow', text: 'THE DIPLOMA · CV' });
+    expect(panelBlocks('travel', 'diploma')).toEqual(PANELS.travel);
   });
 });
