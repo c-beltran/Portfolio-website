@@ -23,7 +23,7 @@ import {
 } from '@/content/scene/framing';
 import framing from '@/content/scene/framing.json';
 import { sizesFor } from '@/content/scene/framingCss';
-import { useTheme } from '@/lib/useTheme';
+import { useLight } from '@/lib/useLight';
 import { LiveLayer } from '@/components/scene/LiveLayer';
 import { Hotspot } from './Hotspot';
 import { MonitorName } from './MonitorName';
@@ -69,6 +69,12 @@ const sizes = (c: Crop) => sizesFor((c.rect.x1 - c.rect.x0) * M.w, c.portrait);
  */
 /** Which crop a still's URL is (seat-<crop>-<mode>-<width>). */
 const cropOf = (src: string) => /\/seat-(p|b\d+)-/.exec(src)?.[1];
+
+/**
+ * Runs as the page is parsed, right after the two renders: when the lamp render is on show (night,
+ * lamp on), it is the first paint, so it loads at once and first; the hidden day render waits.
+ */
+const NIGHT_PAINT = `(function(){if(document.documentElement.dataset.theme!=='lamp')return;var l=document.querySelector('.desk-still__photo--lamp img'),d=document.querySelector('.desk-still__photo--day img');if(l){l.loading='eager';l.fetchPriority='high'}if(d){d.fetchPriority='low'}})();`;
 
 function DeskPhoto({ mode }: { mode: 'day' | 'lamp' }) {
   const [w, h] = px(DEFAULT.rect, SAFE_PX[0]!);
@@ -117,10 +123,12 @@ function DeskPhoto({ mode }: { mode: 'day' | 'lamp' }) {
         // No width/height: globals.css sizes it to its crop (so nothing shifts), and a hidden lamp
         // image would otherwise be judged by band 0's shape.
         alt=""
-        // Day is the LCP. The lamp render is display: none until lamp mode, and lazy, so day
-        // visitors never download it.
+        // By day the day render is the LCP. The lamp render is display: none until the lamp is on
+        // at night, and lazy, so day visitors never download it (NIGHT_PAINT turns this round).
         fetchPriority={mode === 'day' ? 'high' : 'low'}
         loading={mode === 'day' ? 'eager' : 'lazy'}
+        // NIGHT_PAINT swaps these before hydration when the lamp render is the one on show.
+        suppressHydrationWarning
       />
     </picture>
   );
@@ -246,7 +254,7 @@ function useKeptPan(ref: RefObject<HTMLDivElement | null>) {
  * statically rendered section route paints already selected.
  */
 export function DeskStill({ selected, onOpen, onClose }: Props) {
-  const { theme, toggle } = useTheme();
+  const { lamp, render, toggleLamp } = useLight();
   const opened = openedFor(selected);
   // The glow's masks load once the page is idle, like the lamp render: never on the first load.
   const [glow, setGlow] = useState(false);
@@ -301,9 +309,8 @@ export function DeskStill({ selected, onOpen, onClose }: Props) {
             <div className="desk-still__art">
               <DeskPhoto mode="day" />
               <DeskPhoto mode="lamp" />
-              {opened && isMover(opened) && (
-                <DeskPatch id={opened} mode={theme === 'lamp' ? 'lamp' : 'day'} />
-              )}
+              <script dangerouslySetInnerHTML={{ __html: NIGHT_PAINT }} />
+              {opened && isMover(opened) && <DeskPatch id={opened} mode={render} />}
             </div>
             {DESK_OBJECTS.flatMap((o) => [
               glow && <DeskGlow key={`glow-${o.id}`} item={o.id} />,
@@ -318,13 +325,13 @@ export function DeskStill({ selected, onOpen, onClose }: Props) {
               />,
             ])}
             {glow && <DeskGlow item="lightbar" />}
-            <Hotspot item="lightbar" label="Lamp" pressed={theme === 'lamp'} onClick={toggle} />
+            <Hotspot item="lightbar" label="Lamp" pressed={lamp === 'on'} onClick={toggleLamp} />
           </div>
           <LiveLayer open={opened} />
           <div className="desk-still__overlay">
             {glow && <Steam />}
             <MonitorName />
-            {glow && <ScreenLoop mode={theme === 'lamp' ? 'lamp' : 'day'} />}
+            {glow && <ScreenLoop mode={render} />}
           </div>
         </div>
       </div>

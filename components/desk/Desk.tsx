@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { openedFor, sideOf, type OpenedId } from '@/content/opened';
 import { useDeskState } from '@/lib/useDeskState';
-import { useTheme } from '@/lib/useTheme';
+import { useLight } from '@/lib/useLight';
 import { Panel } from '../panel/Panel';
 import { DeskStill } from './DeskStill';
 import { Drawer } from './Drawer';
@@ -33,7 +33,7 @@ function useShown(open: OpenedId | null): { id: OpenedId | null; leaving: boolea
 /** The desk, shared by "/" and "/[section]": the still desk, its drawer, and the panel. */
 export function Desk() {
   const { selected, open, close } = useDeskState();
-  const { theme } = useTheme();
+  const { render } = useLight();
   const opened = openedFor(selected);
   const shown = useShown(opened);
   const main = useRef<HTMLElement>(null);
@@ -62,14 +62,7 @@ export function Desk() {
         <Drawer selected={selected} onOpen={open} />
         <MotionToggle />
       </div>
-      {shown.id && (
-        <Opened
-          key={shown.id}
-          id={shown.id}
-          mode={theme === 'lamp' ? 'lamp' : 'day'}
-          leaving={shown.leaving}
-        />
-      )}
+      {shown.id && <Opened key={shown.id} id={shown.id} mode={render} leaving={shown.leaving} />}
       <Panel slug={selected} onClose={close} />
       {selected === null && <TurnHint />}
     </main>

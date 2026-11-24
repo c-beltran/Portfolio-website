@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { DESK_OBJECTS, type SectionSlug } from '@/content/objects';
 import { useMotion } from '@/lib/useMotion';
-import { useTheme } from '@/lib/useTheme';
+import { useLight } from '@/lib/useLight';
 import { prefetchArt } from './Opened';
 
 type Props = {
@@ -15,7 +15,7 @@ type Props = {
  * at the top left. The hotspots stay out of the tab order.
  */
 export function Drawer({ selected, onOpen }: Props) {
-  const { theme, toggle } = useTheme();
+  const { lamp, toggleLamp } = useLight();
   const motion = useMotion();
 
   // The last input: the card shows for keyboard focus only (globals.css, the Sections list).
@@ -68,8 +68,8 @@ export function Drawer({ selected, onOpen }: Props) {
           <button
             type="button"
             className="drawer__button drawer__button--lamp"
-            aria-pressed={theme === 'lamp'}
-            onClick={toggle}
+            aria-pressed={lamp === 'on'}
+            onClick={toggleLamp}
           >
             Lamp
           </button>

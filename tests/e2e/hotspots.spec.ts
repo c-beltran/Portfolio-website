@@ -4,15 +4,17 @@ import { master, viewOffset } from '../../content/scene/framing';
 import { DESK_OBJECTS } from '../../content/objects';
 import { titleFor } from '../../lib/deskRoutes';
 import {
+  atNight,
   clickFelt,
   desk,
   drawerButton,
-  gotoDesk,
   drawerLamp,
+  gotoDesk,
   historyLength,
   hotspot,
-  panOf,
+  lampOff,
   onScreen,
+  panOf,
   panelTitle,
   path,
 } from './desk';
@@ -70,21 +72,18 @@ test.describe('still desk hotspots', () => {
   test('the desk lamp switches lamp mode without navigating', async ({ page }) => {
     await gotoDesk(page, '/');
     const start = await historyLength(page);
-    const before = await page.evaluate(() => document.documentElement.dataset.theme);
+    const before = await page.evaluate(() => document.documentElement.dataset.lamp);
     await hotspot(page, 'lightbar').click();
-    const after = await page.evaluate(() => document.documentElement.dataset.theme);
+    const after = await page.evaluate(() => document.documentElement.dataset.lamp);
     expect(after).not.toBe(before);
-    const pressed = String(after === 'lamp');
+    const pressed = String(after === 'on');
     await expect(hotspot(page, 'lightbar')).toHaveAttribute('aria-pressed', pressed);
     await expect(drawerLamp(page)).toHaveAttribute('aria-pressed', pressed);
     expect(path(page)).toBe('/');
     expect(await historyLength(page)).toBe(start);
     await drawerLamp(page).focus();
     await page.keyboard.press('Enter');
-    await expect(hotspot(page, 'lightbar')).toHaveAttribute(
-      'aria-pressed',
-      String(after !== 'lamp'),
-    );
+    await expect(hotspot(page, 'lightbar')).toHaveAttribute('aria-pressed', String(after !== 'on'));
   });
 
   test('clicking the desk lamp never focuses the hidden desk', async ({ page }) => {
@@ -99,11 +98,11 @@ test.describe('still desk hotspots', () => {
     page,
   }) => {
     await gotoDesk(page, '/experience');
-    const before = await page.evaluate(() => document.documentElement.dataset.theme);
+    const before = await page.evaluate(() => document.documentElement.dataset.lamp);
     await drawerLamp(page).focus();
     await page.keyboard.press('Enter');
     await expect
-      .poll(() => page.evaluate(() => document.documentElement.dataset.theme))
+      .poll(() => page.evaluate(() => document.documentElement.dataset.lamp))
       .not.toBe(before);
     expect(path(page)).toBe('/experience');
     await expect(page.locator('main.desk')).toHaveAttribute('data-open', 'badge');
@@ -208,10 +207,13 @@ test.describe('still desk hotspots', () => {
         .locator('.desk-still__photo--lamp img')
         .evaluate((el) => Number(getComputedStyle(el).opacity));
     await page.emulateMedia({ reducedMotion: 'reduce' });
+    // At night with the lamp off, the lamp's switch brings up the lamp render.
+    await atNight(page);
+    await lampOff(page);
     await gotoDesk(page, '/');
-    const before = await page.evaluate(() => document.documentElement.dataset.theme);
+    expect(await lampOpacity()).toBe(0);
     await hotspot(page, 'lightbar').click();
-    expect(await lampOpacity()).toBe(before === 'lamp' ? 0 : 1);
+    expect(await lampOpacity()).toBe(1);
   });
 
   test('the desk is Tier 1 and described for assistive tech', async ({ page }) => {

@@ -1,7 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from './fixtures';
 import { titleFor } from '../../lib/deskRoutes';
-import { gotoDesk, hotspot, panelTitle, path } from './desk';
+import { atNight, gotoDesk, hotspot, panelTitle, path } from './desk';
 
 /** The six review windows. */
 const VIEWPORTS: [number, number][] = [
@@ -56,7 +56,7 @@ test.describe('the title under the name stays readable on small screens', () => 
 
 for (const theme of ['day', 'lamp'] as const) {
   test(`axe passes on / and /cv in ${theme}`, async ({ page }) => {
-    await page.addInitScript((t) => localStorage.setItem('desk-theme', t), theme);
+    if (theme === 'lamp') await atNight(page);
     for (const url of ['/', '/cv']) {
       await gotoDesk(page, url);
       const results = await new AxeBuilder({ page })

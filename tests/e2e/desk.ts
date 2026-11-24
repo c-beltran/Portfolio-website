@@ -1,4 +1,5 @@
 import type { Page } from '@playwright/test';
+import { todayInNewYork } from './fixtures';
 import { ULTRAWIDE_MIN, ULTRAWIDE_ONLY } from '../../content/deskLayout';
 
 /** Shared helpers for the still-desk specs. */
@@ -14,6 +15,20 @@ export const drawerButton = (page: Page, label: string) =>
     .getByRole('button', { name: label, exact: true });
 /** The lamp's keyboard path: the Sections list's last button (shown when focused). */
 export const drawerLamp = (page: Page) => drawerButton(page, 'Lamp');
+
+/** 23:00 in New York today: night all year, so the lamp starts on (the lamp render shows). */
+export const NIGHT = todayInNewYork(23);
+
+/** Make the next load happen at night (before `goto`). */
+export const atNight = (page: Page) => page.context().clock.setFixedTime(NIGHT);
+
+/** Make the next load have the lamp switched off this visit (before `goto`). */
+export const lampOff = (page: Page) =>
+  page.addInitScript(() => {
+    try {
+      sessionStorage.setItem('desk-lamp', 'off');
+    } catch {}
+  });
 
 /** The desk's pan (−1…1) from its horizontal scroll; 0 when it can't scroll (wide windows). */
 export const panOf = (page: Page) =>

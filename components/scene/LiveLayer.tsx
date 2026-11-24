@@ -3,7 +3,7 @@
 import dynamic from 'next/dynamic';
 import { Component, useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { forcedTier } from '@/lib/tier';
-import { useTheme } from '@/lib/useTheme';
+import { useLight } from '@/lib/useLight';
 import type { OpenedId } from '@/content/opened';
 
 // Client-only, and only fetched once LiveLayer decides to mount it.
@@ -46,7 +46,7 @@ const hasWebGL2 = () => {
 export function LiveLayer({ open = null }: { open?: OpenedId | null }) {
   const [on, setOn] = useState(false);
   const [ready, setReady] = useState(false);
-  const { theme } = useTheme();
+  const { render } = useLight();
   const ref = useRef<HTMLDivElement>(null);
   // ?tier=2&capture=master: the residual's capture (scripts/scene/measure/residual.mjs).
   const [capture] = useState(
@@ -84,9 +84,9 @@ export function LiveLayer({ open = null }: { open?: OpenedId | null }) {
 
   if (!on) return null;
   return (
-    <div ref={ref} className="desk-still__live" data-ready={ready} data-lamp={theme === 'lamp'}>
+    <div ref={ref} className="desk-still__live" data-ready={ready} data-lamp={render === 'lamp'}>
       <Fallback onError={lost}>
-        <LiveScene lamp={theme === 'lamp'} onReady={onReady} capture={capture} open={open} />
+        <LiveScene lamp={render === 'lamp'} onReady={onReady} capture={capture} open={open} />
       </Fallback>
     </div>
   );
