@@ -246,13 +246,13 @@ export function createPainter(ctx: CanvasRenderingContext2D, w: number, h: numbe
       for (const [dx, dy, k] of c.puffs as [number, number, number][]) {
         const px = cx + dx! * size;
         const py = cy + dy! * size;
-        const pr = size * 0.45 * k!;
-        const g = ctx.createRadialGradient(px, py, 0, px, py, pr);
+        const puffR = size * 0.45 * k!;
+        const g = ctx.createRadialGradient(px, py, 0, px, py, puffR);
         g.addColorStop(0, col);
         g.addColorStop(1, col + '00');
         ctx.globalAlpha = n > 8 ? 0.55 : 0.75;
         ctx.fillStyle = g;
-        ctx.fillRect(px - pr, py - pr, pr * 2, pr * 2);
+        ctx.fillRect(px - puffR, py - puffR, puffR * 2, puffR * 2);
       }
     }
     ctx.globalAlpha = 1;
