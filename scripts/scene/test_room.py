@@ -171,5 +171,57 @@ class Board(unittest.TestCase):
                 self.assertGreaterEqual(diff, 0.20, (a, b))
 
 
+class Diploma(unittest.TestCase):
+    """The framed diploma above the board: generic, no words, on the plain part of the back wall."""
+
+    WINDOW_X0 = -0.1  # build_room's window: its left mullion
+    BACK_WALL_Y = 0.95
+
+    def box(self, d):
+        (cx, _, cz), (w, h) = d["centre"], d["size"]
+        return cx - w / 2, cz - h / 2, cx + w / 2, cz + h / 2
+
+    def test_diploma_hangs_on_the_back_wall(self):
+        cy, depth = R.DIPLOMA["centre"][1], R.DIPLOMA["depth"]
+        self.assertAlmostEqual(cy + depth / 2 + 0.0, self.BACK_WALL_Y, delta=0.001)
+
+    def test_diploma_clear_of_board_and_window(self):
+        x0, z0, x1, z1 = self.box(R.DIPLOMA)
+        bx0, bz0, bx1, bz1 = self.box(R.BOARD)
+        apart = max(bx0 - x1, x0 - bx1, bz0 - z1, z0 - bz1)
+        self.assertGreaterEqual(apart, 0.05)
+        self.assertLessEqual(x1, self.WINDOW_X0 - 0.05)
+
+    def test_diploma_paper_is_landscape(self):
+        corners = R.diploma_paper_corners()
+        w = corners[1][0] - corners[0][0]
+        h = corners[0][2] - corners[3][2]
+        self.assertTrue(1.2 <= w / h <= 1.4, w / h)
+
+    def test_paper_corners_face_the_room(self):
+        tl, tr, br, bl = R.diploma_paper_corners()
+        self.assertLess(tl[0], tr[0])
+        self.assertGreater(tl[2], bl[2])
+        for p in (tl, tr, br, bl):
+            self.assertLess(p[1], self.BACK_WALL_Y)
+
+    def test_diploma_has_no_text_geometry(self):
+        names = [p["name"] for p in R.diploma_parts()]
+        allowed = {"frame", "mat", "paper", "seal"}
+        for n in names:
+            self.assertTrue(n.startswith("diploma_"), n)
+            part = n[len("diploma_"):]
+            self.assertTrue(part.rstrip("_0123456789") in allowed or part.startswith("stroke_"), n)
+        self.assertIn("diploma_seal", names)
+        self.assertGreaterEqual(sum(n.startswith("diploma_stroke_") for n in names), 4)
+
+    def test_strokes_and_seal_sit_on_the_paper(self):
+        tl, tr, br, bl = R.diploma_paper_corners()
+        for p in R.diploma_parts():
+            if p["name"].startswith("diploma_stroke_") or p["name"] == "diploma_seal":
+                x, _, z = p["centre"]
+                self.assertTrue(tl[0] < x < tr[0] and bl[2] < z < tl[2], p["name"])
+
+
 if __name__ == "__main__":
     unittest.main()

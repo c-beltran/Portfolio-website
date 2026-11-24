@@ -2,7 +2,7 @@
 Renders one view of workspace.blend.
 
     Blender -b ~/Portfolio-assets/blend/workspace.blend --python scripts/scene/render.py -- \
-        --mode clay|day|lamp --camera overview|phone|monitor|cv|board|seat \
+        --mode clay|day|lamp --camera overview|phone|monitor|cv|board|diploma|seat \
         --out <png> [--samples N] [--scale 0.5]
 
 The seat camera renders the master (content/scene/framing.json, via framing.py) at its full
@@ -27,7 +27,7 @@ def args():
     argv = sys.argv[sys.argv.index("--") + 1 :]
     p = argparse.ArgumentParser()
     p.add_argument("--mode", choices=["clay", "day", "lamp"], required=True)
-    p.add_argument("--camera", choices=["overview", "phone", "monitor", "cv", "board", "seat"], default="overview")
+    p.add_argument("--camera", choices=["overview", "phone", "monitor", "cv", "board", "diploma", "seat"], default="overview")
     p.add_argument("--out", required=True)
     p.add_argument("--samples", type=int, default=0)
     p.add_argument("--scale", type=float, default=1.0)
@@ -113,7 +113,7 @@ def main():
     if a.camera == "seat":
         w, h = framing.resolution()
     else:
-        w, h = (1080, 1080) if a.camera in ("phone", "monitor", "cv", "board") else (2560, 1440)
+        w, h = (1080, 1080) if a.camera in ("phone", "monitor", "cv", "board", "diploma") else (2560, 1440)
     scene.render.resolution_x, scene.render.resolution_y = round(w * a.scale), round(h * a.scale)
     scene.render.resolution_percentage = 100
     scene.camera = bpy.data.objects[f"cam_{a.camera}"]

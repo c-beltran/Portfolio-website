@@ -457,6 +457,25 @@ def build_board(coll):
     return board
 
 
+def build_diploma(coll):
+    """The framed diploma above the board (room.diploma_parts): a dark frame, a mat, cream paper,
+    lines that read as a certificate's but say nothing, and a plain gold seal. No words or crest."""
+    import room as RM
+
+    root = bpy.data.objects.new("obj_diploma", None)
+    coll.objects.link(root)
+    for p in RM.diploma_parts():
+        x, y, z = p["centre"]
+        if p["kind"] == "box":
+            sx, sy, sz = p["size"]
+            o = box(p["name"], (sx, sy, sz), (x, y, z - sz / 2), coll, bevel=0.0015 if p["name"].startswith("diploma_frame") else 0)
+        else:
+            o = disc(p["name"], p["r"], (x, y, z), coll)
+            o.rotation_euler = (math.radians(90), 0, 0)
+        set_parent(o, root)
+    return root
+
+
 def make_phone_mover(coll):
     """The phone as a mover: obj_phone, an Empty at its bounding-box centre turned with it (local
     +Y along its length, +Z out of its screen); phone_spin under it, which phone_turn turns a
@@ -865,7 +884,8 @@ SEAT_SAFE_HFOV = 73.5  # degrees, across the safe frame
 
 
 def build_lean_cameras(cam):
-    """A camera per lean-in (cam_monitor: the screen's left half; cam_cv: its right; cam_board),
+    """A camera per lean-in (cam_monitor: the screen's left half; cam_cv: its right; cam_board;
+    cam_diploma),
     square to it, its lens putting the farthest corner at opened.FILL of a square frame. The
     lean-in's render looks through it as is."""
     import lean
@@ -924,6 +944,15 @@ def apply_materials():
         "photo_frame": C("photo_frame", h("#18181A"), 0.45),
         "photo_print": M.photo_print("photo_print"),
         "board_face": C("board_steel", h("#D3D5D7"), 0.4),
+        "diploma_frame_": C("diploma_frame", h("#1C1A18"), 0.45),
+        "diploma_mat": C("diploma_mat", h("#ECE6D8"), 0.9, spread=0.04),
+        "diploma_paper": C("diploma_paper", h("#F4EDDC"), 0.85, spread=0.05),
+        "diploma_stroke_title": C("diploma_ink", h("#5E574F"), 0.7),
+        "diploma_stroke_name": C("diploma_ink", h("#5E574F"), 0.7),
+        "diploma_stroke_degree": C("diploma_ink", h("#5E574F"), 0.7),
+        "diploma_stroke_sign": C("diploma_sign", h("#6E6860"), 0.7),
+        "diploma_stroke_": C("diploma_faint", h("#B3ACA1"), 0.8),
+        "diploma_seal": C("diploma_seal", h("#C29A45"), 0.3, metal=1.0),
         "board_frame_": C("board_frame", h("#26272A"), 0.35, metal=0.6),
         "magnet_": C("magnet_rim", h("#EDEBE6"), 0.35, coat=0.4),
         "kit_lid_pad": foam,
@@ -1094,6 +1123,7 @@ def main():
     build_light_bar(objs)
     build_ball(objs)
     build_board(objs)
+    build_diploma(objs)
     apply_materials()
     make_room_movers(objs)  # joined once each part has its material
     build_cameras(cams)  # they find the screen by its material

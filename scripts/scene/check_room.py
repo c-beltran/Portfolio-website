@@ -218,6 +218,32 @@ if laptop:
             continue
         break
 
+# The diploma above the board: on the wall, every part there, no words, and seen from the seat.
+diploma = get("obj_diploma")
+if not diploma:
+    problems.append("no obj_diploma")
+else:
+    parts = [o for o in diploma.children_recursive if o.type == "MESH"]
+    names = {o.name for o in parts}
+    for p in R.diploma_parts():
+        if p["name"] not in names:
+            problems.append(f"no {p['name']}")
+    back = max((o.matrix_world @ v.co).y for o in parts for v in o.data.vertices)
+    if abs(back - 0.95) > 0.002:
+        problems.append(f"obj_diploma: its back at y {back:.4f}, not on the wall (0.95)")
+    if any(o.type == "FONT" for o in diploma.children_recursive):
+        problems.append("obj_diploma: has text")
+    seat = get("cam_seat")
+    if seat:
+        eye = seat.matrix_world.translation
+        corners = R.diploma_paper_corners()
+        middle = tuple(sum(q[i] for q in corners) / 4 for i in range(3))
+        for c in corners + [middle]:
+            d = Vector(c) - eye
+            hit, _, _, _, o, _ = bpy.context.scene.ray_cast(deps, eye, d.normalized(), distance=d.length - 0.002)
+            if hit:
+                problems.append(f"cam_seat: {o.name} hides the diploma at {tuple(round(v, 3) for v in c)}")
+
 # Nothing stands between the board's lean-in camera and any magnet.
 cam = get("cam_board")
 if not cam:

@@ -1,6 +1,6 @@
 """
 Pure geometry for the room's objects: the soccer
-ball by the left wall and the magnet board of Carlos's eight places. No bpy, so it is unit-tested
+ball by the left wall, the magnet board of Carlos's eight places and the framed diploma above it. No bpy, so it is unit-tested
 by test_room.py. Blender axes, metres: +X right, +Y towards the back wall, +Z up.
 """
 
@@ -17,6 +17,10 @@ PLANT = {"at": (0.98, 0.88, 0.55)}
 
 # The board hangs on the back wall (y 0.95) left of the monitor, above the laptop.
 BOARD = {"centre": (-0.99, 0.944, 1.15), "size": (0.40, 0.28), "depth": 0.012, "frame": 0.015}
+# The diploma hangs above the board, centred on it: a dark frame, a mat and cream paper with lines
+# that read as a certificate's but say nothing, and a plain gold seal. No words, crest or logo: the
+# page lays the degree on it as HTML when the view leans in.
+DIPLOMA = {"centre": (-0.99, 0.944, 1.53), "size": (0.34, 0.28), "depth": 0.012, "frame": 0.018, "mat": 0.03}
 MAGNET = {"r": 0.035, "t": 0.006}
 HOME_R = 0.042  # a fifth bigger than the others
 PLACES = ("egypt", "italy", "colombia", "guatemala", "canada", "mexico", "puerto_rico", "aruba")
@@ -313,3 +317,58 @@ def soccer_ball(r, subdiv=2):
                 black.append(pent)
                 face.append(fi)
     return verts, tris, black, face
+
+
+def _diploma_layers():
+    """The diploma's sizes and the y of each layer's front face (the wall is at y 0.95)."""
+    (cx, cy, cz), (w, h) = DIPLOMA["centre"], DIPLOMA["size"]
+    d, f, m = DIPLOMA["depth"], DIPLOMA["frame"], DIPLOMA["mat"]
+    back = cy + d / 2
+    return {"c": (cx, cz), "outer": (w, h), "inner": (w - 2 * f, h - 2 * f), "paper": (w - 2 * f - 2 * m, h - 2 * f - 2 * m),
+            "frame_front": cy - d / 2, "mat_front": back - 0.004, "paper_front": back - 0.005, "ink_front": back - 0.0054}
+
+
+def diploma_paper_corners():
+    """The paper's corners, TL TR BR BL, on its front face: what the page lays the degree on."""
+    L = _diploma_layers()
+    (cx, cz), (pw, ph), y = L["c"], L["paper"], L["paper_front"]
+    return [(cx - pw / 2, y, cz + ph / 2), (cx + pw / 2, y, cz + ph / 2), (cx + pw / 2, y, cz - ph / 2), (cx - pw / 2, y, cz - ph / 2)]
+
+
+# The certificate's lines, from the paper's top (fractions of its height, its width): a title block, a
+# line under it, the name line, two lines of body, the degree line, then two signature lines.
+_STROKES = (
+    ("title", 0.17, 0.0, 0.46, 0.026, "ink"),
+    ("sub", 0.27, 0.0, 0.30, 0.010, "faint"),
+    ("name", 0.40, 0.0, 0.54, 0.022, "ink"),
+    ("body_0", 0.51, 0.0, 0.70, 0.008, "faint"),
+    ("body_1", 0.56, 0.0, 0.62, 0.008, "faint"),
+    ("degree", 0.65, 0.0, 0.44, 0.016, "ink"),
+    ("sign_0", 0.86, -0.29, 0.24, 0.006, "sign"),
+    ("sign_1", 0.86, 0.29, 0.24, 0.006, "sign"),
+)
+SEAL_R = 0.017
+
+
+def diploma_parts():
+    """Every part of the diploma: [{"name", "kind": "box" | "disc", "size" (x, y, z) or "r", "centre" (x, y, z),
+    "ink" for the lines}]. Boxes' centres are their middles; discs face the room (-Y)."""
+    L = _diploma_layers()
+    (cx, cz), (w, h), (iw, ih), (pw, ph) = L["c"], L["outer"], L["inner"], L["paper"]
+    d, f = DIPLOMA["depth"], DIPLOMA["frame"]
+    fy = L["frame_front"] + d / 2
+    parts = []
+    for i, (sx, sz, x, z) in enumerate(((w, f, cx, cz + h / 2 - f / 2), (w, f, cx, cz - h / 2 + f / 2),
+                                        (f, h - 2 * f, cx - w / 2 + f / 2, cz), (f, h - 2 * f, cx + w / 2 - f / 2, cz))):
+        parts.append({"name": f"diploma_frame_{i}", "kind": "box", "size": (sx, d, sz), "centre": (x, fy, z)})
+    mat_d = 0.004
+    parts.append({"name": "diploma_mat", "kind": "box", "size": (iw, mat_d, ih), "centre": (cx, L["mat_front"] + mat_d / 2, cz)})
+    paper_d = 0.001
+    parts.append({"name": "diploma_paper", "kind": "box", "size": (pw, paper_d, ph), "centre": (cx, L["paper_front"] + paper_d / 2, cz)})
+    top = cz + ph / 2
+    ink_d = 0.0004
+    for name, down, across, sw, sh, ink in _STROKES:
+        parts.append({"name": f"diploma_stroke_{name}", "kind": "box", "size": (pw * sw, ink_d, ph * sh),
+                      "centre": (cx + pw * across, L["ink_front"] + ink_d / 2, top - ph * down), "ink": ink})
+    parts.append({"name": "diploma_seal", "kind": "disc", "r": SEAL_R, "centre": (cx, L["ink_front"] - 0.0002, cz - ph / 2 + ph * 0.15)})
+    return parts
