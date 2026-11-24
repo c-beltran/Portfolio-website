@@ -103,6 +103,34 @@ describe('fetchWeather', () => {
     }
   });
 
+  it('asks again over a cached reading of the wrong shape, or from the future', async () => {
+    const f = ok(RAIN);
+    const bad = [
+      { at: 0, place: [HERE.lat, HERE.lon], reading: { condition: 'x' } },
+      {
+        at: 0,
+        place: [HERE.lat, HERE.lon],
+        reading: { condition: 'rain', intensity: 'lots', windMs: 1, windDeg: 1 },
+      },
+      {
+        at: 10 * 60_000,
+        place: [HERE.lat, HERE.lon],
+        reading: { condition: 'rain', intensity: 1, windMs: 1, windDeg: 1 },
+      },
+    ];
+    for (const c of bad) {
+      const storage = memory();
+      storage.setItem(CACHE_KEY, JSON.stringify(c));
+      expect(await fetchWeather(HERE, { fetch: f, storage, now: 0 })).toEqual({
+        condition: 'rain',
+        intensity: 0.75,
+        windMs: 5.5,
+        windDeg: 200,
+      });
+    }
+    expect(f).toHaveBeenCalledTimes(3);
+  });
+
   it('gives nothing for a failed, malformed or unknown answer', async () => {
     const bad = vi.fn(async () => new Response('x', { status: 500 })) as unknown as typeof fetch;
     expect(await fetchWeather(HERE, { fetch: bad, storage: null, now: 0 })).toBeNull();

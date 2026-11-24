@@ -49,6 +49,8 @@ function fakeDate(
 
 const NEW_YORK = { jan: 300, jul: 240 };
 const SYDNEY = { jan: -660, jul: -600 };
+/** No daylight saving: the hemisphere can't be told, so the rule takes the equator's twelve hours. */
+const SAO_PAULO = { jan: 180, jul: 180 };
 
 function run(o: {
   at: { y: number; mo: number; d: number; h: number; mi?: number };
@@ -106,6 +108,18 @@ describe('LIGHT_SCRIPT (before the first paint)', () => {
     // A December evening in Sydney is still light; a June one is dark.
     expect(run({ at: { y: 2026, mo: 11, d: 21, h: 19, mi: 30 }, zone: SYDNEY }).time).toBe('day');
     expect(run({ at: { y: 2026, mo: 5, d: 21, h: 19, mi: 30 }, zone: SYDNEY }).time).toBe('night');
+  });
+
+  it("gives zones without daylight saving the equator's day, not a mid-latitude one", () => {
+    // A December 17:30 in São Paulo is daylight (sunset ~18:45); 40° would have called it night.
+    expect(run({ at: { y: 2026, mo: 11, d: 21, h: 17, mi: 30 }, zone: SAO_PAULO }).time).toBe(
+      'day',
+    );
+    expect(run({ at: { y: 2026, mo: 11, d: 21, h: 19, mi: 30 }, zone: SAO_PAULO }).time).toBe(
+      'night',
+    );
+    expect(run({ at: { y: 2026, mo: 5, d: 21, h: 12 }, zone: SAO_PAULO }).time).toBe('day');
+    expect(run({ at: { y: 2026, mo: 5, d: 21, h: 3 }, zone: SAO_PAULO }).time).toBe('night');
   });
 
   it('turns the lamp on at night unless this visit switched it off', () => {

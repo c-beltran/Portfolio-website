@@ -231,7 +231,9 @@ describe("the window's weather, explained where the site describes itself", () =
     expect(note).toMatchObject({ kind: 'prose', draft: true });
     const text = (note as { text: string }).text;
     expect(text).toMatch(/time zone/);
-    expect(text).toMatch(/never your location/i);
+    // an IP address says roughly where you are: the line promises only what holds
+    expect(text).toMatch(/a city's coordinates, never yours/);
+    expect(text).not.toMatch(/never your location/i);
   });
 
   it("credits Open-Meteo's data under its licence", () => {

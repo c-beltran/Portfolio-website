@@ -30,6 +30,16 @@ function sessionStore(): Storage | null {
   }
 }
 
+/** A reading the window can draw: a known condition and finite numbers (a cache may hold junk). */
+function valid(r: unknown): r is Reading {
+  const o = r as Record<string, unknown> | null;
+  return (
+    !!o &&
+    CONDITIONS.includes(o.condition as Condition) &&
+    ['intensity', 'windMs', 'windDeg'].every((k) => Number.isFinite(o[k]))
+  );
+}
+
 const samePlace = (a: [number, number], p: Place) => a[0] === p.lat && a[1] === p.lon;
 
 function cached(storage: Storage | null, p: Place, now: number): Reading | null {
@@ -37,7 +47,12 @@ function cached(storage: Storage | null, p: Place, now: number): Reading | null 
     const raw = storage?.getItem(CACHE_KEY);
     if (!raw) return null;
     const c = JSON.parse(raw) as Cached;
-    return now - c.at < CACHE_MS && Array.isArray(c.place) && samePlace(c.place, p) && c.reading
+    const age = now - c.at;
+    return age >= 0 &&
+      age < CACHE_MS &&
+      Array.isArray(c.place) &&
+      samePlace(c.place, p) &&
+      valid(c.reading)
       ? c.reading
       : null;
   } catch {

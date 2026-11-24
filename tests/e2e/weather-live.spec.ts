@@ -26,6 +26,13 @@ test.describe("the live desk's window and light", () => {
     await expect(canvas(page)).toHaveAttribute('data-tint', '0.85', { timeout: 5000 });
   });
 
+  test("once the live desk is up, the still's own window stops drawing", async ({ page }) => {
+    await gotoDesk(page, '/?tier=2&weather=rain&time=day');
+    await waitLive(page);
+    await expect(canvas(page)).toHaveAttribute('data-weather-mix', '1.00', { timeout: 10_000 });
+    await expect(page.locator('.weather-window canvas')).toHaveAttribute('data-still', 'true');
+  });
+
   test('the weather stays in the window through a lean-in', async ({ page }) => {
     const errors: string[] = [];
     page.on('pageerror', (e) => errors.push(e.message));

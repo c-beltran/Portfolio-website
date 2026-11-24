@@ -129,7 +129,7 @@ export const PANELS: Record<SectionSlug, PanelBlock[]> = {
     {
       kind: 'prose',
       facts: ['P06'],
-      text: "The window shows the weather where you are: your browser asks Open-Meteo for the current weather in your time zone's main city. Open-Meteo sees your IP address, as any site you load does, and never your location.",
+      text: "The window shows the weather where you are: your browser asks Open-Meteo for the current weather in your time zone's main city. Open-Meteo sees your IP address, as any site you load does, and receives a city's coordinates, never yours.",
       draft: true,
     },
     {

@@ -5,8 +5,8 @@ import clip from '@/content/scene/sky-clip.json';
 import mask from '@/content/scene/sky-mask.json';
 import { quadMatrix3d, type Pt } from '@/content/scene/screenAffine';
 import { useMotion } from '@/lib/useMotion';
-import { createPainter, PAINT_FPS, PAINT_MAX_W } from '@/lib/weather/painter';
-import { reducedMotion, weatherHeld } from '@/lib/weather/hold';
+import { createPainter, motionFps, PAINT_MAX_W } from '@/lib/weather/painter';
+import { liveOver, reducedMotion, weatherHeld } from '@/lib/weather/hold';
 import { PATCH_ASPECT, SKY_QUAD } from '@/lib/weather/patch';
 import type { Sky } from '@/lib/weather/types';
 
@@ -25,8 +25,9 @@ const STYLE = {
  * The visitor's weather in the window: drawn in the space of the window's patch of sky, laid onto
  * the still by that patch's corners (quads.sky) and seen only through the glass (a clip traced
  * from the rendered mask: a clip, never an image, so it can't become the page's largest paint), so the frame, the monitor, the light bar and the plant stay in front. It fades in once
- * drawn. Under reduced motion or the motion pause, while the tab is hidden, or while a lean-in on
- * the monitor covers the window, it holds a still frame.
+ * drawn. It draws only as often as the sky moves (none while nothing does). Under reduced motion or
+ * the motion pause, while the tab is hidden, while a lean-in on the monitor covers the window, or
+ * once the live desk is up over the still, it holds a still frame.
  */
 export function WeatherWindow({ sky }: { sky: Sky | null }) {
   const box = useRef<HTMLDivElement>(null);
@@ -75,7 +76,8 @@ export function WeatherWindow({ sky }: { sky: Sky | null }) {
       );
     };
 
-    const still = () => weatherHeld(wrap, live.current.paused);
+    // Held, or hidden under the live desk (which draws its own window).
+    const still = () => weatherHeld(wrap, live.current.paused) || liveOver(wrap);
 
     const frame = (now: number) => {
       raf = requestAnimationFrame(frame);
@@ -92,9 +94,17 @@ export function WeatherWindow({ sky }: { sky: Sky | null }) {
         canvas.dataset.still = 'true';
       } else {
         t += dt;
-        if (now - last < 1000 / PAINT_FPS) return;
-        last = now;
-        drewStill = '';
+        const fps = motionFps(s, t);
+        if (fps === 0) {
+          // Nothing moves (a clear day between birds, fog): the last frame stands.
+          const key = `rest|${s.condition}|${s.dayness.toFixed(2)}|${canvas.width}`;
+          if (drewStill === key) return;
+          drewStill = key;
+        } else {
+          if (now - last < 1000 / fps) return;
+          last = now;
+          drewStill = '';
+        }
         painter.draw(s, t, { still: false });
         delete canvas.dataset.still;
       }

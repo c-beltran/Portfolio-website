@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { birdsAllowed, nextFlashAt, particleCount, skyColors, starsAlpha } from './painter';
+import {
+  birdsAllowed,
+  motionFps,
+  nextFlashAt,
+  particleCount,
+  skyColors,
+  starsAlpha,
+} from './painter';
 import type { Condition } from './types';
 
 const ALL: Condition[] = ['clear', 'partly', 'overcast', 'fog', 'rain', 'snow', 'storm'];
@@ -81,5 +88,32 @@ describe('the storm flash', () => {
       expect(next - t).toBeGreaterThanOrEqual(3000);
       t = next;
     }
+  });
+});
+
+describe('how often the sky needs a new frame', () => {
+  const at = (condition: Condition, dayness: number) => ({
+    condition,
+    intensity: 0.75,
+    windMs: 3,
+    windDeg: 270,
+    dayness,
+    source: 'live' as const,
+  });
+
+  it('falling rain and snow at the full rate', () => {
+    for (const c of ['rain', 'snow', 'storm'] as const) expect(motionFps(at(c, 1), 0)).toBe(30);
+  });
+
+  it('drifting clouds and twinkling stars slowly', () => {
+    expect(motionFps(at('overcast', 1), 0)).toBe(10);
+    expect(motionFps(at('partly', 0), 0)).toBe(10);
+    expect(motionFps(at('clear', 0), 0)).toBe(10);
+  });
+
+  it('a clear day only while birds cross, and fog never', () => {
+    expect(motionFps(at('clear', 1), 3000)).toBe(30); // mid-crossing
+    expect(motionFps(at('clear', 1), 11_000)).toBe(0); // between crossings
+    expect(motionFps(at('fog', 1), 3000)).toBe(0);
   });
 });

@@ -71,6 +71,31 @@ export function starsAlpha(c: Condition, dayness: number): number {
   return Math.max(0, 1 - dayness * 2) * (c === 'partly' ? 0.5 : 1);
 }
 
+const CLOUDS: Partial<Record<Condition, number>> = {
+  partly: 5,
+  overcast: 14,
+  rain: 12,
+  snow: 10,
+  storm: 14,
+};
+/** Birds cross every BIRD_PERIOD ms, taking BIRD_CROSS ms; quiet in between. */
+const BIRD_PERIOD = 14_000;
+const BIRD_CROSS = 9000;
+const birdsCrossing = (t: number) => t % BIRD_PERIOD <= BIRD_CROSS;
+
+/**
+ * How many frames a second the sky needs at a moment: falling rain or snow, or birds crossing, at
+ * the full rate; drifting clouds or twinkling stars slowly; nothing moving (a clear day between
+ * birds, fog), none: the last frame stands.
+ */
+export function motionFps(sky: Sky, tMs: number): number {
+  const c = sky.condition;
+  if (DENSITY[c]) return PAINT_FPS;
+  if (birdsAllowed(c, sky.dayness) && birdsCrossing(tMs)) return PAINT_FPS;
+  if (CLOUDS[c] || starsAlpha(c, sky.dayness) > 0) return 10;
+  return 0;
+}
+
 /** When the next storm flash comes: never sooner than 3 s after the last (WCAG 2.3.1 by far). */
 export function nextFlashAt(prevMs: number, rand: () => number): number {
   return prevMs + 3000 + rand() * 9000;
@@ -88,13 +113,6 @@ function rng(seed: number) {
   };
 }
 
-const CLOUDS: Partial<Record<Condition, number>> = {
-  partly: 5,
-  overcast: 14,
-  rain: 12,
-  snow: 10,
-  storm: 14,
-};
 const FLASH_MS = 260;
 
 /**
@@ -212,11 +230,9 @@ export function createPainter(ctx: CanvasRenderingContext2D, w: number, h: numbe
 
   function birds(sky: Sky, t: number) {
     if (!birdsAllowed(sky.condition, sky.dayness)) return;
-    // A small group crosses every 14 s, taking 9 s; quiet in between.
-    const period = 14_000;
-    const k = (t % period) / 9000;
-    if (k > 1) return;
-    const lap = Math.floor(t / period);
+    if (!birdsCrossing(t)) return;
+    const k = (t % BIRD_PERIOD) / BIRD_CROSS;
+    const lap = Math.floor(t / BIRD_PERIOD);
     const g = rng(seed * 31 + lap);
     const y0 = h * (0.18 + g() * 0.3);
     const count = 2 + Math.floor(g() * 3);

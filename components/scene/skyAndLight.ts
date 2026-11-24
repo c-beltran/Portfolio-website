@@ -11,7 +11,7 @@ import {
 import type { Lamp, Render, Time } from '@/lib/light';
 import { useMotion } from '@/lib/useMotion';
 import { reducedMotion, weatherHeld } from '@/lib/weather/hold';
-import { createPainter, PAINT_FPS } from '@/lib/weather/painter';
+import { createPainter, motionFps } from '@/lib/weather/painter';
 import { PATCH_ASPECT, SKY_RECT_GLTF } from '@/lib/weather/patch';
 import type { Sky } from '@/lib/weather/types';
 
@@ -120,7 +120,7 @@ export function useSkyAndLight(o: {
     return () => cancelAnimationFrame(id);
   }, [target, lit, canvas, invalidate]);
 
-  // The window's weather: painted into a canvas texture at PAINT_FPS, and only then rendered.
+  // The window's weather: painted into a canvas texture only as often as the sky moves.
   const known = sky !== null;
   useEffect(() => {
     if (!known) return;
@@ -156,7 +156,16 @@ export function useSkyAndLight(o: {
         }
       } else {
         t += dt;
-        if (now - last >= 1000 / PAINT_FPS) {
+        const fps = motionFps(s, t);
+        if (fps === 0) {
+          // Nothing moves (a clear day between birds, fog): no upload, no re-render.
+          const key = `rest|${s.condition}|${s.dayness.toFixed(2)}`;
+          if (drewStill !== key) {
+            drewStill = key;
+            painter.draw(s, t, { still: false });
+            painted = true;
+          }
+        } else if (now - last >= 1000 / fps) {
           last = now;
           drewStill = '';
           painter.draw(s, t, { still: false });
