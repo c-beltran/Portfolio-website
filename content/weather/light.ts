@@ -1,3 +1,4 @@
+import seat from '@/content/scene/bounds-seat.json';
 import type { Lamp, Render, Time } from '@/lib/light';
 import type { Condition, Sky } from '@/lib/weather/types';
 
@@ -23,6 +24,26 @@ const TINTS: Record<Condition, { rgb: RGB; k: number }> = {
   snow: { rgb: [210, 218, 234], k: 0.75 },
   storm: { rgb: [160, 170, 192], k: 1 },
 };
+
+export type Box = { x0: number; y0: number; x1: number; y1: number };
+const O = seat.objects as Record<string, Box>;
+const laptop = (seat as unknown as { decor: Record<string, Box> }).decor.deco_laptop!;
+
+/**
+ * The screens keep their own light, in master fractions: the monitor's two halves (their hotspots
+ * are the screen) and the laptop's screen (the lid's upper half, inset from its edges). The
+ * phone's screen is dark.
+ */
+export const SCREENS: Box[] = [
+  O.obj_monitor!,
+  O.obj_cv!,
+  {
+    x0: laptop.x0 + (laptop.x1 - laptop.x0) * 0.08,
+    x1: laptop.x1 - (laptop.x1 - laptop.x0) * 0.04,
+    y0: laptop.y0,
+    y1: laptop.y0 + (laptop.y1 - laptop.y0) * 0.48,
+  },
+];
 
 /** Moonlight, multiplied over the day render. */
 export const MOON_RGB: RGB = [74, 90, 148];

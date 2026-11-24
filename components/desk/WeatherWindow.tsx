@@ -1,17 +1,15 @@
 'use client';
 
 import { useEffect, useRef, type CSSProperties } from 'react';
-import seat from '@/content/scene/bounds-seat.json';
 import mask from '@/content/scene/sky-mask.json';
 import { quadMatrix3d, type Pt } from '@/content/scene/screenAffine';
 import { useMotion } from '@/lib/useMotion';
 import { createPainter, PAINT_FPS, PAINT_MAX_W } from '@/lib/weather/painter';
+import { reducedMotion, weatherHeld } from '@/lib/weather/hold';
+import { PATCH_ASPECT, SKY_QUAD } from '@/lib/weather/patch';
 import type { Sky } from '@/lib/weather/types';
 
-const QUAD = (seat as unknown as { quads: { sky: Pt[] } }).quads.sky;
-const UV = (seat as unknown as { skyUv: Record<'u0' | 'v0' | 'u1' | 'v1', number> }).skyUv;
-/** The patch's shape in the world (the live sky plane is 6 m × 5 m; sky_geo.py). */
-const PATCH_ASPECT = ((UV.u1 - UV.u0) * 6) / ((UV.v1 - UV.v0) * 5);
+const QUAD = SKY_QUAD;
 /** A frame drawn under reduced motion: a moment with nothing half-crossing. */
 const STILL_T = 4000;
 
@@ -21,8 +19,6 @@ const STYLE = {
   '--pw': mask.x1 - mask.x0,
   '--ph': mask.y1 - mask.y0,
 } as CSSProperties;
-
-const REDUCED = '(prefers-reduced-motion: reduce)';
 
 /**
  * The visitor's weather in the window: drawn in the space of the window's patch of sky, laid onto
@@ -78,11 +74,7 @@ export function WeatherWindow({ sky }: { sky: Sky | null }) {
       );
     };
 
-    const still = () =>
-      matchMedia(REDUCED).matches ||
-      live.current.paused ||
-      document.hidden ||
-      ['monitor', 'cv'].includes(wrap.closest('.desk')?.getAttribute('data-open') ?? '');
+    const still = () => weatherHeld(wrap, live.current.paused);
 
     const frame = (now: number) => {
       raf = requestAnimationFrame(frame);
@@ -95,7 +87,7 @@ export function WeatherWindow({ sky }: { sky: Sky | null }) {
         const key = `${s.condition}|${s.dayness.toFixed(2)}|${canvas.width}`;
         if (drewStill === key) return;
         drewStill = key;
-        painter.draw(s, matchMedia(REDUCED).matches ? STILL_T : t, { still: true });
+        painter.draw(s, reducedMotion() ? STILL_T : t, { still: true });
         canvas.dataset.still = 'true';
       } else {
         t += dt;

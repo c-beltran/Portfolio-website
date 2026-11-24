@@ -131,3 +131,72 @@ describe('coming forward: the dim and the opened bake', () => {
     expect(f).not.toContain('dim');
   });
 });
+
+describe("the window's weather and the room's light", () => {
+  const t = () => new THREE.Texture();
+
+  it('lays the weather over the sky bake, inside its patch, by weatherMix', () => {
+    const m = bakedMaterial(t(), t(), { weather: true });
+    expect(m.uniforms.weatherMix!.value).toBe(0);
+    expect(m.uniforms).toHaveProperty('weatherMap');
+    expect((m.uniforms.weatherRect!.value as THREE.Vector4).toArray()).toEqual([0, 0, 1, 1]);
+    expect(m.fragmentShader).toContain(
+      'base = mix(base, texture2D(weatherMap, wl), weatherMix * inW);',
+    );
+  });
+
+  it('adds the light uniforms, all at no effect', () => {
+    const m = bakedMaterial(t(), t(), { light: true });
+    for (const u of [
+      'tintRgb',
+      'tintK',
+      'tintSide',
+      'tintFar',
+      'moonK',
+      'moonRgb',
+      'poolK',
+      'poolAt',
+      'poolR',
+      'poolRgb',
+      'lightViewProj',
+    ])
+      expect(m.uniforms, u).toHaveProperty(u);
+    expect([m.uniforms.tintK!.value, m.uniforms.moonK!.value, m.uniforms.poolK!.value]).toEqual([
+      0, 0, 0,
+    ]);
+    expect(m.vertexShader).toContain('vWorld');
+  });
+
+  it('lights in the order the still does: moon, then tint, then the pool, then the dim', () => {
+    const f = bakedMaterial(t(), t(), { light: true, dim: true }).fragmentShader;
+    const at = (s: string) => {
+      const i = f.indexOf(s);
+      expect(i, s).toBeGreaterThan(-1);
+      return i;
+    };
+    expect(at('mix(vec3(1.0), moonRgb, moonK)')).toBeLessThan(
+      at('mix(vec3(1.0), tintHere, tintK)'),
+    );
+    expect(at('mix(vec3(1.0), tintHere, tintK)')).toBeLessThan(
+      at('s = 1.0 - (1.0 - s) * (1.0 - pool);'),
+    );
+    expect(at('s = 1.0 - (1.0 - s) * (1.0 - pool);')).toBeLessThan(at('float dimHere = dim;'));
+  });
+
+  it('keeps the screens out of the light, as the still does (three rects, none by default)', () => {
+    const m = bakedMaterial(t(), t(), { light: true });
+    const keep = m.uniforms.lightKeep!.value as THREE.Vector4[];
+    expect(keep).toHaveLength(3);
+    expect(keep.every((v) => v.length() === 0)).toBe(true);
+    expect(m.fragmentShader).toContain('uniform vec4 lightKeep[3];');
+    expect(m.fragmentShader).toContain(
+      'base.rgb = mix(sRGBTransferEOTF(vec4(s, 1.0)).rgb, base.rgb, keep);',
+    );
+  });
+
+  it('leaves the shader alone without them', () => {
+    const f = bakedMaterial(t(), t()).fragmentShader;
+    expect(f).not.toContain('weatherMap');
+    expect(f).not.toContain('tintK');
+  });
+});

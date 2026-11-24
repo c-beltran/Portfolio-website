@@ -334,7 +334,7 @@ export function DeskStill({ selected, onOpen, onClose }: Props) {
             {glow && <DeskGlow item="lightbar" />}
             <Hotspot item="lightbar" label="Lamp" pressed={lamp === 'on'} onClick={toggleLamp} />
           </div>
-          <LiveLayer open={opened} />
+          <LiveLayer open={opened} sky={sky} />
           <div className="desk-still__overlay">
             {glow && <Steam />}
             <MonitorName />

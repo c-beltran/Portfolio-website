@@ -1,31 +1,26 @@
 'use client';
 
 import { useSyncExternalStore, type CSSProperties } from 'react';
-import seat from '@/content/scene/bounds-seat.json';
-import { lightFor, MOON_RGB, POOL, TINT_FAR_SHARE, WINDOW_SIDE } from '@/content/weather/light';
+import {
+  lightFor,
+  MOON_RGB,
+  POOL,
+  SCREENS,
+  TINT_FAR_SHARE,
+  WINDOW_SIDE,
+  type Box,
+} from '@/content/weather/light';
 import { useLight } from '@/lib/useLight';
 import type { Sky } from '@/lib/weather/types';
 
-type Box = { x0: number; y0: number; x1: number; y1: number };
-const O = seat.objects as Record<string, Box>;
-const laptop = (seat as unknown as { decor: Record<string, Box> }).decor.deco_laptop!;
-
-/** The screens keep their own light: the monitor's two halves, the phone, the laptop's screen. */
-const SCREENS: Box[] = [
-  O.obj_monitor!,
-  O.obj_cv!,
-  O.obj_phone!,
-  { ...laptop, y1: laptop.y0 + (laptop.y1 - laptop.y0) * 0.55 },
-];
-
-/** A mask over the master: the whole room, the screens cut nearly out (a tenth still tinted). */
+/** A mask over the master (read by luminance): the room, with the screens cut out under soft edges. */
 const MASK = (() => {
   const rect = (b: Box) => `M${b.x0} ${b.y0}H${b.x1}V${b.y1}H${b.x0}Z`;
-  const holes = SCREENS.map(rect).join('');
   const svg =
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1 1" preserveAspectRatio="none">` +
-    `<path fill="#fff" fill-rule="evenodd" d="M0 0H1V1H0Z${holes}"/>` +
-    `<path fill="#fff" fill-opacity="0.1" d="${holes}"/></svg>`;
+    `<filter id="f" x="-0.1" y="-0.1" width="1.2" height="1.2"><feGaussianBlur stdDeviation="0.003"/></filter>` +
+    `<rect width="1" height="1" fill="#fff"/>` +
+    `<path filter="url(#f)" fill="#000" d="${SCREENS.map(rect).join('')}"/></svg>`;
   return `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
 })();
 
