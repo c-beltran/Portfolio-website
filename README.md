@@ -61,6 +61,8 @@ pnpm e2e                                    # browser tests against the build (C
 - [x] Every other section's object comes forward or zooms in, with real HTML on the badge, the card and both monitor halves
 - [x] The terminal on the monitor loops, under the same pause as the steam
 - [x] The window shows the visitor's weather and time of day, and the room's light follows (night by their clock; the switch works the lamp)
+- [x] Once the car, the ball or the mug has come forward, a visitor can pick it up and spin it
+- [x] A framed diploma on the wall leans in and opens the CV
 - [ ] The live desk becomes the default on capable devices. Until then, its timing tests fail on CI's CPU-only renderer.
 - [ ] Final copy, photos and recordings (marked `DRAFT` and `TODO` for now)
 
