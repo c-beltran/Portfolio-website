@@ -78,10 +78,40 @@ const CLOUDS: Partial<Record<Condition, number>> = {
   snow: 10,
   storm: 14,
 };
-/** Birds cross every BIRD_PERIOD ms, taking BIRD_CROSS ms; quiet in between. */
-const BIRD_PERIOD = 14_000;
+/**
+ * Birds come at uneven times: time is cut into BIRD_SLOT ms slots, and in each a flock sets off at a
+ * seeded moment in its first BIRD_LATEST ms, taking BIRD_CROSS ms to cross, so the sky is quiet
+ * for 6 to 48 s between flocks. The first sets off almost at once.
+ */
+const BIRD_SLOT = 36_000;
 const BIRD_CROSS = 9000;
-const birdsCrossing = (t: number) => t % BIRD_PERIOD <= BIRD_CROSS;
+const BIRD_LATEST = BIRD_SLOT - BIRD_CROSS - 6000;
+const BIRD_FIRST = 1500;
+
+export type Flock = {
+  /** How far across, 0 to 1. */
+  k: number;
+  /** 1 flies left to right, -1 right to left. */
+  dir: 1 | -1;
+  count: number;
+  /** Height in the window, 0 to 1. */
+  y: number;
+};
+
+/** The flock crossing at a moment, or null when the sky is quiet. */
+export function flockAt(tMs: number, seed = 1): Flock | null {
+  const lap = Math.floor(tMs / BIRD_SLOT);
+  const g = rng(seed * 31 + lap);
+  const start = lap * BIRD_SLOT + (lap === 0 ? BIRD_FIRST : g() * BIRD_LATEST);
+  const k = (tMs - start) / BIRD_CROSS;
+  if (k < 0 || k > 1) return null;
+  return {
+    k,
+    dir: g() < 0.5 ? 1 : -1,
+    count: g() < 0.2 ? 1 : 2 + Math.floor(g() * 3),
+    y: 0.18 + g() * 0.3,
+  };
+}
 
 /**
  * How many frames a second the sky needs at a moment: falling rain or snow, or birds crossing, at
@@ -91,7 +121,7 @@ const birdsCrossing = (t: number) => t % BIRD_PERIOD <= BIRD_CROSS;
 export function motionFps(sky: Sky, tMs: number): number {
   const c = sky.condition;
   if (DENSITY[c]) return PAINT_FPS;
-  if (birdsAllowed(c, sky.dayness) && birdsCrossing(tMs)) return PAINT_FPS;
+  if (birdsAllowed(c, sky.dayness) && flockAt(tMs)) return PAINT_FPS;
   if (CLOUDS[c] || starsAlpha(c, sky.dayness) > 0) return 10;
   return 0;
 }
@@ -230,16 +260,14 @@ export function createPainter(ctx: CanvasRenderingContext2D, w: number, h: numbe
 
   function birds(sky: Sky, t: number) {
     if (!birdsAllowed(sky.condition, sky.dayness)) return;
-    if (!birdsCrossing(t)) return;
-    const k = (t % BIRD_PERIOD) / BIRD_CROSS;
-    const lap = Math.floor(t / BIRD_PERIOD);
-    const g = rng(seed * 31 + lap);
-    const y0 = h * (0.18 + g() * 0.3);
-    const count = 2 + Math.floor(g() * 3);
+    const f = flockAt(t, seed);
+    if (!f) return;
+    const { k, dir, count } = f;
+    const y0 = h * f.y;
     ctx.strokeStyle = 'rgba(30,34,40,0.7)';
     ctx.lineWidth = Math.max(1, w / 900);
     for (let i = 0; i < count; i++) {
-      const x = (-0.1 + k * 1.2) * w - i * w * 0.025;
+      const x = (dir === 1 ? -0.1 + k * 1.2 : 1.1 - k * 1.2) * w - dir * i * w * 0.025;
       const y = y0 + (i % 2) * h * 0.02 + Math.sin(t / 300 + i) * h * 0.004;
       const s = w * 0.008;
       const flap = Math.sin(t / 140 + i * 1.7) * s * 0.5;

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   birdsAllowed,
+  flockAt,
   motionFps,
   nextFlashAt,
   particleCount,
@@ -115,5 +116,56 @@ describe('how often the sky needs a new frame', () => {
     expect(motionFps(at('clear', 1), 3000)).toBe(30); // mid-crossing
     expect(motionFps(at('clear', 1), 11_000)).toBe(0); // between crossings
     expect(motionFps(at('fog', 1), 3000)).toBe(0);
+  });
+});
+
+describe('flocks', () => {
+  const HOUR = 3_600_000;
+  const starts: number[] = [];
+  const flocks: NonNullable<ReturnType<typeof flockAt>>[] = [];
+  let was = false;
+  for (let t = 0; t < HOUR; t += 100) {
+    const f = flockAt(t);
+    if (f && !was) {
+      starts.push(t);
+      flocks.push(f);
+    }
+    was = f !== null;
+  }
+  const gaps = starts.slice(1).map((s, i) => s - starts[i]!);
+
+  it('come at uneven times, never closer than 6 s or farther than a minute apart', () => {
+    expect(starts.length).toBeGreaterThan(60);
+    expect(Math.min(...gaps)).toBeGreaterThanOrEqual(6000 + 9000);
+    expect(Math.max(...gaps)).toBeLessThanOrEqual(60_000);
+    expect(new Set(gaps.map((g) => Math.round(g / 1000))).size).toBeGreaterThan(10);
+  });
+
+  it('fly both ways, and now and then a bird flies alone', () => {
+    expect(flocks.some((f) => f.dir === 1)).toBe(true);
+    expect(flocks.some((f) => f.dir === -1)).toBe(true);
+    expect(flocks.some((f) => f.count === 1)).toBe(true);
+    expect(flocks.every((f) => f.count >= 1 && f.count <= 4)).toBe(true);
+  });
+
+  it('the first comes within seconds, and the still frame has one', () => {
+    expect(starts[0]).toBeLessThan(3000);
+    expect(flockAt(4000)).not.toBeNull();
+  });
+
+  it('are the same every time for a seed', () => {
+    expect(flockAt(123_456)).toEqual(flockAt(123_456));
+  });
+
+  it('a clear day moves at the full rate exactly while a flock crosses', () => {
+    const sky = {
+      condition: 'clear' as const,
+      intensity: 0,
+      windMs: 0,
+      windDeg: 0,
+      dayness: 1,
+      source: 'live' as const,
+    };
+    for (let t = 0; t < 200_000; t += 700) expect(motionFps(sky, t)).toBe(flockAt(t) ? 30 : 0);
   });
 });
