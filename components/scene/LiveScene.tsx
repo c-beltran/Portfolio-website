@@ -374,7 +374,8 @@ export default function LiveScene(props: {
         <Scene
           lamp={props.lamp}
           light={props.light}
-          sky={props.sky}
+          // The residual's capture is the bare bake: no weather, no light over it.
+          sky={capture ? null : props.sky}
           onReady={props.onReady}
           capture={capture}
           open={open}
