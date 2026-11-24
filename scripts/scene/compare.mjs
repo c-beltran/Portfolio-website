@@ -1,4 +1,4 @@
-// Builds the M3a look-review sheet (never committed): the reference photo beside each render at
+// Builds the look-review sheet (never committed): the reference photo beside each render at
 // 400 px wide, the phone views at 360 px, and each render at 1280 px. Also saves a PNG of the sheet.
 //
 //   node scripts/scene/compare.mjs <reference.jpg> [renders dir] [out dir]
@@ -31,7 +31,7 @@ const img = (k, w) => `<img src="${basename(files[k])}" style="width:${w}px">`;
 const pair = (a, b, label) =>
   `<section><h2>${label}</h2><div class="row"><figure>${img(a, 400)}<figcaption>Reference</figcaption></figure><figure>${img(b, 400)}<figcaption>Render</figcaption></figure></div></section>`;
 
-const html = `<!doctype html><meta charset="utf-8"><title>M3a look review</title>
+const html = `<!doctype html><meta charset="utf-8"><title>Look review</title>
 <style>
   body { margin: 24px; background: #111; color: #ddd; font: 14px/1.4 system-ui, sans-serif; }
   h1 { font-size: 20px; } h2 { font-size: 15px; margin: 28px 0 8px; color: #aaa; }
@@ -39,7 +39,7 @@ const html = `<!doctype html><meta charset="utf-8"><title>M3a look review</title
   figure { margin: 0; } figcaption { color: #888; font-size: 12px; margin-top: 4px; }
   img { display: block; border-radius: 4px; }
 </style>
-<h1>M3a look review: the workspace, day and lamp</h1>
+<h1>Look review: the workspace, day and lamp</h1>
 <p>The bar: at 400 px, beside the reference, the render reads as a photograph of the same kind of desk.</p>
 ${pair('ref', 'day', 'Day (dusk), 400 px')}
 ${pair('ref', 'lamp', 'Lamp mode (night), 400 px')}

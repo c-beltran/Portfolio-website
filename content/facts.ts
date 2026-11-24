@@ -2,11 +2,12 @@ import statsJson from './stats.json';
 import { CAREER_START, yearsSince } from '../lib/dates';
 import type { FactId } from './factIds';
 import type { Stats } from './stats.types';
+import { PLACES } from './places';
 
 export { CAREER_START, yearsSince };
 
 /**
- * The only place claims about Carlos live (spec §5). Project numbers are never typed here:
+ * The only place claims about Carlos live. Project numbers are never typed here:
  * facts that carry numbers are functions of `Stats`, read from content/stats.json, which only
  * scripts/stats writes.
  */
@@ -16,6 +17,11 @@ export type { FactId };
 export const RETIRED_FACT_IDS = ['F05'] as const;
 
 const STATS = statsJson as Stats;
+
+// The places Carlos has traveled to, in Carlos's order.
+export { PLACES };
+const listed = (items: readonly string[]) =>
+  `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`;
 const n = (value: number) => value.toLocaleString('en-US');
 
 /**
@@ -53,11 +59,19 @@ export const facts: Record<FactId, string | ((s: Stats) => string)> = {
   P06: ({ thisSite: t }) =>
     'This website: designed on a Claude Design canvas ' +
     (t.directions.length === 0
-      ? '[TODO: Q21 directions not exported yet]'
+      ? '[TODO: directions not exported yet]'
       : `across ${n(t.directions.length)} ${t.directions.length === 1 ? 'direction' : 'directions'}`) +
     ', built with AI agents' +
     (verifiedMerges(t) ? ', every PR merged by Carlos' : ''),
   ABOUT: '[TODO: Carlos writes this in his own voice]',
+  // the room, in Carlos's words
+  H01: 'Likes to work on cars; diagnosing them is one of his hobbies',
+  H02: 'Worked as a technician at Start Toyota of Bayside',
+  H03: 'Soccer is his favorite sport: he played on his high school team and still plays with friends',
+  H04: `Has traveled to ${listed(PLACES)}`,
+  // the board's middle magnet
+  H05: 'From El Salvador: his native roots',
+  H06: 'Coffee addict',
 };
 
 export function renderFact(id: FactId, s: Stats = STATS): string {
@@ -65,7 +79,7 @@ export function renderFact(id: FactId, s: Stats = STATS): string {
   return typeof fact === 'function' ? fact(s) : fact;
 }
 
-/** The header's 10-second facts (spec §2). */
+/** The header's 10-second facts. */
 export function tenSecondFacts(now: Date = new Date()): string[] {
   return [
     'Go',

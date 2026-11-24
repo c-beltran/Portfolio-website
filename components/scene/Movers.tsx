@@ -194,7 +194,7 @@ class MoverRig {
       const m = this.all[id];
       const k = easeOutCubic(m.moment.travel);
       dim = Math.max(dim, k);
-      // The residual is exact only where the object rests; it fades off it as it lifts (design §6).
+      // The residual is exact only where the object rests; it fades off it as it lifts.
       for (const mat of id === 'phone' ? [materials.phone, materials.phoneScreen] : [materials.kit])
         if (mat.uniforms.residualWeight) mat.uniforms.residualWeight.value = 1 - k;
       // Until its opened bake has arrived the placeholder is black: keep the rest bake showing.
@@ -213,7 +213,7 @@ class MoverRig {
     canvas.dataset.openMix = mix.toFixed(2);
   }
 
-  /** The opened bake loads the first time its mover comes out (on demand: design §5.5). */
+  /** The opened bake loads the first time its mover comes out (on demand). */
   private loadBake(id: OpenedId) {
     const m = this.all[id];
     if (m.requested) return;
@@ -275,7 +275,7 @@ class MoverRig {
 }
 
 /**
- * The kit and the phone in the live scene (design 2026-11-19 §4.1, §6): each comes from its place
+ * The kit and the phone in the live scene: each comes from its place
  * on the desk to the panel's slot over 0.9 s (eased), then its clip plays (the lid opens, the phone
  * turns), and going back folds both from wherever they are. The slot is the DOM's .opened__art:
  * the object is fitted to that box each rendered frame (presentPose), so a resize refits it. The

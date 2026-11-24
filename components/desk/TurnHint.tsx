@@ -2,7 +2,7 @@ import { useEffect, useRef, type MouseEvent, type PointerEvent } from 'react';
 import { markHintSeen } from './hint';
 
 /**
- * "Turn your phone sideways" (design 2026-11-19 §3.5): on arrival on an upright touch screen the
+ * "Turn your phone sideways": on arrival on an upright touch screen the
  * desk grays out for about 4 s under this card. All CSS (globals.css .turn-hint): it shows only
  * under (pointer: coarse) and PORTRAIT and until html[data-hint-seen], so it works in Tier 1
  * without JavaScript. A tap dismisses it and is swallowed here, so it never opens what's under it.

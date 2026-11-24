@@ -10,6 +10,8 @@ export type SceneBounds = {
   objects: Record<string, Box>;
   /** Narrowest desk width (px) at which no two 44 px hotspots overlap; null if none does. */
   minCollisionFreeWidth: number | null;
+  /** Decoration projected for tests only: never a hotspot. */
+  decor?: Record<string, Box>;
 };
 
 /** WCAG 2.5.5 target size: every hotspot is at least this many CSS px on each side. */

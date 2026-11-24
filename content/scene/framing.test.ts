@@ -92,7 +92,7 @@ describe('visible, wide windows (above 6:5)', () => {
   });
 });
 
-describe('visible, portrait windows (6:5 and narrower): option C', () => {
+describe('visible, portrait windows (6:5 and narrower)', () => {
   it('shows one safe height, centred, at pan 0', () => {
     const v = visible(9 / 19.5);
     const s = master().safe;

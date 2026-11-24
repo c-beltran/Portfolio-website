@@ -1,6 +1,6 @@
 """
 The seat framing, Blender side: the Python twin of content/scene/framing.ts, read from the same
-content/scene/framing.json (design 2026-11-19 §3.2). The seat camera renders a master frame whose
+content/scene/framing.json. The seat camera renders a master frame whose
 safe frame (the part that must always show) sits at its bottom edge, centred. Portrait windows pan
 across the safe frame, so they need no camera of their own.
 

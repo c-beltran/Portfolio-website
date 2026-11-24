@@ -2,7 +2,7 @@ import { CAREER_START, yearsSince } from '../lib/dates';
 
 /**
  * Contact links. No email address appears anywhere in the HTML; the résumé carries it.
- * [TODO: Q14 confirm the LinkedIn and GitHub handles are current]
+ * [TODO: confirm the LinkedIn and GitHub handles are current]
  */
 export const LINKS = {
   linkedin: 'https://www.linkedin.com/in/c-beltran/',
@@ -12,9 +12,9 @@ export const LINKS = {
 
 const RESUME_AVAILABLE = process.env.NEXT_PUBLIC_RESUME_AVAILABLE === 'true';
 
-export const RESUME_TODO = '[TODO: Q15 résumé PDF]';
+export const RESUME_TODO = '[TODO: résumé PDF]';
 
-/** The résumé link shows outside production, and only when the PDF exists (decision Q15). */
+/** The résumé link shows outside production, and only when the PDF exists. */
 export function showResume(
   env: string | undefined = process.env.NEXT_PUBLIC_VERCEL_ENV,
   available: boolean = RESUME_AVAILABLE,

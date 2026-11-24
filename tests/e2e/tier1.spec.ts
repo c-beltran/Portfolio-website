@@ -1,8 +1,17 @@
 import { expect, test } from './fixtures';
 import { DESK_OBJECTS } from '../../content/objects';
-import { clickFelt, desk, drawerButton, gotoDesk, hotspot, panelTitle, path } from './desk';
+import {
+  clickFelt,
+  desk,
+  drawerButton,
+  gotoDesk,
+  hotspot,
+  panelTitle,
+  path,
+  onScreen,
+} from './desk';
 
-/** Spec §8 gates that apply from M2 on: the still desk is a complete site by itself. */
+/** The still desk is a complete site by itself. */
 
 test.describe('reduced motion', () => {
   test.use({ reducedMotion: 'reduce' });
@@ -41,14 +50,19 @@ test.describe('WebGL off', () => {
     await gotoDesk(page, '/');
     expect(await page.evaluate(() => 'WebGLRenderingContext' in window)).toBe(false);
     await expect(page.locator('button.hotspot')).toHaveCount(DESK_OBJECTS.length + 1);
+    const v = page.viewportSize()!;
     for (const o of DESK_OBJECTS) {
-      await hotspot(page, o.id).click();
-      expect(path(page)).toBe(`/${o.slug}`);
+      // an object off screen at this size (the ball until 13:5) opens from its Sections button
+      if (onScreen(o.id, v.width, v.height)) await hotspot(page, o.id).click();
+      else await drawerButton(page, o.label).press('Enter');
+      await expect.poll(() => path(page)).toBe(`/${o.slug}`);
       await expect(panelTitle(page)).toBeVisible();
-      // The panel card covers the right of a wide window (phase 2 brings the object forward
-      // beside it); close it on bare desk before reaching for the next object.
+      // The panel card covers the right of a wide window (an object that comes forward
+      // sits beside it); close it on bare desk before reaching for the next object.
       await clickFelt(page);
       await expect.poll(() => path(page)).toBe('/');
+      // closing hands focus back to the object's Sections button; a key pressed before that is lost
+      await expect(drawerButton(page, o.label)).toBeFocused();
     }
     await drawerButton(page, 'Contact').press('Enter');
     await expect(drawerButton(page, 'Contact')).toHaveAttribute('aria-pressed', 'true');

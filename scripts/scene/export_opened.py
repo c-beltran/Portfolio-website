@@ -2,7 +2,7 @@
 Writes content/scene/opened-poses.json: each mover's opened pose (opened.canonical_pose, the one
 the bake and the opened renders use), in three.js axes, with its clip, plus the seat's eye and
 forward it was made for. The live scene's presentPose turns that pose to wherever the panel's
-slot puts the object (design 2026-11-19 §4.1).
+slot puts the object.
 
     Blender -b ~/Portfolio-assets/blend/workspace.blend --python scripts/scene/export_opened.py -- \
         --out content/scene/opened-poses.json

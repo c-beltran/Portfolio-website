@@ -49,7 +49,7 @@ describe('screenAffine', () => {
   });
 
   it("the phone screen's affine fit is within 1% at its fourth corner", () => {
-    // The clip on the opened phone (Task 5): the screen faces the eye squarely, so an affine fit
+    // The clip on the opened phone: the screen faces the eye squarely, so an affine fit
     // of the whole quad is near exact. Units: art heights (x scaled by the art's aspect).
     const q = art.phone.screen as Pt[];
     const m = { w: art.phone.aspect, h: 1 };

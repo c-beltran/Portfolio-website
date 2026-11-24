@@ -9,7 +9,7 @@ describe('findHandTypedStats', () => {
     'built from 91 specs and plans',
     '5 directions',
     'commits: 1450',
-    // review checkpoint 1: realistic forms the first version missed
+    // realistic forms of a hand-typed stat
     '<strong>1,532</strong> commits',
     '{1532} commits',
     '"commits": 1532',
@@ -37,7 +37,7 @@ describe('findHandTypedStats', () => {
     '7+ years',
     'Directions',
     'width: 44',
-    '[TODO: Q21 directions not exported yet]',
+    '[TODO: directions not exported yet]',
     '1 human + agents',
     "P05: 'Power Walk: built from specs and plans'",
     "{ label: 'Commits', value: (s) => s.potaflow.commits }",

@@ -62,18 +62,6 @@
       "rot_z": 0
     },
     {
-      "slot": "glass",
-      "file": "sketchfab_glass_6e116881/scene.gltf",
-      "name": "Tall Drinking Glass",
-      "author": "AleixoAlonso",
-      "author_url": "https://sketchfab.com/AleixoAlonso",
-      "source": "https://sketchfab.com/3d-models/tall-drinking-glass-6e1168814f8d4c44b4a833f41093905a",
-      "license": "CC Attribution",
-      "license_url": "http://creativecommons.org/licenses/by/4.0/",
-      "zip_sha256": "77acb15f225408ef01866b49c5c4f214d28b3fe38908a7fd8d163d4b0966410c",
-      "rot_z": 0
-    },
-    {
       "slot": "mouse",
       "file": "sketchfab_mouse_4a6e2b1c/scene.gltf",
       "name": "Computer mouse.",
@@ -83,6 +71,36 @@
       "license": "CC Attribution",
       "license_url": "http://creativecommons.org/licenses/by/4.0/",
       "zip_sha256": "4d1a74bf9a36470d4dfbcf0a64558b7084a947889b7a7426b33c0d9671ff2839",
+      "rot_z": 0
+    },
+    {
+      "slot": "car",
+      "file": "sketchfab_car_36f95efb/scene.gltf",
+      "name": "2014 Toyota Corolla E180 EU (with interior)",
+      "author": "Armored Wave",
+      "author_url": "https://sketchfab.com/armoredwave",
+      "source": "https://sketchfab.com/3d-models/2014-toyota-corolla-e180-eu-with-interior-36f95efb0585464cae43a25a3b3392e8",
+      "license": "CC Attribution",
+      "license_url": "http://creativecommons.org/licenses/by/4.0/",
+      "zip_sha256": "7b22f4fff307541f881b9946f7f469942c10d589b6f27f28e54572c2b523c95d",
+      "rot_z": 0
+    },
+    {
+      "slot": "plant",
+      "file": "polyhaven_potted_plant_04/potted_plant_04_1k.gltf",
+      "name": "Potted Plant 04",
+      "author": "James Ray Cock",
+      "author_url": "https://polyhaven.com/all?a=James%20Ray%20Cock",
+      "source": "https://polyhaven.com/a/potted_plant_04",
+      "license": "CC0",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "files": {
+        "potted_plant_04_1k.gltf": "b3a3bc3e97da75844999c4da07b7104b6c023f729a7c045979929b9504184339",
+        "potted_plant_04.bin": "158c1d27503d4845eb3573f00c01ae3f4f77f1d6ca8754c67bf1762745946f7f",
+        "textures/potted_plant_04_diff_1k.jpg": "8693a971557fbafb12a24a2e23c1a04ab6b04ecdc4d26808c5ad3516a4971f24",
+        "textures/potted_plant_04_nor_gl_1k.jpg": "66e4627f6691a2d8104a6c53a39b41daddbd5bad8103e73f372c39166a3dcb07",
+        "textures/potted_plant_04_arm_1k.jpg": "7f3288345570ef700c851ea382ed267490ffc8c901ccc31f2ec5507e4d098e48"
+      },
       "rot_z": 0
     }
   ]

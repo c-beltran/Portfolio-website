@@ -2,9 +2,9 @@ import { expect, test, type Page } from './fixtures';
 import seat from '../../content/scene/bounds-seat.json' with { type: 'json' };
 import { master, portraitStrip, viewOffset } from '../../content/scene/framing';
 import { DESK_OBJECTS } from '../../content/objects';
-import { desk, gotoDesk, hotspot } from './desk';
+import { desk, gotoDesk, hotspot, onScreen } from './desk';
 
-/** The design's review windows (16:9 first), the plan's six (Task 4). */
+/** The six review windows, 16:9 first. */
 const VIEWPORTS: [number, number][] = [
   [1920, 1080],
   [1280, 800],
@@ -13,7 +13,21 @@ const VIEWPORTS: [number, number][] = [
   [2560, 720],
   [844, 390],
 ];
-const ITEMS = ['cv', 'photo', 'badge', 'monitor', 'kit', 'phone', 'notepad', 'card', 'lightbar'];
+const ITEMS = [
+  'cv',
+  'photo',
+  'badge',
+  'monitor',
+  'kit',
+  'phone',
+  'notepad',
+  'card',
+  'car',
+  'ball',
+  'board',
+  'mug',
+  'lightbar',
+];
 const objects = seat.objects as Record<string, { x0: number; y0: number; x1: number; y1: number }>;
 
 /** The desk's pan (−1…1) from its horizontal scroll; 0 when it can't scroll. */
@@ -27,7 +41,7 @@ const panOf = (page: Page) =>
 async function expectHotspotsOnTheirObjects(page: Page) {
   const { W, H } = await page.evaluate(() => ({ W: innerWidth, H: innerHeight }));
   const o = viewOffset(W / H, W, H, await panOf(page));
-  for (const item of ITEMS) {
+  for (const item of ITEMS.filter((id) => onScreen(id, W, H))) {
     const b = objects[`obj_${item}`]!;
     const r = (await hotspot(page, item).boundingBox())!;
     const cx = ((b.x0 + b.x1) / 2) * o.fullW - o.x;
@@ -179,7 +193,7 @@ test.describe('the desk fills the window', () => {
     expect(r.x + r.width).toBeLessThanOrEqual(1280);
     expect(r.y + r.height).toBeLessThanOrEqual(800);
     const buttons = nav.getByRole('button');
-    await expect(buttons).toHaveCount(DESK_OBJECTS.length + 1);
+    await expect(buttons).toHaveCount(DESK_OBJECTS.length + 2); // Pause motion, then the lamp
     await expect(buttons.last()).toHaveText('Lamp');
     await expect(buttons.last()).toHaveAttribute('aria-pressed', /true|false/);
   });

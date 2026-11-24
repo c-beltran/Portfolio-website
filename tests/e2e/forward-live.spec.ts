@@ -2,7 +2,7 @@ import { expect, test, type Page } from './fixtures';
 import { drawerButton, gotoDesk, path } from './desk';
 
 /**
- * Coming forward in the live preview (design 2026-11-19 §4.1; plan M3c-forward Task 7): the 3D
+ * Coming forward in the live preview: the 3D
  * object travels from its place on the desk to the panel's slot, then its clip plays; going back
  * reverses both from wherever they are. Read through the canvas's test hooks (Movers.tsx):
  * data-open, data-travel and data-clip (2 decimals), data-fit (the art box height it fitted to).

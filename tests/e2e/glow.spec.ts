@@ -3,8 +3,7 @@ import { expect, test, type Page } from './fixtures';
 import { drawerButton, gotoDesk, hotspot } from './desk';
 
 /**
- * The hover glow (Carlos, 2026-11-20): "the rectangular outlines do not look so good … make the
- * selections glow slightly instead". A soft warm glow follows the object's silhouette, on hover, on
+ * The hover glow: a soft warm glow follows the object's silhouette, on hover, on
  * the open object, with keyboard focus in the Sections list, and with the touch labels.
  */
 const glow = (page: Page, item: string) => page.locator(`.desk-glow[data-item="${item}"]`);
@@ -52,8 +51,6 @@ test.describe('with a mouse', () => {
     await expect.poll(() => lit(page)).toEqual([]);
   });
 
-  // Carlos, 2026-11-21: "the glow is impacting the way the objects look. the glow should be on the
-  // edges not the item … the toolbox also glows and so does the paper."
   test('the glow lies around the object, never on it', async ({ page }) => {
     await gotoDesk(page, '/');
     await expect(glow(page, 'kit')).toHaveCount(1, { timeout: 10_000 });

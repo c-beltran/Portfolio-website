@@ -1,4 +1,4 @@
-// The residual (M3c phase 1, Task 8): the Tier 1 still minus the live seat, both seen through the
+// The residual: the Tier 1 still minus the live seat, both seen through the
 // seat at rest, in the master's image space. LiveScene projects it from the seat onto the scene and
 // adds it in sRGB (components/scene/materials.ts), which closes the gap at the moment the live
 // scene takes over.

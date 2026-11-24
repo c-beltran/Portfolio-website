@@ -21,7 +21,7 @@ type Present = {
 };
 
 /**
- * Where an object stands when it has come forward (design 2026-11-19 §4.1): the canonical pose,
+ * Where an object stands when it has come forward: the canonical pose,
  * turned about the eye from the view axis onto the ray through the panel's slot, and moved along
  * that ray until it is as tall on screen as the art box (the render's angular height, scaled). The
  * eye sees the same side of it as the render shows. The DOM slot is the only layout; this only

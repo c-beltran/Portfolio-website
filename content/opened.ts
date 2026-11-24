@@ -3,8 +3,8 @@ import { DESK_OBJECTS, type SectionSlug } from './objects';
 import art from './scene/opened-art.json';
 
 /**
- * The objects that come forward (design 2026-11-19 §4.1, §4.2). Phase 2 builds the moment on the
- * kit case and the phone; the other objects keep phase 1's open until phase 3.
+ * The objects that come forward: the kit case and the phone so far. The rest open their
+ * section's panel in place.
  */
 export const OPENED_IDS = ['kit', 'phone'] as const;
 export type OpenedId = (typeof OPENED_IDS)[number];
@@ -37,7 +37,7 @@ export function openedFor(slug: SectionSlug | null): OpenedId | null {
   return id && isOpened(id) ? id : null;
 }
 
-/** An object comes out on the side of the window it already sits on (design 2026-11-19 §4.1). */
+/** An object comes out on the side of the window it already sits on. */
 export function sideOf(id: OpenedId): 'left' | 'right' {
   const b = LAYOUT[id];
   return b.x + b.w / 2 < 50 ? 'left' : 'right';

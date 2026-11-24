@@ -16,7 +16,7 @@ describe('the shared camera transition', () => {
     expect(hfov(CAMERAS.seat)).toBeCloseTo(2 * Math.atan(18 / CAMERAS.seat.lens), 9);
   });
 
-  it('rests at the seat, on every window shape (design 2026-11-19 §3.2)', () => {
+  it('rests at the seat, on every window shape', () => {
     expect(cameraFor('rest')).toBe(CAMERAS.seat);
     expect(cameraFor('monitor')).toBe(CAMERAS.monitor);
   });

@@ -1,6 +1,6 @@
 """
-Renders a silhouette mask of each clickable object from the seat, for the hover glow (Carlos,
-2026-11-20: a slight glow that follows the object instead of a rectangle):
+Renders a silhouette mask of each clickable object from the seat, for the hover glow,
+which follows the object's shape:
 
     Blender -b ~/Portfolio-assets/blend/workspace.blend --python scripts/scene/render_masks.py -- \
         [--out ~/Portfolio-assets/renders/masks]
@@ -29,6 +29,11 @@ ITEMS = {
     "notepad": "obj_notepad",
     "card": "obj_card",
     "lightbar": "obj_lightbar",
+    # the room
+    "car": "obj_car",
+    "ball": "obj_ball",
+    "board": "obj_board",
+    "mug": "deco_mug",  # Coffee
 }
 
 

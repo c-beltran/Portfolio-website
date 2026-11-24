@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { OUT, REST, stepMoment, type Moment } from './moment';
 import { MOVE_MS } from './transition';
 
-/** The coming-forward timeline (design 2026-11-19 §4.1): 0.9 s of travel, then the clip. */
+/** The coming-forward timeline: 0.9 s of travel, then the clip. */
 const CLIP = 800;
 const run = (m: Moment, open: boolean, ms: number, step = 16) => {
   for (let t = 0; t < ms; t += step) m = stepMoment(m, open, Math.min(step, ms - t), CLIP);

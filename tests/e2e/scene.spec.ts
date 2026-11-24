@@ -2,9 +2,9 @@ import { DESK_OBJECTS } from '../../content/objects';
 import { expect, test, type Page } from './fixtures';
 import { gotoDesk, hotspot, panelTitle, path } from './desk';
 
-/** The live scene (spec §4): product code under /scene, the M3b lab gone. */
+/** The live scene: product code under /scene. */
 
-test('the M3b lab is gone', async ({ request }) => {
+test('the lab page is gone', async ({ request }) => {
   expect((await request.get('/lab/monitor')).status()).toBe(404);
 });
 
@@ -12,7 +12,7 @@ test('serves the live scene', async ({ request }) => {
   expect((await request.get('/scene/scene.glb')).status()).toBe(200);
 });
 
-/** The ?tier=2 preview (M3b): the live scene over the still, under the hotspots. */
+/** The ?tier=2 preview: the live scene over the still, under the hotspots. */
 const live = (page: Page) => page.locator('.desk-still__live');
 const canvas = (page: Page) => page.locator('.desk-still__live canvas');
 
@@ -73,7 +73,7 @@ test('?tier=2: the canvas is the window, through a resize into a phone and back'
   await expect.poll(() => canvasAspect(page)).toBeCloseTo(1280 / 800, 2);
 });
 
-/** The glance's overlay shift (design 2026-11-19 §3.1), written on .desk-still, read on the layer. */
+/** The glance's overlay shift, written on .desk-still, read on the layer. */
 const gx = (page: Page) =>
   page
     .locator('.desk-still__layer')
@@ -81,7 +81,7 @@ const gx = (page: Page) =>
 
 test.describe('?tier=2: your head follows the cursor', () => {
   test.skip(({ isMobile }) => isMobile, 'mouse');
-  // Its waits run to 20 s; under the full suite (phase 2 added the live coming-forward tests),
+  // Its waits run to 20 s; under the full suite (with the live coming-forward tests),
   // headless WebGL is slow enough that the default 30 s test budget cut them short.
   test.slow();
 

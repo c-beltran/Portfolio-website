@@ -1,5 +1,5 @@
 """
-Renders a camera transition as frames (M3b live-vs-clips test): from one scene camera to another,
+Renders a camera transition as frames: from one scene camera to another,
 easing out (easeOutCubic) over N frames. Eye, target, horizontal field of view and lens shift are
 interpolated exactly as the live scene does (components/scene/transition.ts: lerpLookAt with the same curve).
 

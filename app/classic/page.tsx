@@ -41,6 +41,11 @@ const SECTIONS: ClassicSection[] = [
     ],
   },
   { heading: 'About', facts: ['ABOUT'], desk: [{ slug: 'about', label: 'About' }] },
+  // the room
+  { heading: 'Cars', facts: ['H01', 'H02'], desk: [{ slug: 'cars', label: 'Cars' }] },
+  { heading: 'Soccer', facts: ['H03'], desk: [{ slug: 'soccer', label: 'Soccer' }] },
+  { heading: 'Travel', facts: ['H05', 'H04'], desk: [{ slug: 'travel', label: 'Travel' }] },
+  { heading: 'Coffee', facts: ['H06'], desk: [{ slug: 'coffee', label: 'Coffee' }] },
 ];
 
 function DeskLinks({ desk }: { desk: ClassicSection['desk'] }) {
@@ -92,7 +97,7 @@ export default function ClassicPage() {
               <a href={LINKS.github}>GitHub</a>
             </li>
           </ul>
-          <p>[TODO: Q14 confirm the LinkedIn and GitHub handles are current]</p>
+          <p>[TODO: confirm the LinkedIn and GitHub handles are current]</p>
           <DeskLinks desk={[{ slug: 'contact', label: 'Contact' }]} />
         </section>
         <p className="classic__footnote">

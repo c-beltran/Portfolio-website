@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { gotoDesk, path } from './desk';
 
-/** The turn-sideways hint (design 2026-11-19 §3.5): an upright touch screen, on the desk itself. */
+/** The turn-sideways hint: an upright touch screen, on the desk itself. */
 const hint = (page: Page) => page.locator('.turn-hint');
 const opacity = (page: Page) => hint(page).evaluate((el) => Number(getComputedStyle(el).opacity));
 

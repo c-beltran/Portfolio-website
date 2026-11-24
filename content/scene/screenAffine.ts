@@ -1,5 +1,5 @@
 /**
- * Placing HTML on the monitor's right half (design 2026-11-19 §4.2): the screen seen from the seat
+ * Placing HTML on the monitor's right half: the screen seen from the seat
  * is a curved panel in perspective, so its corners (bounds-seat.json quads.screen_right, TL TR BR
  * BL, master-normalised) are not a parallelogram. CSS can't carry a window-sized perspective
  * matrix (its terms would depend on --u), so the name gets an affine fit to a small region of the

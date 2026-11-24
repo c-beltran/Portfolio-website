@@ -4,7 +4,7 @@ import poses from '@/content/scene/opened-poses.json';
 import { blendPose, presentPose, projectedHeight, type Pose } from './present';
 
 /**
- * The pose an object takes in front of the panel's slot (design 2026-11-19 §4.1): the canonical
+ * The pose an object takes in front of the panel's slot: the canonical
  * pose (the opened render's), turned about the eye onto the ray through the slot and moved along it
  * until it fills the slot as the render fills the art.
  */

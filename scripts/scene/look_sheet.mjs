@@ -1,6 +1,6 @@
-// The seat look test (M3c phase 1, Task 2): crops the seat's master render through framing.ts's
+// The seat look test: crops the seat's master render through framing.ts's
 // visible() at the window shapes a visitor will have (portrait ones centred and swiped to each side), and lays them out on one labelled sheet for
-// Carlos. Never committed.
+// review. Never committed.
 //
 //   pnpm exec tsx scripts/scene/look_sheet.mjs [renders dir] [out png]
 import { homedir } from 'node:os';

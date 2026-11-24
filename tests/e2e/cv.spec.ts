@@ -3,7 +3,7 @@ import { expect, test } from './fixtures';
 import { titleFor } from '../../lib/deskRoutes';
 import { gotoDesk, hotspot, panelTitle, path } from './desk';
 
-/** The design's review windows (Task 4's six). */
+/** The six review windows. */
 const VIEWPORTS: [number, number][] = [
   [1920, 1080],
   [1280, 800],

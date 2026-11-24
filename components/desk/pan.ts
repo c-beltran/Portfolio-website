@@ -1,5 +1,5 @@
 /**
- * The portrait pan (design 2026-11-19 §3.2, option C): .desk-still scrolls sideways across the safe
+ * The portrait pan: .desk-still scrolls sideways across the safe
  * frame. −1 is its left edge, +1 its right edge, 0 the centre; framing.ts visible(aspect, pan)
  * uses the same scale.
  */

@@ -22,16 +22,18 @@ class GroupFor(unittest.TestCase):
         self.assertEqual(group_for("Object_4", "obj_monitor", False), "monitor")
         self.assertEqual(group_for("obj_lightbar", "obj_lightbar", False), "monitor")
 
-    def test_glass_and_water(self):
-        self.assertEqual(group_for("deco_glass", "deco_glass", False), "glass")
-        self.assertEqual(group_for("deco_water_glass", "deco_water_glass", False), "water")
+    def test_no_glass_or_water_groups(self):
+        # the water glass goes, so the portrait behind it shows
+        self.assertNotIn("glass", GROUPS)
+        self.assertNotIn("water", GROUPS)
+        self.assertEqual(group_for("deco_mug", "deco_mug", False), "props")
 
     def test_props(self):
         self.assertEqual(group_for("deco_mug", "deco_mug", False), "props")
         self.assertEqual(group_for("deco_cable_mouse", "deco_cable_mouse", False), "props")
 
     def test_movers_bake_on_their_own(self):
-        # phase 2: the kit and the phone come forward, so each gets its own atlas
+        # the kit and the phone come forward, so each gets its own atlas
         self.assertIn("kit", GROUPS)
         self.assertIn("phone", GROUPS)
         self.assertEqual(group_for("kit_base", "obj_kit", False), "kit")

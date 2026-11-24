@@ -1,5 +1,5 @@
 """
-Bakes the workspace's lighting for the live scene (M3b) and exports its geometry.
+Bakes the workspace's lighting for the live scene and exports its geometry.
 
     Blender -b --factory-startup ~/Portfolio-assets/blend/workspace.blend --python scripts/scene/bake.py -- \
         [--out-dir ~/Portfolio-assets/bake] [--glb ~/Portfolio-assets/glb/scene-raw.glb] [--samples 512] [--scale 1]
@@ -9,10 +9,9 @@ density by area). Each group is baked once per mode (Cycles COMBINED without tra
 render's light, colour and a view-independent sheen) and saved through the scene's colour management
 (AgX, Punchy, the mode's exposure), so an unlit texture in three.js shows the render's look.
 The monitor screen bakes on its own UVs at full size (the close-up reads it). The window gets a
-backdrop plane carrying the sky gradient. Glass and water are not baked (no real-time transmission,
-spec §6): they export as plain meshes and the live scene fakes them.
+backdrop plane carrying the sky gradient.
 
-The movers (design 2026-11-19 §4.2: the kit case and the phone, which come forward) bake on their
+The movers (the kit case and the phone, which come forward) bake on their
 own: each rigid part becomes one mesh under its pivot (kit_base and kit_lid; phone_body), one bake
 UV is packed across a mover's parts, and each mover is baked twice per mode: at rest (frame 0),
 and in its opened pose (opened.canonical_pose in front of the seat, its clip at the last frame),
@@ -20,7 +19,7 @@ one mover at a time. They export to their own GLB with the hierarchy and the cli
 
 Never saves the .blend: the scene is changed in memory only. Outputs:
   <out-dir>/<group>-<mode>.png, <out-dir>/<mover>-open-<mode>.png,
-  <glb> (meshes named room, desk, monitor, props, screen, sky, glass, water; one UV map, the
+  <glb> (meshes named room, desk, monitor, props, screen, sky; one UV map, the
   bake's; placeholder materials) and <movers-glb> (obj_kit › kit_base, kit_lid; obj_phone ›
   phone_spin › phone_body, phone_screen; the clips kit_open and phone_turn; no materials).
 """
@@ -486,10 +485,9 @@ def export(g, glb):
         o = bpy.context.object
         o.name = name
         me = o.data
-        if name not in ("glass", "water"):
-            for u in [u for u in me.uv_layers if u.name != "bake"]:
-                me.uv_layers.remove(u)
-            me.uv_layers["bake"].name = "UVMap"
+        for u in [u for u in me.uv_layers if u.name != "bake"]:
+            me.uv_layers.remove(u)
+        me.uv_layers["bake"].name = "UVMap"
         me.materials.clear()
         keep.append(o)
     for o in [o for o in bpy.context.scene.objects if o not in keep]:

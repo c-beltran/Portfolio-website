@@ -1,7 +1,7 @@
 """
-Pure geometry for the two objects that come forward (design 2026-11-19 §4.2, §6 Animation):
-the backflow test-kit case, whose lid opens on Carlos's kit (2026-11-21, from his photos in
-~/Portfolio-assets/reference/kit/: the gauge with its three hoses, brass fittings and his
+Pure geometry for the two objects that come forward:
+the backflow test-kit case, whose lid opens on Carlos's kit
+(the gauge with its three hoses, brass fittings and a
 screwdriver), and the phone, which turns to landscape. No bpy, so it is unit-tested by
 test_movers.py.
 
@@ -17,7 +17,7 @@ PHONE_TURN_S = 0.5
 LID_OPEN_DEG = 105
 PHONE_TURN_DEG = 90
 
-# Today's case (M3a): 0.26 × 0.18 × 0.085 m, resting at (-0.33, 0.30, 0.7925), turned −14°.
+# The case: 0.26 × 0.18 × 0.085 m, resting at (-0.33, 0.30, 0.7925), turned −14°.
 KIT_SIZE = (0.26, 0.18, 0.085)
 KIT_REST = {"location": (-0.33, 0.30, 0.7925), "rot_z_deg": -14.0}
 LID_H = 0.030

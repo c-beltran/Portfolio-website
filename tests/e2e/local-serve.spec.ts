@@ -3,7 +3,7 @@ import { expect, test } from './fixtures';
 /**
  * The local server (`pnpm serve:out`, Playwright's webServer). serve-handler (6.1.6, unchanged in
  * 6.1.8) opens a file before checking its ETag and never closes it when it answers 304, so every
- * revalidated file leaks a handle; after enough reloads it dies with EMFILE (Carlos, 2026-11-21).
+ * revalidated file leaks a handle; after enough reloads it dies with EMFILE.
  * With --no-etag it sends Last-Modified instead and only ever answers in full. Vercel serves
  * production, so this is local only.
  */

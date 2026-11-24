@@ -6,7 +6,7 @@ type Props = {
   slug?: string;
   pressed: boolean;
   onClick: () => void;
-  /** The tape label on the object (spec §2, discoverability). */
+  /** The tape label on the object (discoverability). */
   label: string;
   /** The pointer came over it: a chance to fetch what opening it shows. */
   onIntent?: () => void;
@@ -14,9 +14,9 @@ type Props = {
 
 /**
  * A desk object you can click: a box over the object in the still, grown to 44px around its
- * centre. Placed by transform only (spec §4): left/top stay 0 and globals.css builds the
+ * centre. Placed by transform only: left/top stay 0 and globals.css builds the
  * transform from hotspotVars. Out of the Tab order: the drawer is the
- * keyboard and screen-reader path (spec §3.4).
+ * keyboard and screen-reader path.
  */
 export function Hotspot({ item, slug, pressed, onClick, label, onIntent }: Props) {
   return (

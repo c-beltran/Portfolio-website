@@ -1,5 +1,5 @@
 """
-Renders one view of workspace.blend (M3a).
+Renders one view of workspace.blend.
 
     Blender -b ~/Portfolio-assets/blend/workspace.blend --python scripts/scene/render.py -- \
         --mode clay|day|lamp --camera overview|phone|monitor|seat \
@@ -8,7 +8,7 @@ Renders one view of workspace.blend (M3a).
 The seat camera renders the master (content/scene/framing.json, via framing.py) at its full
 resolution times --scale.
 
-clay: one neutral grey material and a simple sun and sky, for the layout checkpoint.
+clay: one neutral grey material and a simple sun and sky, for checking the layout.
 """
 
 import argparse

@@ -1,11 +1,11 @@
 /**
- * The seat framing (design 2026-11-19 §3.2), shared by the site and Blender (scripts/scene/framing.py
+ * The seat framing, shared by the site and Blender (scripts/scene/framing.py
  * reads the same framing.json). The seat camera renders a "master" frame around a "safe frame",
  * the part that must always show.
  *
  * - Wide windows (above range[0], 6:5) fit the safe frame inside them (contain) and the master fills
  *   the rest. Beyond 32:9 the master covers the window instead, so there is never a gap.
- * - Portrait windows (6:5 and narrower, option C) show the safe frame at full height and pan
+ * - Portrait windows (6:5 and narrower) show the safe frame at full height and pan
  *   sideways across it: pan −1 is its left edge, +1 its right edge.
  *
  * Units: sizes are in safe-frame heights; rects are normalised to the master, y down.

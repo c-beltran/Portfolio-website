@@ -1,4 +1,5 @@
 import type { Page } from '@playwright/test';
+import { ULTRAWIDE_MIN, ULTRAWIDE_ONLY } from '../../content/deskLayout';
 
 /** Shared helpers for the still-desk specs. */
 export const path = (page: Page) => new URL(page.url()).pathname;
@@ -49,3 +50,12 @@ export async function clickFelt(page: Page) {
   if (!pt) throw new Error('no bare desk in view');
   await page.mouse.click(pt[0]!, pt[1]!);
 }
+
+/**
+ * Whether the whole of an object is on screen in a W×H window, so its centre can be clicked: the
+ * ultrawide-only ones (the ball) only from ULTRAWIDE_MIN. Narrower, room.spec clicks
+ * the part that shows.
+ */
+export const onScreen = (id: string, W: number, H: number) =>
+  !(ULTRAWIDE_ONLY as readonly string[]).includes(id) ||
+  W / H >= ULTRAWIDE_MIN[0] / ULTRAWIDE_MIN[1];

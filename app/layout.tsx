@@ -4,7 +4,7 @@ import { Analytics } from '@vercel/analytics/next';
 import { IBM_Plex_Mono, Inter, Schibsted_Grotesk } from 'next/font/google';
 import { titleFor } from '@/lib/deskRoutes';
 import { HINT_SCRIPT } from '@/components/desk/hint';
-import { labelFocusCss } from '@/content/deskLayout';
+import { labelFocusCss, ultrawideOnlyCss } from '@/content/deskLayout';
 import { framingCss } from '@/content/scene/framingCss';
 import { THEME_SCRIPT, themeCss } from '@/lib/theme';
 import './globals.css';
@@ -49,13 +49,14 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
         <script dangerouslySetInnerHTML={{ __html: HINT_SCRIPT }} />
         <style dangerouslySetInnerHTML={{ __html: themeCss() }} />
-        {/* The seat framing (design 2026-11-19 §3.2): CSS only, so Tier 1 needs no script. */}
+        {/* The seat framing: CSS only, so Tier 1 needs no script. */}
         <style dangerouslySetInnerHTML={{ __html: framingCss() }} />
         <style dangerouslySetInnerHTML={{ __html: labelFocusCss() }} />
+        <style dangerouslySetInnerHTML={{ __html: ultrawideOnlyCss() }} />
       </head>
       {/* Extensions (ColorZilla, Grammarly…) add attributes to <body> before React hydrates. */}
       <body suppressHydrationWarning>
-        {/* The desk fills the window with no header (design §3.1); /classic and 404 bring their own. */}
+        {/* The desk fills the window with no header; /classic and 404 bring their own. */}
         <div className="page">{children}</div>
         <Analytics />
       </body>

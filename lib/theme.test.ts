@@ -64,7 +64,7 @@ describe('THEME_SCRIPT', () => {
   });
 });
 
-describe('the name on the monitor (M3c)', () => {
+describe('the name on the monitor', () => {
   it('is dark ink on the rendered screen paper, at 4.5:1 or better in both themes', () => {
     expect(TEXT_PAIRS).toContainEqual(['screenInk', 'screenPaper']);
     for (const t of ['day', 'lamp'] as const)

@@ -69,7 +69,7 @@ describe('framingCss', () => {
   });
 });
 
-describe('the dim while an object is out (design 2026-11-19 §4.1)', () => {
+describe('the dim while an object is out', () => {
   it('is the same in Tier 1 (globals.css) as in the live shader (DIM_LEVEL)', () => {
     const globals = readFileSync('app/globals.css', 'utf8');
     expect(globals).toContain(`brightness(${DIM_LEVEL})`);

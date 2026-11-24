@@ -105,12 +105,12 @@ test.describe('section routes', () => {
     );
   });
 
-  test('keyboard order: the Sections list first (every section, then Lamp), then the panel', async ({
+  test('keyboard order: the Sections list first (every section, Pause motion, Lamp), then the panel', async ({
     page,
   }) => {
     await gotoDesk(page, '/');
     const names: string[] = [];
-    for (let i = 0; i < DESK_OBJECTS.length + 1; i++) {
+    for (let i = 0; i < DESK_OBJECTS.length + 2; i++) {
       await page.keyboard.press('Tab');
       names.push(
         await page.evaluate(() => {
@@ -119,7 +119,11 @@ test.describe('section routes', () => {
         }),
       );
     }
-    expect(names).toEqual([...DESK_OBJECTS.map((o) => `drawer:${o.label}`), 'drawer:Lamp']);
+    expect(names).toEqual([
+      ...DESK_OBJECTS.map((o) => `drawer:${o.label}`),
+      'drawer:Pause motion',
+      'drawer:Lamp',
+    ]);
     await drawerButton(page, 'Contact').focus();
     await page.keyboard.press('Enter');
     await expect(panelTitle(page)).toBeFocused();

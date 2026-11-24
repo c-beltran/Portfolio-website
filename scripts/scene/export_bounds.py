@@ -1,7 +1,7 @@
 """
 Projects each interactive object through a camera and writes its hotspot bounds (the site uses the
-seat's, content/scene/bounds-seat.json)
-(M3a Task 4): normalized 0–1 boxes, y down, plus minCollisionFreeWidth (see content/scene/bounds.ts,
+seat's, content/scene/bounds-seat.json):
+normalized 0–1 boxes, y down, plus minCollisionFreeWidth (see content/scene/bounds.ts,
 which re-derives it in the unit test).
 
     Blender -b ~/Portfolio-assets/blend/workspace.blend --python scripts/scene/export_bounds.py -- \
@@ -31,7 +31,15 @@ from mathutils.geometry import barycentric_transform, intersect_point_tri_2d
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import framing  # noqa: E402
 
-OBJECTS = ["obj_monitor", "obj_kit", "obj_phone", "obj_badge", "obj_photo", "obj_notepad", "obj_card", "obj_lightbar"]
+OBJECTS = ["obj_monitor", "obj_kit", "obj_phone", "obj_badge", "obj_photo", "obj_notepad", "obj_card", "obj_lightbar",
+           "obj_car", "obj_ball", "obj_board", "obj_mug"]  # the car, the ball, the board
+# Clickable objects the build names as decoration: the mug became Coffee after it was baked.
+BUILT_AS = {"obj_mug": "deco_mug"}
+# Decoration projected for the tests only (written under "decor", never a hotspot): the plant must
+# show in every window; the board must hang above the laptop.
+DECOR = ["deco_plant", "deco_laptop"]
+# Shown only in ultrawide windows: exempt from --check-safe.
+ULTRAWIDE_ONLY = {"obj_ball"}
 # Camera and still resolution per view (matching render.py).
 VIEWS = {
     "overview": ("cam_overview", 2560, 1440),
@@ -193,7 +201,7 @@ def check_safe(boxes):
     dx = (safe["x1"] - safe["x0"]) * SAFE_INSET
     dy = (safe["y1"] - safe["y0"]) * SAFE_INSET
     lo_x, lo_y, hi_x, hi_y = safe["x0"] + dx, safe["y0"] + dy, safe["x1"] - dx, safe["y1"] - dy
-    bad = [k for k, b in boxes.items() if b["x0"] < lo_x or b["y0"] < lo_y or b["x1"] > hi_x or b["y1"] > hi_y]
+    bad = [k for k, b in boxes.items() if k not in ULTRAWIDE_ONLY and (b["x0"] < lo_x or b["y0"] < lo_y or b["x1"] > hi_x or b["y1"] > hi_y)]
     to_safe = lambda v, lo, hi: (v - lo) / (hi - lo)
     for k, b in boxes.items():
         print(f"  {k:14s} in safe frame: x {to_safe(b['x0'], safe['x0'], safe['x1']):+.3f}..{to_safe(b['x1'], safe['x0'], safe['x1']):+.3f}"
@@ -211,7 +219,7 @@ def main():
     cam = bpy.data.objects[cam_name]
     depsgraph = bpy.context.evaluated_depsgraph_get()
     aspect = scene.render.resolution_y / scene.render.resolution_x
-    boxes = {name: project(scene, cam, bpy.data.objects[name], depsgraph) for name in OBJECTS}
+    boxes = {name: project(scene, cam, bpy.data.objects[BUILT_AS.get(name, name)], depsgraph) for name in OBJECTS}
     quads = None
     if a.camera == "seat":
         # The seat's monitor is two hotspots: How I build (left) and the CV page (right, design 4.2).
@@ -221,6 +229,8 @@ def main():
     data = {"camera": cam.name, "aspect": aspect, "objects": boxes, "minCollisionFreeWidth": width}
     if quads:
         data["quads"] = quads
+    if a.camera == "seat":
+        data["decor"] = {name: project(scene, cam, bpy.data.objects[name], depsgraph) for name in DECOR}
     with open(a.out, "w") as f:
         json.dump(data, f, indent=2)
         f.write("\n")

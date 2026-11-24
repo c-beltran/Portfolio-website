@@ -2,8 +2,8 @@ import { expect, test, type Page } from './fixtures';
 import { drawerButton, gotoDesk } from './desk';
 
 /**
- * The phone's clip (design 2026-11-19 §4.2: "turns to landscape and plays a short muted, looped
- * clip of Power Walk on its screen"; plan M3c-forward Task 5). A placeholder until Carlos's
+ * The phone's clip: it turns to landscape and plays a short muted, looped
+ * clip of Power Walk on its screen. A placeholder until Carlos's
  * recording. It loops past 5 s, so the panel carries a Pause/Play button (WCAG 2.2.2).
  */
 const video = (page: Page) => page.locator('video#power-walk-clip');

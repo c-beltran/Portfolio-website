@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { renderFact, statsFootnote, tenSecondFacts } from '@/content/facts';
+import { renderFact, statsFootnote, tenSecondFacts, PLACES } from '@/content/facts';
 import { headerSummary, LINKS, RESUME_TODO, showResume, showResumeTodo } from '@/content/links';
 import type { SectionSlug } from '@/content/objects';
 import { DRAFT_MARK, PANELS, type PanelBlock } from '@/content/panels';
@@ -40,6 +40,14 @@ function Block({ block }: { block: PanelBlock }) {
             <li key={id} data-fact-id={id}>
               {renderFact(id)}
             </li>
+          ))}
+        </ul>
+      );
+    case 'places':
+      return (
+        <ul className="panel__list" data-fact-id={block.fact}>
+          {PLACES.map((p) => (
+            <li key={p}>{p}</li>
           ))}
         </ul>
       );
@@ -111,14 +119,14 @@ function Block({ block }: { block: PanelBlock }) {
 
 const STAT_FACTS = new Set(['P02', 'P05', 'P06']);
 
-/** Panels showing project stats also show their definition and date (spec §5). */
+/** Panels showing project stats also show their definition and date. */
 function hasProjectStats(blocks: PanelBlock[]): boolean {
   return blocks.some((b) => b.kind === 'stats' || (b.kind === 'fact' && STAT_FACTS.has(b.fact)));
 }
 
 type Props = { slug: SectionSlug | null; onClose: () => void };
 
-/** The section panel (spec §2). Stays outside any canvas; announced politely. */
+/** The section panel. Stays outside any canvas; announced politely. */
 export function Panel({ slug, onClose }: Props) {
   if (slug === null) {
     return (

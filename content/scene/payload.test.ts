@@ -4,8 +4,8 @@ import { gzipSync } from 'node:zlib';
 import { describe, expect, it } from 'vitest';
 
 /**
- * The live scene's assets (spec §7: the 3D payload — three's JS, the GLB, the textures — is
- * ≤ 3 MB gzipped). The assets get half, leaving room for the three chunk (~270 kB) and M4's
+ * The live scene's assets (the 3D payload — three's JS, the GLB, the textures — is
+ * ≤ 3 MB gzipped). The assets get half, leaving room for the three chunk (~270 kB) and the final art's
  * screen content.
  */
 const DIR = join(process.cwd(), 'public/scene');

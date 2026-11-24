@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 
 /**
- * Your head follows the cursor (design 2026-11-19 §3.1): the live seat turns a few degrees towards
+ * Your head follows the cursor: the live seat turns a few degrees towards
  * the pointer, eased and damped, and back to centre when the pointer leaves. Tier 2 only.
  */
 export type Vec3 = [number, number, number];
@@ -59,7 +59,7 @@ const clamp1 = (x: number) => Math.max(-1, Math.min(1, x));
  * The damped glance from the mouse or pen (never touch), or on Android from the device's tilt
  * (where it needs no permission prompt: ±15° from the first reading is full). Calls onChange every
  * animation frame while it moves, and not at all with reduced motion. While `enabled` is false
- * (an object has come forward: design 2026-11-19 §4.1) its goal is straight ahead, so the view
+ * (an object has come forward) its goal is straight ahead, so the view
  * settles back and holds still; turning it on again follows the pointer from where it is.
  */
 export function useGlance(onChange: (g: Glance) => void, enabled = true) {

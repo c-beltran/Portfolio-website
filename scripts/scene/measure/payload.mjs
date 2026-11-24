@@ -1,4 +1,4 @@
-// What the live scene adds to a visit, gzipped, against the 3 MB 3D budget (spec §7): every
+// What the live scene adds to a visit, gzipped, against the 3 MB 3D budget: every
 // response loading /?tier=2 (until the scene is ready) minus every response loading /, by URL.
 // Needs the static export served (pnpm serve:out).
 //

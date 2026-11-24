@@ -3,7 +3,7 @@ import { test as base } from '@playwright/test';
 export * from '@playwright/test';
 
 /**
- * The specs' test: the turn-sideways hint (design 2026-11-19 §3.5) counts as already seen, so it
+ * The specs' test: the turn-sideways hint counts as already seen, so it
  * never covers what a test taps. hint.spec (and the labels test that needs the hint) use
  * @playwright/test's own test instead.
  */

@@ -12,7 +12,7 @@ export type ProbeOptions = {
   strength?: number;
   strengthLamp?: number;
   /**
-   * The residual (M3c): the Tier 1 still minus the live render, both at the seat's rest pose, in
+   * The residual: the Tier 1 still minus the live render, both at the seat's rest pose, in
    * the seat master's image space (scripts/scene/measure/residual.mjs). Projected from the seat
    * onto this geometry and added in sRGB, it closes the gap between the live scene and the still.
    */
@@ -24,12 +24,12 @@ export type ProbeOptions = {
     weight?: number;
   };
   /**
-   * Coming forward (design 2026-11-19 §4.1): a `dim` uniform (0–1) that darkens the output toward
+   * Coming forward: a `dim` uniform (0–1) that darkens the output toward
    * DIM_LEVEL while an object is out (the static scene; Tier 1's CSS brightness() matches it).
    */
   dim?: true;
   /**
-   * The opened-pose bake of a mover (design §6): `openDay` and `openLamp` (black 1×1 until they
+   * The opened-pose bake of a mover: `openDay` and `openLamp` (black 1×1 until they
    * load) mixed over the rest bake by `openMix` (0–1) after the day/lamp fade.
    */
   opened?: true;
@@ -238,52 +238,5 @@ export function bakedMaterial(day: THREE.Texture, lamp: THREE.Texture, opts: Pro
     uniforms,
     vertexShader: world ? VERTEX : VERTEX_PLAIN,
     fragmentShader: fragment.join('\n'),
-  });
-}
-
-/**
- * Glass and water (no real-time transmission, spec §6): a faint tint plus the probe's reflection,
- * strongest at the rim. Their meshes are upright cylinders, so the normal is radial from the
- * vertical axis through `center` (set from the mesh's bounds).
- */
-export function glassMaterial(probe: Probe, tint: THREE.Color, fill: number, strength = 1) {
-  probe.forEach(probeMap);
-  return new THREE.ShaderMaterial({
-    transparent: true,
-    depthWrite: false,
-    side: THREE.DoubleSide,
-    uniforms: {
-      probeDay: { value: probe[0] },
-      probeLamp: { value: probe[1] },
-      fade: { value: 0 },
-      tint: { value: tint },
-      fill: { value: fill },
-      strength: { value: strength },
-      center: { value: new THREE.Vector3() },
-      // while an object is out it dims with the rest of the static scene (Movers.tsx)
-      dim: { value: 0 },
-    },
-    vertexShader: VERTEX,
-    fragmentShader: [
-      'uniform vec3 tint;',
-      'uniform float fill;',
-      'uniform float strength;',
-      'uniform vec3 center;',
-      'uniform float dim;',
-      PROBE_GLSL,
-      'varying vec2 vUv;',
-      'varying vec3 vWorld;',
-      'void main() {',
-      '  vec3 v = normalize(vWorld - cameraPosition);',
-      '  vec3 n = normalize(vec3(vWorld.x - center.x, 0.0, vWorld.z - center.z));',
-      '  if (dot(n, v) > 0.0) n = -n;',
-      '  float f = strength * schlick(dot(-v, n));',
-      '  vec3 env = probe(reflect(v, n), 1.0);',
-      '  float a = clamp(fill + f, 0.0, 1.0);',
-      '  gl_FragColor = vec4((tint * fill + env * f) / max(a, 1e-3), a);',
-      `  gl_FragColor.rgb = sRGBTransferEOTF(vec4(sRGBTransferOETF(gl_FragColor).rgb * (1.0 - ${(1 - DIM_LEVEL).toFixed(2)} * dim), 1.0)).rgb;`,
-      '  #include <colorspace_fragment>',
-      '}',
-    ].join('\n'),
   });
 }

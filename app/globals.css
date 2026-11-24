@@ -226,7 +226,7 @@ button {
 }
 
 /*
- * ---- The desk (Tier 1): the window is the desk, seen from the seat (design 2026-11-19 §3). ----
+ * ---- The desk (Tier 1): the window is the desk, seen from the seat. ----
  * content/scene/framingCss.ts sets the framing variables on .desk-still (--u, --mw, --mh,
  * --stage-w and the band crop --bx0 --by0 --bw --bh); everything below places by them.
  */
@@ -380,7 +380,7 @@ html:has(.desk-still) body {
 }
 
 /*
- * Placement is transform-only (spec §4), in master percents scaled by --u. Each box is its
+ * Placement is transform-only, in master percents scaled by --u. Each box is its
  * object's projected bounds, grown to 44px around its centre (WCAG 2.5.5); --lift always has a
  * value, or the whole transform computes to none.
  */
@@ -410,7 +410,7 @@ html:has(.desk-still) body {
 
 /*
  * The tape label: one size on every object, from the scale (about 1% of the safe frame's width).
- * Hidden at rest; it appears where you look (design §3.3, components/desk/useLabels.ts): near the
+ * Hidden at rest; it appears where you look (components/desk/useLabels.ts): near the
  * pointer, on hover, on the open object, during the touch intro, and for keyboard focus in the
  * Sections list (labelFocusCss, inlined in <head>).
  */
@@ -444,8 +444,7 @@ html:has(.desk-still) body {
 }
 
 /*
- * The glow (Carlos, 2026-11-20: "the rectangular outlines do not look so good … make the selections
- * glow slightly instead"; 2026-11-21: "on the edges not the item"): a soft warm ring just outside
+ * The glow: a soft warm ring just outside
  * the object's silhouette, never on the object, screened onto the still (or the live scene). Each .desk-glow sits just before its
  * hotspot (DeskStill.tsx): it lights on hover, on the open object, with the touch labels on arrival
  * and, from labelFocusCss, with keyboard focus in the Sections list. It follows the glance.
@@ -526,7 +525,7 @@ html:has(.desk-still) body {
 }
 
 /*
- * ---- Turn your phone sideways (design §3.5, components/desk/TurnHint.tsx). Only on an upright
+ * ---- Turn your phone sideways (components/desk/TurnHint.tsx). Only on an upright
  * touch screen (PORTRAIT, content/scene/framing.ts) and only until html[data-hint-seen]: one 4 s
  * animation, fade in 0.3 s, hold, fade out 0.6 s, ending hidden. ----
  */
@@ -643,7 +642,7 @@ html:has(.desk-still) body {
 }
 
 /*
- * ---- The Sections list: the keyboard and screen-reader path (design §5.4). Out of sight until
+ * ---- The Sections list: the keyboard and screen-reader path. Out of sight until
  * something in it has focus, then a card at the top left. After a pointer or touch (Drawer.tsx sets
  * data-input), the focus a close puts back on its button stays invisible, so the card never pops up
  * under a finger; without JavaScript it shows on any focus. ----
@@ -747,7 +746,7 @@ html:has(.desk-still) body {
 }
 
 /*
- * ---- Coming forward (design 2026-11-19 §4.1): the kit and the phone (content/opened.ts). ----
+ * ---- Coming forward: the kit and the phone (content/opened.ts). ----
  * While one is out, .desk carries data-open and data-side (the side the object sits on): the still
  * dims and softens, the desk takes no hotspot clicks (any click on it puts the object back), the
  * object's render sits in a slot on its own side and the panel on the other; in portrait the
@@ -994,4 +993,123 @@ html:has(.desk-still) body {
 .desk:has(.desk-still__live[data-ready='true'] canvas[data-travel]:not([data-travel='0.00']))
   .desk-still__overlay {
   opacity: 0;
+}
+
+/*
+ * ---- Steam over the mug, and the pause that WCAG 2.2.2 asks of motion that
+ * never ends. Placed in master fractions from the mug's bounds (Steam.tsx); it follows the glance.
+ * Only transform and opacity animate. None of it exists under reduced motion. ----
+ */
+.steam {
+  position: absolute;
+  left: calc((var(--sx) - var(--sw) / 2) * 100%);
+  top: calc((var(--sy) - var(--sh)) * 100%);
+  width: calc(var(--sw) * 100%);
+  height: calc(var(--sh) * 100%);
+  transform: translate(var(--gx, 0px), var(--gy, 0px));
+  pointer-events: none;
+}
+
+.steam__wisp {
+  position: absolute;
+  bottom: 0;
+  left: 18%;
+  width: 64%;
+  height: 78%;
+  opacity: 0;
+  transform-origin: 50% 100%;
+  /* its own layer: the blur is drawn once, which halves the CPU without a GPU (measured) */
+  will-change: transform, opacity;
+  animation: steam-rise 6s linear infinite;
+}
+
+.steam__wisp:nth-child(2) {
+  left: 0;
+  width: 56%;
+  height: 64%;
+  animation-duration: 7.4s;
+  animation-delay: -2.6s;
+}
+
+.steam__wisp:nth-child(3) {
+  left: 42%;
+  width: 56%;
+  height: 70%;
+  animation-duration: 8.2s;
+  animation-delay: -5.1s;
+}
+
+.steam__wisp svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  filter: blur(calc(0.004 * var(--u)));
+}
+
+.steam__wisp path {
+  fill: none;
+  stroke: rgb(255 246 234 / 0.5);
+  stroke-width: 9;
+  stroke-linecap: round;
+}
+
+.steam[data-paused] .steam__wisp,
+.desk[data-open] .steam__wisp {
+  animation-play-state: paused;
+}
+
+@keyframes steam-rise {
+  0% {
+    opacity: 0;
+    transform: translateY(6%) scale(0.7, 0.45);
+  }
+
+  25% {
+    opacity: 0.85;
+    transform: translate(-5%, -2%) scale(0.85, 0.75) rotate(-3deg);
+  }
+
+  60% {
+    opacity: 0.5;
+    transform: translate(6%, -14%) scale(1.05, 0.98) rotate(3deg);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-3%, -30%) scale(1.3, 1.1) rotate(-2deg);
+  }
+}
+
+/* Top left: the panel and sheet never sit there, and the ball needs the bottom left. */
+.motion-toggle {
+  position: fixed;
+  top: calc(12px + env(safe-area-inset-top));
+  left: calc(12px + env(safe-area-inset-left));
+  z-index: 15;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid rgb(255 244 226 / 0.5);
+  border-radius: 50%;
+  background: rgb(12 10 8 / 0.6);
+  color: #f4ece0;
+  cursor: pointer;
+}
+
+.motion-toggle svg {
+  fill: currentColor;
+}
+
+.desk[data-open] .motion-toggle {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .steam,
+  .motion-toggle,
+  .drawer .drawer__motion {
+    display: none;
+  }
 }

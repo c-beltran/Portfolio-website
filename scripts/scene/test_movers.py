@@ -109,8 +109,7 @@ class Case(unittest.TestCase):
         self.assertAlmostEqual(foam["centre"][2] + foam["size"][2] / 2, top - MV.FOAM_DROP, places=9)
 
     def test_contents_are_carloss_kit(self):
-        # Carlos, 2026-11-21: "closer to my real kit": the gauge with its hoses, the fittings and
-        # the screwdriver (his photos); the generic certificate is dropped.
+        # Modeled on a real kit: the gauge with its hoses, the fittings and the screwdriver.
         c = MV.kit_layout()["contents"]
         for name in ("gauge", "gauge_face", "needle", "minigauge", "minigauge_face", "manifold",
                      "screwdriver", "screwdriver_collar", "screwdriver_shaft", "screwdriver_tip"):

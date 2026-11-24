@@ -1,6 +1,6 @@
 """
-Renders an object that comes forward (design 2026-11-19 §5.5: "each object also gets a Cycles render
-in its opened pose, so Tier 1 visitors see the same art when they click"), or the patch that hides
+Renders an object that comes forward, in its opened pose,
+so Tier 1 visitors see the same art when they click, or the patch that hides
 it on the seat still while it is out.
 
     Blender -b ~/Portfolio-assets/blend/workspace.blend --python scripts/scene/render_opened.py -- \

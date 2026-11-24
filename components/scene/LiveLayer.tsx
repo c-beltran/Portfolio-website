@@ -6,12 +6,12 @@ import { forcedTier } from '@/lib/tier';
 import { useTheme } from '@/lib/useTheme';
 import type { OpenedId } from '@/content/opened';
 
-// Client-only, and only fetched once LiveLayer decides to mount it (spec §4).
+// Client-only, and only fetched once LiveLayer decides to mount it.
 const LiveScene = dynamic(() => import('./LiveScene'), { ssr: false });
 
 /**
  * Any failure inside the scene (no context after all, a missing GLB or texture, a shader error)
- * unmounts it and leaves the still (spec §3.1: any 3D failure falls back to Tier 1).
+ * unmounts it and leaves the still (any 3D failure falls back to Tier 1).
  */
 class Fallback extends Component<
   { onError: () => void; children: ReactNode },

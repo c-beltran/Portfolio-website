@@ -1,5 +1,5 @@
 /**
- * The seat framing as CSS (design 2026-11-19 §3.2): custom properties on .desk-still that
+ * The seat framing as CSS: custom properties on .desk-still that
  * globals.css uses to place the master, the band crop and the hotspots, with no script reading the
  * viewport. Same maths as framing.ts:
  *
