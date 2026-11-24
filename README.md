@@ -60,6 +60,7 @@ pnpm e2e                                    # browser tests against the build (C
 - [x] The test kit and phone come forward
 - [x] Every other section's object comes forward or zooms in, with real HTML on the badge, the card and both monitor halves
 - [x] The terminal on the monitor loops, under the same pause as the steam
+- [x] The window shows the visitor's weather and time of day, and the room's light follows (night by their clock; the switch works the lamp)
 - [ ] The live desk becomes the default on capable devices. Until then, its timing tests fail on CI's CPU-only renderer.
 - [ ] Final copy, photos and recordings (marked `DRAFT` and `TODO` for now)
 

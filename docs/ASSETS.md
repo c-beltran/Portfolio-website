@@ -23,6 +23,7 @@ Everything else in the scene is built in code under [`scripts/scene/`](../script
 
 ## Data
 
-| Data                               | Source                                          | License       | Use                                                                                 |
-| ---------------------------------- | ----------------------------------------------- | ------------- | ----------------------------------------------------------------------------------- |
-| Time zone coordinates (`zone.tab`) | [tzdata](https://www.iana.org/time-zones), IANA | Public domain | Each time zone's main city, for the window's weather (`content/weather/zones.json`) |
+| Data                               | Source                                          | License       | Use                                                                                     |
+| ---------------------------------- | ----------------------------------------------- | ------------- | --------------------------------------------------------------------------------------- |
+| Current weather                    | [Open-Meteo](https://open-meteo.com/)           | CC BY 4.0     | The window's weather, fetched by the visitor's browser; credited on the This site panel |
+| Time zone coordinates (`zone.tab`) | [tzdata](https://www.iana.org/time-zones), IANA | Public domain | Each time zone's main city, for the window's weather (`content/weather/zones.json`)     |

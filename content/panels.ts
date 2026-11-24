@@ -126,6 +126,17 @@ export const PANELS: Record<SectionSlug, PanelBlock[]> = {
         { label: 'Merged PRs', value: (s) => n(s.thisSite.mergedPRs) },
       ],
     },
+    {
+      kind: 'prose',
+      facts: ['P06'],
+      text: "The window shows the weather where you are: your browser asks Open-Meteo for the current weather in your time zone's main city. Open-Meteo sees your IP address, as any site you load does, and never your location.",
+      draft: true,
+    },
+    {
+      kind: 'link',
+      href: 'https://open-meteo.com/',
+      label: 'Weather data by Open-Meteo.com (CC BY 4.0)',
+    },
     { kind: 'todo', text: '[TODO: direction thumbnails]' },
     {
       kind: 'todo',
