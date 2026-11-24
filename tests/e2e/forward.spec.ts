@@ -18,7 +18,7 @@ const NEW = [
   { id: 'board', slug: 'travel', label: 'Travel', side: 'left', lean: true },
 ] as const;
 const main = (page: Page) => page.locator('main.desk');
-const art = (page: Page) => page.locator('.opened__art');
+const art = (page: Page) => page.locator('.opened .opened__art');
 const canvas = (page: Page) => page.locator('.opened__canvas');
 const panel = (page: Page) => page.locator('.desk > .panel');
 const box = async (l: Locator) => (await l.boundingBox())!;

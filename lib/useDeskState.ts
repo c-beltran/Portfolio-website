@@ -1,7 +1,7 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import { useCallback, useEffect, useRef, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import type { SectionSlug } from '@/content/objects';
 import { slugFromPath, titleFor } from './deskRoutes';
 
@@ -29,6 +29,8 @@ const viaNow = (): string | null => {
   const v = (window.history.state as { via?: unknown } | null)?.via;
   return typeof v === 'string' ? v : null;
 };
+/** The URL's section and its via together: a via belongs to the entry whose path it came with. */
+const entryNow = () => `${slugFromPath(window.location.pathname) ?? ''}|${viaNow() ?? ''}`;
 const onVia = (f: () => void) => {
   window.addEventListener('popstate', f);
   window.addEventListener(VIA_EVENT, f);
@@ -46,8 +48,25 @@ const onVia = (f: () => void) => {
 export function useDeskState() {
   const selected = slugFromPath(usePathname() ?? '/');
   // null while hydrating (the server knows no history), then the entry's own
-  const viaState = useSyncExternalStore(onVia, viaNow, () => null);
-  const via = selected ? viaState : null;
+  const entry = useSyncExternalStore(onVia, entryNow, () => null);
+  const [entrySlug, entryVia] = entry ? entry.split('|') : [null, ''];
+  const current = entry !== null && (entrySlug || null) === selected;
+  // Next commits a new path in a transition, after the history entry (and its via) has already
+  // changed: until the path catches up, the shown section keeps the via it was opened with, so
+  // closing the diploma never shows the monitor's CV on its way out.
+  const [held, setHeld] = useState<{ slug: SectionSlug | null; via: string | null }>({
+    slug: null,
+    via: null,
+  });
+  if (current && (held.slug !== selected || held.via !== (entryVia || null)))
+    setHeld({ slug: selected, via: entryVia || null });
+  const via = !selected
+    ? null
+    : current
+      ? entryVia || null
+      : held.slug === selected
+        ? held.via
+        : null;
   const previous = useRef<SectionSlug | null>(selected);
   const focusPanel = useRef(false);
   /** The selection Next has committed; the URL can run ahead of it while a navigation is pending. */

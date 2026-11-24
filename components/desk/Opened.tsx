@@ -1,6 +1,14 @@
 'use client';
 
-import { lazy, Suspense, useEffect, useRef, useState, type CSSProperties } from 'react';
+import {
+  lazy,
+  Suspense,
+  useEffect,
+  useRef,
+  useState,
+  type ComponentType,
+  type CSSProperties,
+} from 'react';
 import { artOf, artSrc, isLean, OPENED_IDS, sideOf, type OpenedId } from '@/content/opened';
 import { OpenedFace } from './OpenedFace';
 import { PhoneClip } from './PhoneClip';
@@ -9,8 +17,18 @@ import { Steam } from './Steam';
 import { isSpin } from '@/lib/spin/spin';
 import { liveOver } from '@/lib/weather/hold';
 
+/** If the 3D view's code can't be fetched, the picture simply stays: it reports the failure. */
+function NoSpinView({ onFail }: { onFail: () => void }) {
+  useEffect(() => onFail(), [onFail]);
+  return null;
+}
+type SpinViewProps = Parameters<typeof import('./SpinView').default>[0];
 /** The spinnable object in 3D: loaded (three.js with it) only when a visitor first grabs one. */
-const SpinView = lazy(() => import('./SpinView'));
+const SpinView = lazy<ComponentType<SpinViewProps>>(() =>
+  import('./SpinView').catch(() => ({
+    default: NoSpinView,
+  })),
+);
 
 type Mode = 'day' | 'lamp';
 

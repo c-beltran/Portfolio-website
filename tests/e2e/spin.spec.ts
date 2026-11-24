@@ -138,6 +138,63 @@ test.describe('spinning in the still view', () => {
     await expect(view(page)).toHaveAttribute('data-spin-mode', 'day');
   });
 
+  const slow = (page: Page, file: string, ms = 2500) =>
+    page.route(`**/opened/bake/${file}`, async (r) => {
+      await new Promise((t) => setTimeout(t, ms));
+      await r.continue();
+    });
+  const press = async (page: Page, id = 'car') => {
+    const box = (await target(page, id).boundingBox())!;
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await page.mouse.down();
+  };
+  const spun = (page: Page) => page.locator('.opened[data-id="car"]');
+
+  test('the picture stays until the 3D object has its paint', async ({ page }) => {
+    await slow(page, 'car-open-day.webp');
+    await gotoDesk(page, '/cars');
+    await press(page);
+    await page.waitForTimeout(1500);
+    await expect(spun(page)).not.toHaveAttribute('data-spun', /.*/);
+    await expect(spun(page)).toHaveAttribute('data-spun', 'true', { timeout: 15_000 });
+  });
+
+  test('the lamp switch keeps the old light until the new paint comes', async ({ page }) => {
+    await atNight(page);
+    await slow(page, 'car-open-day.webp');
+    await gotoDesk(page, '/cars');
+    await grab(page);
+    await page.mouse.up();
+    await expect(view(page)).toHaveAttribute('data-spin-mode', 'lamp');
+    await drawerLamp(page).focus();
+    await page.keyboard.press('Enter');
+    await page.waitForTimeout(1000);
+    await expect(view(page)).toHaveAttribute('data-spin-mode', 'lamp');
+    await expect(view(page)).toHaveAttribute('data-spin-mode', 'day', { timeout: 15_000 });
+  });
+
+  test('if its paint fails, the picture stays', async ({ page }) => {
+    await page.route('**/opened/bake/car-open-day.webp', (r) => r.abort());
+    await gotoDesk(page, '/cars');
+    await press(page);
+    await page.waitForTimeout(2500);
+    await expect(spun(page)).not.toHaveAttribute('data-spun', /.*/);
+    await expect(view(page)).toHaveCount(0);
+  });
+
+  test('if the 3D code fails to load, the picture stays and the page carries on', async ({
+    page,
+  }) => {
+    await gotoDesk(page, '/cars');
+    await page.waitForLoadState('networkidle'); // the page's own late chunks (the window) are in
+    await page.route('**/_next/static/chunks/**', (r) => r.abort());
+    await press(page);
+    await page.waitForTimeout(2500);
+    await expect(spun(page)).toBeVisible();
+    await expect(spun(page)).not.toHaveAttribute('data-spun', /.*/);
+    await expect(page.locator('section.panel')).toBeVisible();
+  });
+
   test('a resize keeps the outline', async ({ page }) => {
     await gotoDesk(page, '/cars');
     await grab(page);

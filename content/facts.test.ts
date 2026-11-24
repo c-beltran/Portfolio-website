@@ -196,7 +196,7 @@ describe('FACT_IDS', () => {
 });
 
 describe('education', () => {
-  it('E01 is the degree, as Carlos gave it', () => {
+  it('E01 states the degree', () => {
     expect(renderFact('E01')).toBe(
       'Bachelor of Science in Computer Science, Queens College, The City University of New York (CUNY), May 2019',
     );

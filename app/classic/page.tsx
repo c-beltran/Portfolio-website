@@ -40,6 +40,7 @@ const SECTIONS: ClassicSection[] = [
       { slug: 'this-site', label: 'This site' },
     ],
   },
+  { heading: 'Education', facts: ['E01'], desk: [] },
   { heading: 'About', facts: ['ABOUT'], desk: [{ slug: 'about', label: 'About' }] },
   // the room
   { heading: 'Cars', facts: ['H01', 'H02'], desk: [{ slug: 'cars', label: 'Cars' }] },
@@ -78,7 +79,7 @@ export default function ClassicPage() {
                 </li>
               ))}
             </ul>
-            <DeskLinks desk={section.desk} />
+            {section.desk.length > 0 && <DeskLinks desk={section.desk} />}
           </section>
         ))}
         <section aria-labelledby="classic-contact">

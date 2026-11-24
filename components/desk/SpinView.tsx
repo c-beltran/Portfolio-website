@@ -111,32 +111,57 @@ export default function SpinView({ id, mode, onReady, onFail }: Props) {
 
     const loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
     const textures = new THREE.TextureLoader();
-    const bakes = new Map<string, THREE.Texture>();
+    // Each bake is used only once it has arrived: a texture still loading draws black.
+    const bakes = new Map<string, Promise<THREE.Texture>>();
+    const loaded: THREE.Texture[] = [];
     const bake = (m: 'day' | 'lamp') => {
       const key = bakeSrc(id, m);
-      if (!bakes.has(key)) {
-        const t = textures.load(key, redraw);
-        t.flipY = false;
-        t.colorSpace = THREE.SRGBColorSpace;
-        bakes.set(key, t);
-      }
+      if (!bakes.has(key))
+        bakes.set(
+          key,
+          new Promise((resolve, reject) =>
+            textures.load(
+              key,
+              (t) => {
+                t.flipY = false;
+                t.colorSpace = THREE.SRGBColorSpace;
+                if (gone) t.dispose();
+                else loaded.push(t);
+                resolve(t);
+              },
+              undefined,
+              reject,
+            ),
+          ),
+        );
       return bakes.get(key)!;
     };
-    const material = new THREE.MeshBasicMaterial({ map: bake(modeRef.current) });
+    const material = new THREE.MeshBasicMaterial();
+    let shown = false;
+    let painted: 'day' | 'lamp' | null = null;
+    const paint = (m: 'day' | 'lamp') =>
+      bake(m).then((t) => {
+        // the latest mode wins: a slow bake for a mode since left is dropped
+        if (gone || modeRef.current !== m) return;
+        material.map = t;
+        material.needsUpdate = true;
+        painted = m;
+        canvas.dataset.spinMode = m;
+        redraw();
+      });
+    // until the new light's bake arrives, the object keeps the old one
     setMode.current = (m) => {
-      material.map = bake(m);
-      material.needsUpdate = true;
-      canvas.dataset.spinMode = m;
-      redraw();
+      if (shown) paint(m).catch(() => {});
     };
-    canvas.dataset.spinMode = modeRef.current;
 
-    const timer = setTimeout(() => !root && fail.current(), GIVE_UP_MS);
-    loader.load(
-      modelSrc(id),
-      (gltf) => {
-        if (gone) return;
-        const obj = gltf.scene.getObjectByName(`obj_${id}`) ?? gltf.scene;
+    const timer = setTimeout(() => !shown && fail.current(), GIVE_UP_MS);
+    const model = new Promise<THREE.Object3D>((resolve, reject) =>
+      loader.load(modelSrc(id), (gltf) => resolve(gltf.scene), undefined, reject),
+    );
+    Promise.all([model, paint(modeRef.current)])
+      .then(([gltf]) => {
+        if (gone || !painted) return;
+        const obj = gltf.getObjectByName(`obj_${id}`) ?? gltf;
         obj.traverse((o) => {
           if (o instanceof THREE.Mesh) o.material = material;
         });
@@ -151,13 +176,14 @@ export default function SpinView({ id, mode, onReady, onFail }: Props) {
         // the first frame is on the canvas: the picture can hand over
         requestAnimationFrame(() => {
           if (gone) return;
+          shown = true;
           canvas.dataset.spinReady = 'true';
           ready.current();
+          // the light may have changed while it loaded
+          if (modeRef.current !== painted) paint(modeRef.current).catch(() => {});
         });
-      },
-      undefined,
-      () => !gone && fail.current(),
-    );
+      })
+      .catch(() => !gone && !shown && fail.current());
 
     return () => {
       gone = true;
@@ -166,9 +192,12 @@ export default function SpinView({ id, mode, onReady, onFail }: Props) {
       ro.disconnect();
       unsubscribe();
       material.dispose();
-      bakes.forEach((t) => t.dispose());
+      loaded.forEach((t) => t.dispose());
       root?.traverse((o) => o instanceof THREE.Mesh && o.geometry.dispose());
       renderer.dispose();
+      // free the context now, not at garbage collection: a browser keeps only a few, and drops
+      // the oldest (the live scene's, maybe) when more are made
+      renderer.forceContextLoss();
     };
   }, [id]);
 

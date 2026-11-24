@@ -293,6 +293,41 @@ test.describe('the diploma', () => {
     await expect.poll(() => path(page)).toBe('/');
   });
 
+  for (const leave of ['Escape', 'Back', 'drawer'] as const)
+    test(`leaving by ${leave}, the diploma is what leaves: the monitor never shows`, async ({
+      page,
+    }) => {
+      await gotoDesk(page, '/');
+      await hotspot(page, 'diploma').click();
+      await expect.poll(() => opened(page)).toBe('diploma');
+      await page.evaluate(() => {
+        const w = window as unknown as { seen: string[] };
+        w.seen = [];
+        const note = () => {
+          for (const el of document.querySelectorAll('.opened'))
+            w.seen.push(el.getAttribute('data-id') ?? '');
+          const eyebrow = document.querySelector('.panel__eyebrow')?.textContent;
+          if (eyebrow) w.seen.push(eyebrow);
+          if (document.querySelector('.hotspot[data-item="cv"][aria-pressed="true"]'))
+            w.seen.push('cv');
+        };
+        new MutationObserver(note).observe(document.body, {
+          subtree: true,
+          childList: true,
+          attributes: true,
+          characterData: true,
+        });
+      });
+      if (leave === 'Escape') await page.keyboard.press('Escape');
+      else if (leave === 'Back') await page.goBack();
+      else await drawerButton(page, 'About').press('Enter');
+      await expect.poll(() => path(page)).not.toBe('/cv');
+      await page.waitForTimeout(500);
+      const seen = await page.evaluate(() => (window as unknown as { seen: string[] }).seen);
+      expect(seen).not.toContain('cv');
+      expect(seen).not.toContain('THE MONITOR · CV');
+    });
+
   test('a direct load of /cv leans in to the monitor', async ({ page }) => {
     await gotoDesk(page, '/cv');
     await expect.poll(() => opened(page)).toBe('cv');

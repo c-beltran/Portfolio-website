@@ -1,4 +1,5 @@
 import { expect, test } from './fixtures';
+import { WALL_PIECES } from '../../content/wall';
 import { DESK_OBJECTS } from '../../content/objects';
 import {
   clickFelt,
@@ -49,7 +50,9 @@ test.describe('WebGL off', () => {
   test('the desk, every object, the drawer and the panel still work', async ({ page }) => {
     await gotoDesk(page, '/');
     expect(await page.evaluate(() => 'WebGLRenderingContext' in window)).toBe(false);
-    await expect(page.locator('button.hotspot')).toHaveCount(DESK_OBJECTS.length + 1);
+    await expect(page.locator('button.hotspot')).toHaveCount(
+      DESK_OBJECTS.length + 1 + WALL_PIECES.length,
+    );
     const v = page.viewportSize()!;
     for (const o of DESK_OBJECTS) {
       // an object off screen at this size (the ball until 13:5) opens from its Sections button
