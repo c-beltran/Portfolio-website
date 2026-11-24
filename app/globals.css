@@ -1239,6 +1239,37 @@ html:has(.desk-still) body {
 }
 
 /*
+ * The visitor's weather in the window (WeatherWindow.tsx): seen only through the glass mask, at
+ * the mask's place on the master; the canvas inside is laid onto the window's patch of sky by a
+ * matrix3d from its top-left corner. It fades in once drawn.
+ */
+.weather-window {
+  position: absolute;
+  left: calc(var(--px0) * 100%);
+  top: calc(var(--py0) * 100%);
+  width: calc(var(--pw) * 100%);
+  height: calc(var(--ph) * 100%);
+  overflow: hidden;
+  pointer-events: none;
+  -webkit-mask: url(/weather/sky-mask.webp) 0 0 / 100% 100% no-repeat;
+  mask: url(/weather/sky-mask.webp) 0 0 / 100% 100% no-repeat;
+  opacity: 0;
+  transition: opacity 0.6s ease-out;
+}
+
+.weather-window[data-drawn] {
+  opacity: 1;
+}
+
+.weather-window canvas {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: block;
+  transform-origin: 0 0;
+}
+
+/*
  * ---- Steam over the mug, and the pause that WCAG 2.2.2 asks of motion that
  * never ends. Placed in master fractions from the mug's bounds (Steam.tsx); it follows the glance.
  * Only transform and opacity animate. None of it exists under reduced motion. ----

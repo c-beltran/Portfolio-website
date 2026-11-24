@@ -24,11 +24,13 @@ import {
 import framing from '@/content/scene/framing.json';
 import { sizesFor } from '@/content/scene/framingCss';
 import { useLight } from '@/lib/useLight';
+import { useSky } from '@/lib/weather/useSky';
 import { LiveLayer } from '@/components/scene/LiveLayer';
 import { Hotspot } from './Hotspot';
 import { MonitorName } from './MonitorName';
 import { prefetchArt } from './Opened';
 import { ScreenLoop } from './ScreenLoop';
+import { WeatherWindow } from './WeatherWindow';
 import { CENTRE_SCRIPT, panOf, setPan } from './pan';
 import { Steam } from './Steam';
 import { useLabels } from './useLabels';
@@ -258,6 +260,8 @@ export function DeskStill({ selected, onOpen, onClose }: Props) {
   const opened = openedFor(selected);
   // The glow's masks load once the page is idle, like the lamp render: never on the first load.
   const [glow, setGlow] = useState(false);
+  // The weather is asked for once the page is idle, with the glow: never on the first load.
+  const sky = useSky(glow);
   const still = useRef<HTMLDivElement>(null);
   const layer = useRef<HTMLDivElement>(null);
   useKeptPan(still);
@@ -310,6 +314,7 @@ export function DeskStill({ selected, onOpen, onClose }: Props) {
               <DeskPhoto mode="day" />
               <DeskPhoto mode="lamp" />
               <script dangerouslySetInnerHTML={{ __html: NIGHT_PAINT }} />
+              {glow && <WeatherWindow sky={sky} />}
               {opened && isMover(opened) && <DeskPatch id={opened} mode={render} />}
             </div>
             {DESK_OBJECTS.flatMap((o) => [
