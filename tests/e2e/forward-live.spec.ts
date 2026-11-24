@@ -341,7 +341,9 @@ test.describe('coming forward live', () => {
 test.describe('spinning live', () => {
   test.skip(({ isMobile }) => isMobile, 'desktop preview');
   test.slow();
-  test.use({ viewport: { width: 1280, height: 800 } });
+  // Reduced motion holds the window's weather still, so only the spin can change a frame (a drag
+  // still turns the object; it just doesn't coast).
+  test.use({ viewport: { width: 1280, height: 800 }, reducedMotion: 'reduce' });
 
   const spinHook = (page: Page) =>
     canvas(page).evaluate((c: HTMLCanvasElement) => ({

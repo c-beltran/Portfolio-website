@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, type CSSProperties } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { artOf } from '@/content/opened';
 import { spinLive } from '@/lib/spin/live';
 import { createSpin, type Spin, type SpinId } from '@/lib/spin/spin';
@@ -9,6 +9,19 @@ import { reducedMotion } from '@/lib/weather/hold';
 const NAMES: Record<SpinId, string> = { car: 'car', ball: 'ball', mug: 'mug' };
 /** Velocity of a release: the pointer's motion over the last stretch of the drag. */
 const FLICK_MS = 80;
+/** "Drag to spin" shows once a visit, for this long or until the first grab. */
+const HINT_KEY = 'desk-spin-hint';
+const HINT_MS = 3000;
+
+function hintDue(): boolean {
+  try {
+    if (sessionStorage.getItem(HINT_KEY)) return false;
+    sessionStorage.setItem(HINT_KEY, '1');
+  } catch {
+    // storage blocked: show it, it fades on its own
+  }
+  return true;
+}
 
 /**
  * What the visitor grabs to spin an object that has come forward: a button over its art (outside
@@ -21,12 +34,16 @@ export function SpinTarget({
   side,
   leaving,
   onFirstInput,
+  children,
 }: {
   id: SpinId;
   side: 'left' | 'right';
   leaving?: boolean;
   onFirstInput?: () => void;
+  /** The still view's 3D object, once grabbed. */
+  children?: ReactNode;
 }) {
+  const [hint, setHint] = useState(false);
   const spin = useRef<Spin | null>(null);
   const raf = useRef(0);
   const touched = useRef(false);
@@ -47,16 +64,31 @@ export function SpinTarget({
   };
 
   const first = () => {
+    setHint(false);
     if (touched.current) return;
     touched.current = true;
     onFirstInput?.();
   };
 
   useEffect(() => {
+    if (!hintDue()) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- sessionStorage only exists here
+    setHint(true);
+    const t = setTimeout(() => setHint(false), HINT_MS);
+    return () => clearTimeout(t);
+  }, []);
+
+  useEffect(() => {
     const s = createSpin({ reducedMotion: reducedMotion() });
     spin.current = s;
+    // how far it is turned (radians), for tests
+    const off = spinLive.subscribe(() => {
+      if (el.current)
+        el.current.dataset.spinTurn = (2 * Math.acos(Math.min(1, Math.abs(s.q[3])))).toFixed(2);
+    });
     spinLive.set({ id, spin: s });
     return () => {
+      off();
       cancelAnimationFrame(raf.current);
       raf.current = 0;
       if (spinLive.get()?.spin === s) spinLive.set(null);
@@ -134,7 +166,14 @@ export function SpinTarget({
             spinLive.moved();
             run();
           }}
-        />
+        >
+          {children}
+        </button>
+        {hint && (
+          <p className="spin-hint" aria-hidden="true">
+            Drag to spin
+          </p>
+        )}
       </div>
     </div>
   );

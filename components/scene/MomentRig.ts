@@ -138,7 +138,7 @@ export class MomentRig {
     this.unspin = spinLive.subscribe(() => {
       const live = spinLive.get();
       s.canvas.dataset.spin = live && !live.spin.atRest ? 'moving' : 'rest';
-      const w = live ? Math.min(1, Math.abs(live.spin.q.w)) : 1;
+      const w = live ? Math.min(1, Math.abs(live.spin.q[3])) : 1;
       s.canvas.dataset.spinTurn = (2 * Math.acos(w)).toFixed(2);
       s.invalidate();
     });
@@ -240,7 +240,8 @@ export class MomentRig {
       let pose = k > 0 && m.present ? blendPose(m.rest, m.present, k) : m.rest;
       const live = spinLive.get();
       const local = this.centres.get(id);
-      if (k > 0 && local && live?.id === id) pose = this.spun(pose, local, live.spin.q, cam);
+      if (k > 0 && local && live?.id === id)
+        pose = this.spun(pose, local, new THREE.Quaternion(...live.spin.q), cam);
       m.pivot.position.fromArray(pose.position);
       m.pivot.quaternion.fromArray(pose.quaternion);
     }

@@ -822,6 +822,7 @@ html:has(.desk-still) body {
 
 .spin-target {
   display: block;
+  position: relative;
   padding: 0;
   border: 0;
   background: none;
@@ -839,8 +840,78 @@ html:has(.desk-still) body {
   border-radius: 8px;
 }
 
+/* On close the spun object fades out with the art, easing home as it goes. */
 .spin-layer[data-leaving] {
-  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease-out;
+}
+
+.spin-layer[data-leaving] .spin-target {
+  pointer-events: none;
+}
+
+/* The 3D object (SpinView.tsx), in the art's box: it fades in over the picture, which fades out. */
+.spin-view {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease-out;
+}
+
+.spin-view[data-spin-ready] {
+  opacity: 1;
+}
+
+.opened[data-spun] .opened__canvas[data-drawn] {
+  opacity: 0;
+  transition: opacity 0.15s ease-out;
+}
+
+/* The steam rises from the mug as it rests: not from one being turned over. */
+.opened[data-spun] .steam {
+  display: none;
+}
+
+.spin-hint {
+  position: absolute;
+  left: 50%;
+  bottom: 8%;
+  margin: 0;
+  padding: 6px 12px;
+  border-radius: 999px;
+  transform: translateX(-50%);
+  background: rgba(12, 10, 8, 0.62);
+  color: #f4efe6;
+  font-size: 0.85rem;
+  pointer-events: none;
+  animation: spin-hint 3s ease both;
+}
+
+@keyframes spin-hint {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  10%,
+  80% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spin-view,
+  .opened[data-spun] .opened__canvas[data-drawn],
+  .spin-layer[data-leaving] {
+    transition: none;
+  }
+
+  .spin-hint {
+    animation: none;
+  }
 }
 
 .opened__slot {

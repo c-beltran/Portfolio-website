@@ -20,6 +20,8 @@ Use `--python-exit-code 1` with Blender, which otherwise exits 0 when a script t
 
 The window's weather draws on the patch of sky the window shows: `export_bounds.py` writes its corners (`quads.sky`) and its place on the live desk's sky plane (`skyUv`, from `sky_geo.py`); `render_masks.py --only sky` and `encode_sky.mjs` trace its glass to a vector clip (`sky-clip.json`, never an image, so it is never the page's largest paint).
 
+`optimize_glb.sh` also cuts the car, the ball and the mug out of `movers.glb` into `spin-<id>.glb` (`split_spin.mjs`): the still view loads one of them, with three.js, only when a visitor first grabs it to spin.
+
 Geometry lives in modules without `bpy` (`room.py`, `movers.py`, `framing.py`, `opened.py`, `sky_geo.py`), tested with `python3 -I scripts/scene/test_<name>.py`.
 
 ## Downloads

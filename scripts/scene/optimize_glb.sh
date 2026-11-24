@@ -14,8 +14,9 @@ OPEN='kit-open,phone-open,badge-open,photo-open,notepad-open,card-open,car-open,
 mkdir -p "$OUT/bake" "$OPENED/bake"
 pnpm exec gltf-transform meshopt "$RAW" "$OUT/scene.glb" --level medium
 pnpm exec gltf-transform meshopt "$MOVERS" "$OUT/movers.glb" --level medium
+node scripts/scene/split_spin.mjs "$OUT/movers.glb" "$OUT"
 node scripts/scene/encode_bake.mjs "$BAKE" "$OUT/bake" 82 --skip "$OPEN"
 node scripts/scene/encode_bake.mjs "$BAKE" "$OPENED/bake" 82 --only "$OPEN"
-for f in scene movers; do
+for f in scene movers spin-car spin-ball spin-mug; do
   printf '%s.glb gzipped: %s bytes\n' "$f" "$(gzip -9c "$OUT/$f.glb" | wc -c | tr -d ' ')"
 done
