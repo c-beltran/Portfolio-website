@@ -1298,8 +1298,8 @@ html:has(.desk-still) body {
 }
 
 /*
- * The visitor's weather in the window (WeatherWindow.tsx): seen only through the glass mask, at
- * the mask's place on the master; the canvas inside is laid onto the window's patch of sky by a
+ * The visitor's weather in the window (WeatherWindow.tsx): seen only through the glass (an SVG
+ * clip traced from the rendered mask), at the mask's place on the master; the canvas inside is laid onto the window's patch of sky by a
  * matrix3d from its top-left corner. It fades in once drawn.
  */
 .weather-window {
@@ -1310,14 +1310,19 @@ html:has(.desk-still) body {
   height: calc(var(--ph) * 100%);
   overflow: hidden;
   pointer-events: none;
-  -webkit-mask: url(/weather/sky-mask.webp) 0 0 / 100% 100% no-repeat;
-  mask: url(/weather/sky-mask.webp) 0 0 / 100% 100% no-repeat;
+  clip-path: url(#weather-glass);
   opacity: 0;
   transition: opacity 0.6s ease-out;
 }
 
 .weather-window[data-drawn] {
   opacity: 1;
+}
+
+.weather-window__glass {
+  position: absolute;
+  width: 0;
+  height: 0;
 }
 
 .weather-window canvas {

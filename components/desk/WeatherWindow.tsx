@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, type CSSProperties } from 'react';
+import clip from '@/content/scene/sky-clip.json';
 import mask from '@/content/scene/sky-mask.json';
 import { quadMatrix3d, type Pt } from '@/content/scene/screenAffine';
 import { useMotion } from '@/lib/useMotion';
@@ -22,8 +23,8 @@ const STYLE = {
 
 /**
  * The visitor's weather in the window: drawn in the space of the window's patch of sky, laid onto
- * the still by that patch's corners (quads.sky) and seen only through the glass (the rendered
- * mask), so the frame, the monitor, the light bar and the plant stay in front. It fades in once
+ * the still by that patch's corners (quads.sky) and seen only through the glass (a clip traced
+ * from the rendered mask: a clip, never an image, so it can't become the page's largest paint), so the frame, the monitor, the light bar and the plant stay in front. It fades in once
  * drawn. Under reduced motion or the motion pause, while the tab is hidden, or while a lean-in on
  * the monitor covers the window, it holds a still frame.
  */
@@ -116,6 +117,11 @@ export function WeatherWindow({ sky }: { sky: Sky | null }) {
 
   return (
     <div ref={box} className="weather-window" aria-hidden="true" style={STYLE}>
+      <svg className="weather-window__glass" aria-hidden="true">
+        <clipPath id="weather-glass" clipPathUnits="objectBoundingBox">
+          <path d={clip.d} clipRule="evenodd" />
+        </clipPath>
+      </svg>
       <canvas ref={ref} />
     </div>
   );

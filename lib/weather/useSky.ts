@@ -1,8 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { fetchWeather, overrideFrom, type Reading } from './fetchWeather';
-import { dayness, sunElevation } from './sun';
+import type { Reading } from './fetchWeather';
 import type { Place, Sky } from './types';
 
 const CLEAR: Reading = { condition: 'clear', intensity: 0, windMs: 0, windDeg: 0 };
@@ -17,10 +16,12 @@ function timeZone(): string | undefined {
   }
 }
 
+type Sun = typeof import('./sun');
+
 /** How much day it is now: from the sun at the place, else from the local hour. */
-function daynessNow(place: Place | null): number {
+function daynessNow(sun: Sun, place: Place | null): number {
   const now = new Date();
-  if (place) return dayness(sunElevation(place, now));
+  if (place) return sun.dayness(sun.sunElevation(place, now));
   const h = now.getHours();
   return h >= 6 && h < 18 ? 1 : 0;
 }
@@ -40,6 +41,11 @@ export function useSky(enabled: boolean): Sky | null {
     let timer: ReturnType<typeof setInterval> | undefined;
     let onBack: (() => void) | undefined;
     (async () => {
+      // All of it loads now, after the page is idle: never with the first paint.
+      const [{ fetchWeather, overrideFrom }, sun] = await Promise.all([
+        import('./fetchWeather'),
+        import('./sun'),
+      ]);
       const forced = overrideFrom(location.search);
       let place: Place | null = null;
       try {
@@ -55,7 +61,7 @@ export function useSky(enabled: boolean): Sky | null {
       if (!live) return;
       const source: Sky['source'] = forced.condition ? 'override' : reading ? 'live' : 'fallback';
       const day = () =>
-        forced.time !== undefined ? OVERRIDE_DAYNESS[forced.time] : daynessNow(place);
+        forced.time !== undefined ? OVERRIDE_DAYNESS[forced.time] : daynessNow(sun, place);
       const base = reading ?? CLEAR;
       setSky({ ...base, dayness: day(), source });
       const tick = () => setSky((s) => (s ? { ...s, dayness: day() } : s));

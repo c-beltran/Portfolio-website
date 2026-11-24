@@ -1,17 +1,18 @@
-// The window's glass mask, for the weather drawn over the still: from render_masks.py's
-// mask-sky.png (everything black, so only the window is see-through), white where the sky shows,
-// as white-on-alpha WebP at a quarter of the master, kept inside the window's patch (quads.sky), cropped to the sky and softened by a pixel so
-// a slight crop mismatch never shows an edge. Writes its place on the master (fractions) to
-// content/scene/sky-mask.json.
+// The window's glass, for the weather drawn over the still: from render_masks.py's mask-sky.png
+// (everything black, so only the window is see-through, at a quarter of the master), kept inside
+// the window's patch (quads.sky), specks dropped, cropped to the sky, and traced to a vector clip
+// (content/scene/sky-clip.json; a clip is never an image, so it can never be the page's largest
+// paint). Writes the crop's place on the master (fractions) to content/scene/sky-mask.json.
 //
 //   node scripts/scene/encode_sky.mjs [masks dir]   (default ~/Portfolio-assets/renders/masks)
-import { mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import sharp from 'sharp';
+import { simplify, trace } from './trace.mjs';
 
 const SRC = process.argv[2] ?? join(homedir(), 'Portfolio-assets/renders/masks');
-const OUT = 'public/weather/sky-mask.webp';
+const CLIP = 'content/scene/sky-clip.json';
 const RECT = 'content/scene/sky-mask.json';
 
 const { data, info } = await sharp(join(SRC, 'mask-sky.png'))
@@ -76,27 +77,20 @@ for (let k = 0; k < w * h; k++)
     [x0, y0, x1, y1] = [Math.min(x0, x), Math.min(y0, y), Math.max(x1, x), Math.max(y1, y)];
   }
 if (x1 < 0) throw new Error('encode_sky: no sky in the mask');
-// One pixel of room for the softening.
-[x0, y0, x1, y1] = [
-  Math.max(0, x0 - 1),
-  Math.max(0, y0 - 1),
-  Math.min(w - 1, x1 + 1),
-  Math.min(h - 1, y1 + 1),
-];
 const cw = x1 - x0 + 1;
 const ch = y1 - y0 + 1;
-const soft = await sharp(sky, { raw: { width: w, height: h, channels: 1 } })
-  .extract({ left: x0, top: y0, width: cw, height: ch })
-  .blur(0.6)
-  .extractChannel(0)
-  .raw()
-  .toBuffer();
-const rgba = Buffer.alloc(cw * ch * 4, 255);
-for (let k = 0; k < cw * ch; k++) rgba[k * 4 + 3] = soft[k];
-mkdirSync('public/weather', { recursive: true });
-await sharp(rgba, { raw: { width: cw, height: ch, channels: 4 } })
-  .webp({ lossless: true })
-  .toFile(OUT);
+// The outline of the glass, as a clip path in the crop's own units (0–1 across and down; drawn with
+// clipPathUnits="objectBoundingBox" and the even-odd rule, so a gap between leaves is a hole).
+const loops = trace({ data: sky.map((v) => (v >= 128 ? 1 : 0)), w, h })
+  .map((loop) => simplify(loop, 0.8))
+  .filter((loop) => loop.length >= 3);
+const n = (v) => Number(v.toFixed(4));
+const d = loops
+  .map(
+    (loop) => 'M' + loop.map(([x, y]) => `${n((x - x0) / cw)} ${n((y - y0) / ch)}`).join('L') + 'Z',
+  )
+  .join('');
+writeFileSync(CLIP, JSON.stringify({ d }) + '\n');
 const r = (v) => Math.round(v * 1e5) / 1e5;
 writeFileSync(
   RECT,
@@ -106,4 +100,4 @@ writeFileSync(
     2,
   ) + '\n',
 );
-console.log(`${OUT}  ${cw}×${ch}  ${(statSync(OUT).size / 1024).toFixed(1)} kB → ${RECT}`);
+console.log(`${CLIP}  ${loops.length} loops, ${(d.length / 1024).toFixed(1)} kB → ${RECT}`);

@@ -1,9 +1,8 @@
-import { existsSync, statSync } from 'node:fs';
-import sharp from 'sharp';
+import { existsSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import seat from './bounds-seat.json';
+import clip from './sky-clip.json';
 import rect from './sky-mask.json';
-import { master } from './framing';
 
 type Pt = [number, number];
 const quad = (seat as unknown as { quads: { sky: Pt[] } }).quads.sky;
@@ -55,18 +54,18 @@ describe("the window's patch of sky", () => {
   });
 });
 
-describe('the glass mask', () => {
-  const file = 'public/weather/sky-mask.webp';
-
-  it('is small', () => {
-    expect(existsSync(file)).toBe(true);
-    expect(statSync(file).size).toBeLessThanOrEqual(20_000);
+describe('the glass outline', () => {
+  it('is a small vector clip inside its crop', () => {
+    expect(clip.d.length).toBeGreaterThan(100);
+    expect(clip.d.length).toBeLessThan(10_000);
+    const nums = clip.d.match(/-?\d+(\.\d+)?/g)!.map(Number);
+    for (const v of nums) {
+      expect(v).toBeGreaterThanOrEqual(-0.01);
+      expect(v).toBeLessThanOrEqual(1.01);
+    }
   });
 
-  it('has the shape of its place on the master', async () => {
-    const { width, height } = await sharp(file).metadata();
-    const { w: mw, h: mh } = master();
-    const want = ((rect.x1 - rect.x0) * mw) / ((rect.y1 - rect.y0) * mh);
-    expect(Math.abs(width! / height! / want - 1)).toBeLessThan(0.02);
+  it('is never an image: nothing for the page to count as a paint', () => {
+    expect(existsSync('public/weather/sky-mask.webp')).toBe(false);
   });
 });

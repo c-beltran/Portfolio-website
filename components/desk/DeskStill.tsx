@@ -1,4 +1,6 @@
 import {
+  lazy,
+  Suspense,
   useEffect,
   useLayoutEffect,
   useRef,
@@ -31,10 +33,15 @@ import { MonitorName } from './MonitorName';
 import { prefetchArt } from './Opened';
 import { ScreenLoop } from './ScreenLoop';
 import { RoomLight } from './RoomLight';
-import { WeatherWindow } from './WeatherWindow';
+
 import { CENTRE_SCRIPT, panOf, setPan } from './pan';
 import { Steam } from './Steam';
 import { useLabels } from './useLabels';
+
+/** The window's weather and its painter load once the page is idle, never with the first paint. */
+const WeatherWindow = lazy(() =>
+  import('./WeatherWindow').then((m) => ({ default: m.WeatherWindow })),
+);
 
 type Props = {
   selected: SectionSlug | null;
@@ -317,7 +324,11 @@ export function DeskStill({ selected, onOpen, onClose }: Props) {
               <script dangerouslySetInnerHTML={{ __html: NIGHT_PAINT }} />
               {opened && isMover(opened) && <DeskPatch id={opened} mode={render} />}
               <RoomLight sky={sky} />
-              {glow && <WeatherWindow sky={sky} />}
+              {glow && sky && (
+                <Suspense fallback={null}>
+                  <WeatherWindow sky={sky} />
+                </Suspense>
+              )}
             </div>
             {DESK_OBJECTS.flatMap((o) => [
               glow && <DeskGlow key={`glow-${o.id}`} item={o.id} />,
