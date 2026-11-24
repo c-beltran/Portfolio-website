@@ -121,7 +121,7 @@ def monitor_halves(scene, cam, o, depsgraph):
 
 
 def sky_patch(scene, cam):
-    """The patch of the sky plane the window shows from the seat (sky_geo.py): its corners in the
+    """The patch of the sky plane the window shows in the seat's frame (sky_geo.py): its corners in the
     frame (top-left, top-right, bottom-right, bottom-left; they may reach past the frame) and its
     place on the plane's UVs."""
     from mathutils import Vector
@@ -132,7 +132,8 @@ def sky_patch(scene, cam):
     z0, z1 = min(p.z for p in pts), max(p.z for p in pts)
     y = sum(p.y for p in pts) / len(pts)
     opening = [(x0, y, z0), (x1, y, z0), (x1, y, z1), (x0, y, z1)]
-    patch = SKY.window_patch(tuple(cam.matrix_world.translation), opening)
+    view = [tuple(cam.matrix_world @ p) for p in cam.data.view_frame(scene=scene)]
+    patch = SKY.window_patch(tuple(cam.matrix_world.translation), opening, view)
     r = lambda v: round(v, 5)
     quad = [[r(fx), r(fy)] for fx, fy in (to_frame(scene, cam, Vector(p)) for p in SKY.patch_corners(patch))]
     return quad, SKY.patch_uv(patch)

@@ -35,6 +35,14 @@ class Patch(unittest.TestCase):
         bx0, bx1, bz0, bz1 = S.plane_bounds()
         self.assertTrue(bx0 <= x0 and x1 <= bx1 and bz0 <= z0 and z1 <= bz1)
 
+    def test_cut_to_what_the_camera_sees(self):
+        # A frame whose top edge meets the plane at z = 2.0: the patch stops a margin above it.
+        view = [(-1.0, 1.7, 2.0), (3.0, 1.7, 2.0), (3.0, 1.7, 0.0), (-1.0, 1.7, 0.0)]
+        x0, x1, z0, z1 = S.window_patch(EYE, OPENING, view)
+        full = S.window_patch(EYE, OPENING)
+        self.assertLess(z1, full[3])
+        self.assertLess(z1, 2.0 + (2.0 - z0))
+
     def test_corners_run_clockwise_from_top_left(self):
         c = S.patch_corners((0.0, 1.0, 0.5, 2.0))
         self.assertEqual(c[0], (0.0, 1.7, 2.0))

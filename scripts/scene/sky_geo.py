@@ -34,12 +34,17 @@ def onto_plane(eye, p):
     return eye[0] + (p[0] - eye[0]) * t, eye[2] + (p[2] - eye[2]) * t
 
 
-def window_patch(eye, opening):
-    """The window opening as seen from the eye, on the plane, grown by MARGIN and kept on the
-    plane: (x0, x1, z0, z1)."""
+def window_patch(eye, opening, view=None):
+    """The window opening as seen from the eye, on the plane, cut to what the camera's frame shows
+    (view: the frame's corners as world points far along their rays) when given, grown by MARGIN
+    and kept on the plane: (x0, x1, z0, z1)."""
     pts = [onto_plane(eye, p) for p in opening]
     x0, x1 = min(x for x, _ in pts), max(x for x, _ in pts)
     z0, z1 = min(z for _, z in pts), max(z for _, z in pts)
+    if view:
+        seen = [onto_plane(eye, p) for p in view]
+        x0, x1 = max(x0, min(x for x, _ in seen)), min(x1, max(x for x, _ in seen))
+        z0, z1 = max(z0, min(z for _, z in seen)), min(z1, max(z for _, z in seen))
     dx, dz = (x1 - x0) * MARGIN, (z1 - z0) * MARGIN
     px0, px1, pz0, pz1 = plane_bounds()
     return max(px0, x0 - dx), min(px1, x1 + dx), max(pz0, z0 - dz), min(pz1, z1 + dz)
