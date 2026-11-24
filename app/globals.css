@@ -806,11 +806,41 @@ html:has(.desk-still) body {
   opacity: 0;
 }
 
-.opened {
+.opened,
+.spin-layer {
   position: fixed;
   inset: 0;
   z-index: 10;
   pointer-events: none;
+}
+
+/* What the visitor grabs to spin the car, the ball or the mug (SpinTarget.tsx): laid out as the
+   art, over it, and invisible; a drag on it never scrolls or zooms the page. */
+.spin-layer {
+  z-index: 11;
+}
+
+.spin-target {
+  display: block;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: grab;
+  touch-action: none;
+}
+
+.spin-target[data-spin='moving'] {
+  cursor: grabbing;
+}
+
+.spin-target:focus-visible {
+  outline: 2px solid var(--focus, currentColor);
+  outline-offset: 4px;
+  border-radius: 8px;
+}
+
+.spin-layer[data-leaving] {
+  visibility: hidden;
 }
 
 .opened__slot {
@@ -829,7 +859,8 @@ html:has(.desk-still) body {
   right: calc(32px + var(--panel-w) + env(safe-area-inset-right));
 }
 
-.opened[data-side='right'] .opened__slot {
+.opened[data-side='right'] .opened__slot,
+.spin-layer[data-side='right'] .opened__slot {
   left: calc(32px + var(--panel-w) + env(safe-area-inset-left));
   right: calc(16px + env(safe-area-inset-right));
 }
@@ -962,7 +993,8 @@ html:has(.desk-still) body {
 
 /* Portrait (content/scene/framing.ts PORTRAIT): the object in the top 42dvh, the panel below. */
 @media (max-aspect-ratio: 6/5) {
-  .opened[data-side] .opened__slot {
+  .opened[data-side] .opened__slot,
+  .spin-layer[data-side] .opened__slot {
     top: calc(8px + env(safe-area-inset-top));
     bottom: auto;
     left: calc(8px + env(safe-area-inset-left));

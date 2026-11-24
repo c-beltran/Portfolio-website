@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { describe, expect, it } from 'vitest';
 import poses from '@/content/scene/opened-poses.json';
-import { blendPose, presentPose, projectedHeight, type Pose } from './present';
+import { blendPose, presentPose, projectedHeight, spunPose, type Pose } from './present';
 
 /**
  * The pose an object takes in front of the panel's slot: the canonical
@@ -99,5 +99,18 @@ describe('projectedHeight', () => {
     const ray: [number, number, number] = [0, -Math.sin(a), -Math.cos(a)];
     const h = projectedHeight(cam, ray, 2, 0.05, view);
     expect(h / ((f * 0.05) / 2)).toBeCloseTo(1 / Math.cos(a) ** 2, 2);
+  });
+});
+
+describe('spunPose', () => {
+  it('rotates about the centre, not the pivot', () => {
+    const pose: Pose = { position: [1, 0, 0], quaternion: [0, 0, 0, 1] };
+    const q = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI / 2);
+    const out = spunPose(pose, [0, 0, 0], q);
+    expect(out.position[0]).toBeCloseTo(0, 9);
+    expect(out.position[2]).toBeCloseTo(-1, 9);
+    expect(new THREE.Quaternion(...out.quaternion).angleTo(q)).toBeLessThan(1e-9);
+    const still = spunPose(pose, [1, 0, 0], q);
+    expect(still.position).toEqual([1, 0, 0]);
   });
 });

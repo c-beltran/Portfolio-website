@@ -4,7 +4,9 @@ import { useEffect, useRef, type CSSProperties } from 'react';
 import { artOf, artSrc, isLean, OPENED_IDS, sideOf, type OpenedId } from '@/content/opened';
 import { OpenedFace } from './OpenedFace';
 import { PhoneClip } from './PhoneClip';
+import { SpinTarget } from './SpinTarget';
 import { Steam } from './Steam';
+import { isSpin } from '@/lib/spin/spin';
 
 type Mode = 'day' | 'lamp';
 
@@ -107,24 +109,27 @@ type Props = { id: OpenedId; mode: Mode; leaving?: boolean };
 export function Opened({ id, mode, leaving }: Props) {
   const ref = useArtCanvas(id, mode);
   return (
-    // Its own side, not the desk's: the desk drops data-side the moment it closes, while this art
-    // fades out for 300 ms where it was.
-    <div
-      className="opened"
-      aria-hidden="true"
-      data-id={id}
-      data-kind={isLean(id) ? 'lean' : 'mover'}
-      data-side={sideOf(id)}
-      data-leaving={leaving || undefined}
-    >
-      <div className="opened__slot">
-        <div className="opened__art" style={{ '--aspect': artOf(id).aspect } as CSSProperties}>
-          <canvas ref={ref} className="opened__canvas" />
-          <OpenedFace id={id} />
-          {id === 'phone' && <PhoneClip leaving={leaving} />}
-          {id === 'mug' && <Steam at={artOf('mug').steam} />}
+    <>
+      {/* Its own side, not the desk's: the desk drops data-side the moment it closes, while this
+          art fades out for 300 ms where it was. */}
+      <div
+        className="opened"
+        aria-hidden="true"
+        data-id={id}
+        data-kind={isLean(id) ? 'lean' : 'mover'}
+        data-side={sideOf(id)}
+        data-leaving={leaving || undefined}
+      >
+        <div className="opened__slot">
+          <div className="opened__art" style={{ '--aspect': artOf(id).aspect } as CSSProperties}>
+            <canvas ref={ref} className="opened__canvas" />
+            <OpenedFace id={id} />
+            {id === 'phone' && <PhoneClip leaving={leaving} />}
+            {id === 'mug' && <Steam at={artOf('mug').steam} />}
+          </div>
         </div>
       </div>
-    </div>
+      {isSpin(id) && <SpinTarget id={id} side={sideOf(id)} leaving={leaving} />}
+    </>
   );
 }
