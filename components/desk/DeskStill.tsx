@@ -30,6 +30,7 @@ import { Hotspot } from './Hotspot';
 import { MonitorName } from './MonitorName';
 import { prefetchArt } from './Opened';
 import { ScreenLoop } from './ScreenLoop';
+import { RoomLight } from './RoomLight';
 import { WeatherWindow } from './WeatherWindow';
 import { CENTRE_SCRIPT, panOf, setPan } from './pan';
 import { Steam } from './Steam';
@@ -314,8 +315,9 @@ export function DeskStill({ selected, onOpen, onClose }: Props) {
               <DeskPhoto mode="day" />
               <DeskPhoto mode="lamp" />
               <script dangerouslySetInnerHTML={{ __html: NIGHT_PAINT }} />
-              {glow && <WeatherWindow sky={sky} />}
               {opened && isMover(opened) && <DeskPatch id={opened} mode={render} />}
+              <RoomLight sky={sky} />
+              {glow && <WeatherWindow sky={sky} />}
             </div>
             {DESK_OBJECTS.flatMap((o) => [
               glow && <DeskGlow key={`glow-${o.id}`} item={o.id} />,

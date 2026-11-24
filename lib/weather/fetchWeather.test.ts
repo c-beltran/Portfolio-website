@@ -89,6 +89,20 @@ describe('fetchWeather', () => {
     expect(f).toHaveBeenCalledTimes(2);
   });
 
+  it('works when even touching the browser storage throws', async () => {
+    Object.defineProperty(globalThis, 'sessionStorage', {
+      configurable: true,
+      get() {
+        throw new Error('storage blocked');
+      },
+    });
+    try {
+      expect(await fetchWeather(HERE, { fetch: ok(RAIN), now: 0 })).not.toBeNull();
+    } finally {
+      delete (globalThis as { sessionStorage?: unknown }).sessionStorage;
+    }
+  });
+
   it('gives nothing for a failed, malformed or unknown answer', async () => {
     const bad = vi.fn(async () => new Response('x', { status: 500 })) as unknown as typeof fetch;
     expect(await fetchWeather(HERE, { fetch: bad, storage: null, now: 0 })).toBeNull();

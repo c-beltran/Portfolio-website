@@ -21,6 +21,15 @@ export function weatherUrl(p: Place): string {
   return `${WEATHER_URL}?${q}`;
 }
 
+/** The browser's sessionStorage, or null where there is none or even touching it throws. */
+function sessionStore(): Storage | null {
+  try {
+    return typeof sessionStorage !== 'undefined' ? sessionStorage : null;
+  } catch {
+    return null;
+  }
+}
+
 const samePlace = (a: [number, number], p: Place) => a[0] === p.lat && a[1] === p.lon;
 
 function cached(storage: Storage | null, p: Place, now: number): Reading | null {
@@ -56,12 +65,7 @@ export async function fetchWeather(
   o: { fetch?: typeof fetch; now?: number; storage?: Storage | null } = {},
 ): Promise<Reading | null> {
   const now = o.now ?? Date.now();
-  const storage =
-    o.storage !== undefined
-      ? o.storage
-      : typeof sessionStorage !== 'undefined'
-        ? sessionStorage
-        : null;
+  const storage = o.storage !== undefined ? o.storage : sessionStore();
   const hit = cached(storage, p, now);
   if (hit) return hit;
   const ctrl = new AbortController();

@@ -1,5 +1,6 @@
+import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from './fixtures';
-import { gotoDesk, hotspot } from './desk';
+import { atNight, gotoDesk, hotspot, lampOff, NIGHT } from './desk';
 
 const WEATHER = 'https://api.open-meteo.com/**';
 const canvas = (page: Page) => page.locator('.weather-window canvas');
@@ -71,7 +72,7 @@ test.describe('the weather window', () => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await gotoDesk(page, '/?weather=rain&time=day');
     await expect(canvas(page)).toHaveAttribute('data-still', 'true');
-    await page.waitForTimeout(700); // the fade-in
+    await page.waitForTimeout(2500); // the window's fade-in, and the room's tint after it
     const box = (await page.locator('.weather-window').boundingBox())!;
     const a = await page.screenshot({ clip: box });
     await page.waitForTimeout(1000);
@@ -161,4 +162,144 @@ test.describe('the weather stays behind the glass', () => {
     expect(solid.length).toBeGreaterThan(0);
     for (const [k, v] of solid) expect(v, k).toBe(true);
   });
+});
+
+const room = (page: Page) => page.locator('.room-light');
+
+/** The mean brightness of a square of the page around a point, from a screenshot. */
+async function brightness(page: Page, x: number, y: number, size = 24) {
+  const png = await page.screenshot({
+    clip: { x: Math.round(x - size / 2), y: Math.round(y - size / 2), width: size, height: size },
+  });
+  return page.evaluate(async (b64) => {
+    const img = new Image();
+    img.src = `data:image/png;base64,${b64}`;
+    await img.decode();
+    const c = new OffscreenCanvas(img.width, img.height);
+    const ctx = c.getContext('2d')!;
+    ctx.drawImage(img, 0, 0);
+    const d = ctx.getImageData(0, 0, img.width, img.height).data;
+    let sum = 0;
+    for (let i = 0; i < d.length; i += 4)
+      sum += 0.2126 * d[i]! + 0.7152 * d[i + 1]! + 0.0722 * d[i + 2]!;
+    return sum / (d.length / 4);
+  }, png.toString('base64'));
+}
+
+/** A point on the bare desk, between the keyboard and the mug (no object, no screen). */
+async function deskPoint(page: Page) {
+  const mug = (await hotspot(page, 'mug').boundingBox())!;
+  return [mug.x - mug.width * 0.6, mug.y + mug.height * 0.5] as const;
+}
+
+test.describe("the room's light", () => {
+  test.skip(({ isMobile }) => isMobile, 'once is enough');
+
+  test('the first paint has no weather tint; it fades in when the weather comes', async ({
+    page,
+  }) => {
+    let release!: () => void;
+    const held = new Promise<void>((r) => (release = r));
+    await page.route(WEATHER, async (route) => {
+      await held;
+      await route.fulfill({ json: answer(65) });
+    });
+    await gotoDesk(page, '/');
+    await expect(room(page)).toHaveAttribute('data-tint', '0.00');
+    const [x, y] = await deskPoint(page);
+    const before = await brightness(page, x, y);
+    release();
+    await expect(room(page)).not.toHaveAttribute('data-tint', '0.00');
+    await page.waitForTimeout(300);
+    const early = await brightness(page, x, y);
+    await page.waitForTimeout(2200);
+    const after = await brightness(page, x, y);
+    expect(after).toBeLessThan(before - 2);
+    // still on its way at first: a fade, not a jump
+    expect(early).toBeGreaterThan(after + 0.5);
+  });
+
+  test('at night with the lamp off the room is moonlit, under the dark palette', async ({
+    page,
+  }) => {
+    const [x, y] = await (async () => {
+      await gotoDesk(page, '/?weather=clear');
+      return deskPoint(page);
+    })();
+    await page.waitForTimeout(700);
+    const day = await brightness(page, x, y);
+    await atNight(page);
+    await lampOff(page);
+    await gotoDesk(page, '/?weather=clear');
+    expect(await html(page, 'time')).toBe('night');
+    await expect(room(page)).toHaveAttribute('data-moon', '1.00');
+    await page.waitForTimeout(700);
+    expect(await brightness(page, x, y)).toBeLessThan(day * 0.8);
+  });
+
+  test('by day the lamp lights its pool', async ({ page }) => {
+    await gotoDesk(page, '/?weather=clear');
+    const kb = (await page.locator('.desk-still__art').boundingBox())!;
+    // POOL.at on the master, through the art box
+    const [x, y] = [kb.x + kb.width * 0.47, kb.y + kb.height * 0.84];
+    const off = await brightness(page, x, y);
+    await hotspot(page, 'lightbar').click();
+    await expect(room(page)).toHaveAttribute('data-pool', '1.00');
+    await page.waitForTimeout(800);
+    expect(await brightness(page, x, y)).toBeGreaterThan(off + 4);
+  });
+
+  test('the screens keep their own light whatever the weather', async ({ page }) => {
+    const name = page.locator('.monitor-name');
+    const at = async () => {
+      const b = (await name.boundingBox())!;
+      return brightness(page, b.x + b.width * 0.8, b.y + b.height * 0.8, 16);
+    };
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await gotoDesk(page, '/?weather=clear&time=day');
+    await page.waitForTimeout(2500);
+    const clear = await at();
+    await gotoDesk(page, '/?weather=storm&time=day');
+    await page.waitForTimeout(2500);
+    expect(Math.abs((await at()) - clear)).toBeLessThanOrEqual(6);
+  });
+
+  test('a sunset during the visit moves the window and the daylight, never the lamp or palette', async ({
+    page,
+  }) => {
+    await gotoDesk(page, '/');
+    await expect(canvas(page)).toHaveAttribute('data-dayness', '1.00');
+    await page.context().clock.setFixedTime(NIGHT);
+    await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
+    await expect(canvas(page)).toHaveAttribute('data-dayness', '0.00');
+    expect(await html(page, 'dayness')).toBe('0.00');
+    expect(await html(page, 'time')).toBe('day');
+    expect(await html(page, 'lamp')).toBe('off');
+    await expect(room(page)).toHaveAttribute('data-moon', '1.00');
+  });
+});
+
+test.describe('accessible in every light', () => {
+  test.skip(({ isMobile }) => isMobile, 'once is enough');
+
+  for (const night of [false, true])
+    for (const off of [false, true])
+      test(`axe passes ${night ? 'at night' : 'by day'} with the lamp ${off !== night ? 'on' : 'off'}`, async ({
+        page,
+      }) => {
+        if (night) await atNight(page);
+        // by day the lamp starts off and at night on: `off` flips it
+        if (off)
+          await page.addInitScript(
+            (v) => sessionStorage.setItem('desk-lamp', v),
+            night ? 'off' : 'on',
+          );
+        for (const route of ['/', '/cv']) {
+          await gotoDesk(page, route);
+          const { violations } = await new AxeBuilder({ page })
+            .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+            .analyze();
+          expect(violations.map((v) => v.id)).toEqual([]);
+        }
+      });
 });

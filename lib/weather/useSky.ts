@@ -28,7 +28,7 @@ function daynessNow(place: Place | null): number {
 /**
  * The sky outside the window, once `enabled` (the page is idle): the visitor's current weather at
  * their time zone's main city, or a clear sky when that can't be had. Day and night follow the sun
- * there, rechecked every minute. `?weather=…&time=…` forces either. Null until it is known. Mirrors
+ * there, rechecked every minute and on coming back to the tab. `?weather=…&time=…` forces either. Null until it is known. Mirrors
  * itself on <html> (data-sky, data-sky-source, data-dayness).
  */
 export function useSky(enabled: boolean): Sky | null {
@@ -38,6 +38,7 @@ export function useSky(enabled: boolean): Sky | null {
     if (!enabled) return;
     let live = true;
     let timer: ReturnType<typeof setInterval> | undefined;
+    let onBack: (() => void) | undefined;
     (async () => {
       const forced = overrideFrom(location.search);
       let place: Place | null = null;
@@ -57,11 +58,18 @@ export function useSky(enabled: boolean): Sky | null {
         forced.time !== undefined ? OVERRIDE_DAYNESS[forced.time] : daynessNow(place);
       const base = reading ?? CLEAR;
       setSky({ ...base, dayness: day(), source });
-      timer = setInterval(() => setSky((s) => (s ? { ...s, dayness: day() } : s)), TICK_MS);
+      const tick = () => setSky((s) => (s ? { ...s, dayness: day() } : s));
+      timer = setInterval(tick, TICK_MS);
+      // Back from another tab (an hour later, maybe): catch up at once.
+      onBack = () => {
+        if (!document.hidden) tick();
+      };
+      document.addEventListener('visibilitychange', onBack);
     })();
     return () => {
       live = false;
       clearInterval(timer);
+      if (onBack) document.removeEventListener('visibilitychange', onBack);
     };
   }, [enabled]);
 
