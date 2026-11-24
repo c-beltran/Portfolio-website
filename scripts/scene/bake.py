@@ -39,6 +39,7 @@ import movers as MV  # noqa: E402
 import opened as OP  # noqa: E402
 import render as R  # noqa: E402  (mode settings: world, lights, screen strength, exposure)
 import room_movers as RV  # noqa: E402
+import sky_geo as SKY  # noqa: E402  (the backdrop plane, shared with export_bounds.py)
 from bake_logic import GROUPS, MOVERS, STATICS, backdrop_covers, group_for, lift_for  # noqa: E402
 
 ASSETS = Path.home() / "Portfolio-assets"
@@ -351,10 +352,10 @@ def target_image(objs, name, size):
 def sky_backdrop():
     """A plane beyond the window with the sky's gradient (the world shades by view direction;
     from the desk, a point's height over the eye line at ~2.6 m gives the same direction)."""
-    bpy.ops.mesh.primitive_plane_add(size=1, location=(1.0, 1.7, 1.6), rotation=(math.radians(90), 0, 0))
+    bpy.ops.mesh.primitive_plane_add(size=1, location=SKY.CENTER, rotation=(math.radians(90), 0, 0))
     o = bpy.context.object
     o.name = "sky"
-    o.scale = (6, 5, 1)
+    o.scale = (*SKY.SIZE, 1)
     bpy.ops.object.transform_apply(scale=True)
     for attr in ("visible_diffuse", "visible_glossy", "visible_transmission", "visible_volume_scatter", "visible_shadow"):
         setattr(o, attr, False)

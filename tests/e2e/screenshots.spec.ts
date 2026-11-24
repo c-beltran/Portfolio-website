@@ -1,10 +1,11 @@
 import { test } from './fixtures';
+import { atNight } from './desk';
 
 /** Review screenshots. Run only in CI's screenshot step (@screens). */
 for (const theme of ['day', 'lamp'] as const) {
   for (const route of ['/', '/potaflow', '/classic']) {
     test(`@screens ${theme} ${route}`, async ({ page }, info) => {
-      await page.addInitScript((t) => localStorage.setItem('desk-theme', t), theme);
+      if (theme === 'lamp') await atNight(page);
       await page.goto(route);
       // The stills are part of the review: wait until the shown render has decoded.
       await page.waitForFunction(() =>

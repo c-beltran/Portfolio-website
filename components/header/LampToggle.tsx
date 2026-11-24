@@ -1,12 +1,12 @@
 'use client';
 
-import { useTheme } from '@/lib/useTheme';
+import { useLight } from '@/lib/useLight';
 
 /** The DOM mirror of the desk lamp: toggles day/lamp and remembers the choice if storage allows. */
 export function LampToggle() {
-  const { theme, toggle } = useTheme();
+  const { lamp, toggleLamp } = useLight();
   return (
-    <button type="button" className="lamp-toggle" aria-pressed={theme === 'lamp'} onClick={toggle}>
+    <button type="button" className="lamp-toggle" aria-pressed={lamp === 'on'} onClick={toggleLamp}>
       Lamp
     </button>
   );

@@ -1,6 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Locator, type Page } from './fixtures';
-import { drawerButton, drawerLamp, gotoDesk } from './desk';
+import { atNight, drawerButton, drawerLamp, gotoDesk, lampOff } from './desk';
 import { SECTION_SLUGS as SECTIONS } from '../../content/objects';
 
 /** The words on opened objects: the badge's and the card's backs, and the leaned-in screens. */
@@ -142,7 +142,9 @@ test.describe('faces', () => {
   }) => {
     const seen: string[] = [];
     page.on('request', (r) => seen.push(r.url()));
-    await page.addInitScript(() => localStorage.setItem('desk-theme', 'day'));
+    // At night with the lamp off, so the switch brings up the lamp render.
+    await atNight(page);
+    await lampOff(page);
     await gotoDesk(page, '/cv');
     await drawn(page);
     const paper = () =>
@@ -203,7 +205,7 @@ test.describe('faces, accessibility', () => {
   test.skip(({ isMobile }) => isMobile, 'once is enough');
   for (const theme of ['day', 'lamp'] as const)
     test(`axe passes on every section route in ${theme}`, async ({ page }) => {
-      await page.addInitScript((t) => localStorage.setItem('desk-theme', t), theme);
+      if (theme === 'lamp') await atNight(page);
       for (const s of SECTIONS) {
         await gotoDesk(page, `/${s}`);
         const results = await new AxeBuilder({ page })

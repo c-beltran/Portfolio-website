@@ -222,3 +222,25 @@ describe('panel eyebrows', () => {
     });
   });
 });
+
+describe("the window's weather, explained where the site describes itself", () => {
+  const site = PANELS['this-site'];
+
+  it('says where the weather comes from and what it never learns, as a draft', () => {
+    const note = site.find((b) => b.kind === 'prose' && /Open-Meteo/.test(b.text));
+    expect(note).toMatchObject({ kind: 'prose', draft: true });
+    const text = (note as { text: string }).text;
+    expect(text).toMatch(/time zone/);
+    // an IP address says roughly where you are: the line promises only what holds
+    expect(text).toMatch(/a city's coordinates, never yours/);
+    expect(text).not.toMatch(/never your location/i);
+  });
+
+  it("credits Open-Meteo's data under its licence", () => {
+    expect(site).toContainEqual({
+      kind: 'link',
+      href: 'https://open-meteo.com/',
+      label: 'Weather data by Open-Meteo.com (CC BY 4.0)',
+    });
+  });
+});

@@ -38,4 +38,6 @@ Both come from the same Blender build:
 1. **Stills** (Cycles) are the default and the first paint, cropped for each window shape.
 2. **Live** (React Three Fiber) uses lighting baked from that scene. A small correction layer matches it to the still at rest.
 
+Both tiers draw the window's weather with one canvas painter (the visitor's time zone gives a rough place; Open-Meteo gives the weather, after the page is idle) and lay the room's light over the bakes the same way: CSS layers on the still, shader uniforms in the live view.
+
 Object positions are exported from Blender, so the click targets, glows and camera agree.

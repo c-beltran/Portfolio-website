@@ -1,13 +1,14 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from './fixtures';
 import { SECTION_SLUGS } from '../../content/objects';
+import { atNight } from './desk';
 
 const ROUTES = ['/', ...SECTION_SLUGS.map((s) => `/${s}`), '/classic', '/nope'];
 
 for (const theme of ['day', 'lamp'] as const) {
   test.describe(`axe (${theme})`, () => {
     test.beforeEach(async ({ page }) => {
-      await page.addInitScript((t) => localStorage.setItem('desk-theme', t), theme);
+      if (theme === 'lamp') await atNight(page);
     });
 
     for (const route of ROUTES) {

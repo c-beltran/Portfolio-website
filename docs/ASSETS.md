@@ -20,3 +20,10 @@ The [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) models are modifie
 ## Made for this site
 
 Everything else in the scene is built in code under [`scripts/scene/`](../scripts/scene): the furniture, test kit, badge and lanyard, notepad and sketch, card, photo frame, ball, magnet board and its icons, glows, the monitor and laptop screen images (editor, terminal frames and dashboard), and the placeholder phone clip. The car and the mug keep their CC BY credits above, also in their opened poses. The photo in the frame and the notepad's sketches are placeholders; the photo, handwriting and screen recording are still to come.
+
+## Data
+
+| Data                               | Source                                          | License       | Use                                                                                     |
+| ---------------------------------- | ----------------------------------------------- | ------------- | --------------------------------------------------------------------------------------- |
+| Current weather                    | [Open-Meteo](https://open-meteo.com/)           | CC BY 4.0     | The window's weather, fetched by the visitor's browser; credited on the This site panel |
+| Time zone coordinates (`zone.tab`) | [tzdata](https://www.iana.org/time-zones), IANA | Public domain | Each time zone's main city, for the window's weather (`content/weather/zones.json`)     |

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { contrastRatio, TEXT_PAIRS, THEME_SCRIPT, themeCss, TOKENS, type ThemeName } from './theme';
+import { contrastRatio, TEXT_PAIRS, themeCss, TOKENS, type ThemeName } from './theme';
 
 describe('tokens', () => {
   it.each(['day', 'lamp'] as ThemeName[])('every text pair in %s meets 4.5:1', (theme) => {
@@ -27,40 +27,23 @@ describe('tokens', () => {
     expect(contrastRatio('#FFFFFF', '#FFFFFF')).toBeCloseTo(1, 2);
   });
 
-  it('emits every token as a CSS variable for both themes, with a no-JS dark fallback', () => {
+  it('emits the palettes by the time of day, never by the system setting', () => {
     const css = themeCss();
-    expect(css).toContain(':root[data-theme="day"]');
-    expect(css).toContain(':root[data-theme="lamp"]');
-    expect(css).toContain('@media (prefers-color-scheme: dark)');
+    expect(css).toContain(':root[data-time="day"]');
+    expect(css).toContain(`:root[data-time="night"]{--bg:${TOKENS.lamp.bg}`);
+    expect(css).not.toContain('prefers-color-scheme');
     expect(css).toContain(`--ink:${TOKENS.lamp.ink}`);
     expect(css).toContain(`--link-hover:${TOKENS.day.linkHover}`);
   });
-});
 
-describe('THEME_SCRIPT', () => {
-  function runScript(opts: { stored?: string; throws?: boolean; dark: boolean }) {
-    const documentElement = { dataset: {} as Record<string, string> };
-    const localStorage = {
-      getItem: () => {
-        if (opts.throws) throw new Error('blocked');
-        return opts.stored ?? null;
-      },
-    };
-    const matchMedia = () => ({ matches: opts.dark });
-    new Function('localStorage', 'matchMedia', 'document', THEME_SCRIPT)(localStorage, matchMedia, {
-      documentElement,
-    });
-    return documentElement.dataset.theme;
-  }
-
-  it('follows the OS when storage throws', () => {
-    expect(runScript({ throws: true, dark: true })).toBe('lamp');
-    expect(runScript({ throws: true, dark: false })).toBe('day');
-  });
-
-  it('prefers a stored choice and ignores junk values', () => {
-    expect(runScript({ stored: 'day', dark: true })).toBe('day');
-    expect(runScript({ stored: 'purple', dark: true })).toBe('lamp');
+  it("keeps the monitor's paper with the render on show, not the palette", () => {
+    // At night with the lamp off the day render shows under a dark page: its paper is the day one.
+    const css = themeCss();
+    expect(css).toContain(`:root[data-theme="day"]{--screen-paper:${TOKENS.day.screenPaper}`);
+    expect(css).toContain(`:root[data-theme="lamp"]{--screen-paper:${TOKENS.lamp.screenPaper}`);
+    expect(css.indexOf(':root[data-theme="day"]')).toBeGreaterThan(
+      css.indexOf(':root[data-time="night"]'),
+    );
   });
 });
 

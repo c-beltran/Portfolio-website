@@ -38,9 +38,11 @@ async function serve() {
 
 async function capture(browser, mode) {
   const ctx = await browser.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: 1 });
-  await ctx.addInitScript((m) => localStorage.setItem('desk-theme', m), mode);
   const page = await ctx.newPage();
-  await page.goto(`${BASE}/?tier=2&capture=master`);
+  // Day, or night with the lamp on (the lamp render); the capture leaves the room's light out.
+  await page.goto(
+    `${BASE}/?tier=2&capture=master&weather=clear&time=${mode === 'lamp' ? 'night' : 'day'}`,
+  );
   await page.locator('.desk-still__live[data-ready="true"]').waitFor({ timeout: 60_000 });
   await page.waitForTimeout(1500); // past the fade-in and the lamp cross-fade
   const url = await page

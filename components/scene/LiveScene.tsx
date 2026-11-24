@@ -5,6 +5,9 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Suspense, useCallback, useEffect, useMemo, useRef, type RefObject } from 'react';
 import * as THREE from 'three';
 import { bakedMaterial } from './materials';
+import { useSkyAndLight } from './skyAndLight';
+import type { Lamp, Time } from '@/lib/light';
+import type { Sky } from '@/lib/weather/types';
 import { Movers } from './Movers';
 import type { MomentRig } from './MomentRig';
 import { leanCamera, leanView, stateOf, type CamState, type ScreenBox } from './lean';
@@ -82,12 +85,16 @@ const RESIDUAL = ['/scene/bake/residual-seat-day.webp', '/scene/bake/residual-se
 
 function Scene({
   lamp,
+  light,
+  sky,
   onReady,
   capture,
   open,
   rigRef,
 }: {
   lamp: boolean;
+  light: { lamp: Lamp; time: Time };
+  sky: Sky | null;
   onReady: () => void;
   capture: boolean;
   open: OpenedId | null;
@@ -117,9 +124,17 @@ function Scene({
       GROUPS.map((g, i) => {
         const k = glossy.findIndex(([name]) => name === g);
         const opts = k < 0 ? {} : { ...glossy[k]![1], probe, gloss: textures[n + 2 + k]! };
+        // The sky carries the window's weather; the screens keep their own light; the rest is lit.
+        const own =
+          g === 'sky' ? { weather: true as const } : g === 'screen' ? {} : { light: true as const };
         return [
           g,
-          bakedMaterial(textures[2 * i]!, textures[2 * i + 1]!, { ...opts, residual, dim: true }),
+          bakedMaterial(textures[2 * i]!, textures[2 * i + 1]!, {
+            ...opts,
+            ...own,
+            residual,
+            dim: true,
+          }),
         ];
       }),
     ) as Record<Group, THREE.ShaderMaterial>;
@@ -131,11 +146,17 @@ function Scene({
           residual,
           opened: true,
           dim: true,
+          light: true,
         }),
       ]),
     ) as Record<Mover, THREE.ShaderMaterial>;
     const glassTex = flat(PHONE_GLASS);
-    const phoneScreen = bakedMaterial(glassTex, glassTex, { residual, opened: true, dim: true });
+    const phoneScreen = bakedMaterial(glassTex, glassTex, {
+      residual,
+      opened: true,
+      dim: true,
+      light: true,
+    });
     return { ...baked, ...moving, phoneScreen };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [textures]);
@@ -151,6 +172,22 @@ function Scene({
     onReady();
   }, [scene, materials, invalidate, onReady]);
   const statics = useMemo(() => GROUPS.map((g) => materials[g]), [materials]);
+  const lit = useMemo(
+    () => Object.values(materials).filter((m) => 'tintK' in m.uniforms),
+    [materials],
+  );
+  const lightViewProj = useMemo(() => seatViewProj(), []);
+  useSkyAndLight({
+    sky,
+    render: lamp ? 'lamp' : 'day',
+    lamp: light.lamp,
+    time: light.time,
+    skyMaterial: materials.sky,
+    lit,
+    viewProj: lightViewProj,
+    canvas,
+    invalidate,
+  });
 
   // Day ↔ lamp cross-fade (0.6 s), rendering on demand only while it runs.
   const first = useRef(true);
@@ -304,7 +341,12 @@ function Rig({
 }
 
 export default function LiveScene(props: {
+  /** The lamp render is on show (night, lamp on). */
   lamp: boolean;
+  /** The lamp switch and the time of day (lib/light.ts), for the room's light. */
+  light: { lamp: Lamp; time: Time };
+  /** The window's sky, once known. */
+  sky: Sky | null;
   onReady: () => void;
   /** ?tier=2&capture=master: the whole master at rest, no residual, readable pixels. */
   capture?: boolean;
@@ -331,6 +373,9 @@ export default function LiveScene(props: {
       <Suspense fallback={null}>
         <Scene
           lamp={props.lamp}
+          light={props.light}
+          // The residual's capture is the bare bake: no weather, no light over it.
+          sky={capture ? null : props.sky}
           onReady={props.onReady}
           capture={capture}
           open={open}

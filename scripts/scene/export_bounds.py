@@ -9,7 +9,8 @@ which re-derives it in the unit test).
 
 The seat's boxes are normalised to its master (framing.py), and its monitor is split at the screen
 image's midline into obj_monitor (left, How I build) and obj_cv (right, the CV page), with the right
-half's corners in quads.screen_right. --check-safe fails unless every box is inside the safe frame.
+half's corners in quads.screen_right; the patch of sky the window shows is quads.sky (its corners)
+and skyUv (its place on the live desk's sky plane, sky_geo.py). --check-safe fails unless every box is inside the safe frame.
 
 A report, not a gate: objects are never moved to make hotspots fit. The box is each object's
 projected hull (its meshes and its children's), clipped to the frame; occlusion is not removed.
@@ -29,6 +30,7 @@ from bpy_extras.object_utils import world_to_camera_view
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import framing  # noqa: E402
 from screen_geo import screen_meshes, screen_point, screen_rect  # noqa: E402
+import sky_geo as SKY  # noqa: E402
 
 OBJECTS = ["obj_monitor", "obj_kit", "obj_phone", "obj_badge", "obj_photo", "obj_notepad", "obj_card", "obj_lightbar",
            "obj_car", "obj_ball", "obj_board", "obj_mug"]  # the car, the ball, the board
@@ -118,6 +120,25 @@ def monitor_halves(scene, cam, o, depsgraph):
     return left, right, quad
 
 
+def sky_patch(scene, cam):
+    """The patch of the sky plane the window shows in the seat's frame (sky_geo.py): its corners in the
+    frame (top-left, top-right, bottom-right, bottom-left; they may reach past the frame) and its
+    place on the plane's UVs."""
+    from mathutils import Vector
+
+    parts = [c for c in bpy.data.objects["window_frame"].children_recursive if c.type == "MESH"]
+    pts = [c.matrix_world @ Vector(v) for c in parts for v in c.bound_box]
+    x0, x1 = min(p.x for p in pts), max(p.x for p in pts)
+    z0, z1 = min(p.z for p in pts), max(p.z for p in pts)
+    y = sum(p.y for p in pts) / len(pts)
+    opening = [(x0, y, z0), (x1, y, z0), (x1, y, z1), (x0, y, z1)]
+    view = [tuple(cam.matrix_world @ p) for p in cam.data.view_frame(scene=scene)]
+    patch = SKY.window_patch(tuple(cam.matrix_world.translation), opening, view)
+    r = lambda v: round(v, 5)
+    quad = [[r(fx), r(fy)] for fx, fy in (to_frame(scene, cam, Vector(p)) for p in SKY.patch_corners(patch))]
+    return quad, SKY.patch_uv(patch)
+
+
 def grow(lo, hi):
     pad = max(0.0, MIN_TARGET - (hi - lo)) / 2
     return lo - pad, hi + pad
@@ -179,11 +200,13 @@ def main():
     if a.camera == "seat":
         # The seat's monitor is two hotspots: How I build (left) and the CV page (right).
         boxes["obj_monitor"], boxes["obj_cv"], right = monitor_halves(scene, cam, bpy.data.objects["obj_monitor"], depsgraph)
-        quads = {"screen_right": right}
+        sky, sky_uv = sky_patch(scene, cam)
+        quads = {"screen_right": right, "sky": sky}
     width = min_free_width(boxes, aspect)
     data = {"camera": cam.name, "aspect": aspect, "objects": boxes, "minCollisionFreeWidth": width}
     if quads:
         data["quads"] = quads
+        data["skyUv"] = sky_uv
     if a.camera == "seat":
         data["decor"] = {name: project(scene, cam, bpy.data.objects[name], depsgraph) for name in DECOR}
     with open(a.out, "w") as f:

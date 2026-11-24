@@ -33,6 +33,18 @@ export type ProbeOptions = {
    * load) mixed over the rest bake by `openMix` (0–1) after the day/lamp fade.
    */
   opened?: true;
+  /**
+   * The window's weather (the sky only): `weatherMap` (the painter's canvas) laid over the bake
+   * inside `weatherRect` (its patch on the plane's UVs: u0, v0, u1, v1, v down) by `weatherMix`.
+   */
+  weather?: true;
+  /**
+   * The room's light, as Tier 1's CSS layers lay it over the still, in the seat master's space
+   * (lightViewProj): moonlight multiplied in by moonK, the weather's tint (stronger toward the
+   * window: tintSide is the master x where it is full, then where it is down to tintFar) by tintK,
+   * then the lamp's pool screened on by poolK. In sRGB, as CSS blends.
+   */
+  light?: true;
 };
 
 /** A black 1×1 standing in for a bake that hasn't loaded. */
@@ -186,7 +198,29 @@ export function bakedMaterial(day: THREE.Texture, lamp: THREE.Texture, opts: Pro
       openMix: { value: 0 },
       openDecode: { value: 0 },
     });
-  const world = !!(probe || residual);
+  if (opts.weather)
+    Object.assign(uniforms, {
+      weatherMap: { value: black() },
+      weatherMix: { value: 0 },
+      weatherRect: { value: new THREE.Vector4(0, 0, 1, 1) },
+    });
+  if (opts.light)
+    Object.assign(uniforms, {
+      tintRgb: { value: new THREE.Vector3(1, 1, 1) },
+      tintK: { value: 0 },
+      tintSide: { value: new THREE.Vector2(1, 0) },
+      tintFar: { value: 1 },
+      moonK: { value: 0 },
+      moonRgb: { value: new THREE.Vector3(1, 1, 1) },
+      poolK: { value: 0 },
+      poolAt: { value: new THREE.Vector2(0.5, 0.5) },
+      poolR: { value: new THREE.Vector2(0.2, 0.2) },
+      poolRgb: { value: new THREE.Vector3(1, 1, 1) },
+      lightViewProj: { value: new THREE.Matrix4() },
+      // The screens keep their own light: master rects (x0, y0, x1, y1); zero-area ones keep nothing.
+      lightKeep: { value: [0, 1, 2].map(() => new THREE.Vector4(0, 0, 0, 0)) },
+    });
+  const world = !!(probe || residual || opts.light);
   const fragment = [
     'uniform sampler2D day;',
     'uniform sampler2D lamp;',
@@ -215,6 +249,31 @@ export function bakedMaterial(day: THREE.Texture, lamp: THREE.Texture, opts: Pro
           'uniform float openDecode;',
         ]
       : []),
+    ...(opts.weather
+      ? ['uniform sampler2D weatherMap;', 'uniform float weatherMix;', 'uniform vec4 weatherRect;']
+      : []),
+    ...(opts.light
+      ? [
+          'uniform vec3 tintRgb;',
+          'uniform float tintK;',
+          'uniform vec2 tintSide;',
+          'uniform float tintFar;',
+          'uniform float moonK;',
+          'uniform vec3 moonRgb;',
+          'uniform float poolK;',
+          'uniform vec2 poolAt;',
+          'uniform vec2 poolR;',
+          'uniform vec3 poolRgb;',
+          'uniform mat4 lightViewProj;',
+          'uniform vec4 lightKeep[3];',
+          'float keepAt(vec2 m, vec4 r) {',
+          '  if (r.z <= r.x || r.w <= r.y) return 0.0;',
+          '  vec2 lo = smoothstep(r.xy - 0.004, r.xy + 0.004, m);',
+          '  vec2 hi = 1.0 - smoothstep(r.zw - 0.004, r.zw + 0.004, m);',
+          '  return lo.x * lo.y * hi.x * hi.y;',
+          '}',
+        ]
+      : []),
     'varying vec2 vUv;',
     ...(world ? ['varying vec3 vWorld;'] : []),
     'void main() {',
@@ -237,6 +296,29 @@ export function bakedMaterial(day: THREE.Texture, lamp: THREE.Texture, opts: Pro
         ]
       : []),
     ...(residual ? ['  base.rgb = residual(base.rgb, vWorld);'] : []),
+    ...(opts.weather
+      ? [
+          '  vec2 wl = (vUv - weatherRect.xy) / (weatherRect.zw - weatherRect.xy);',
+          '  float inW = step(0.0, wl.x) * step(wl.x, 1.0) * step(0.0, wl.y) * step(wl.y, 1.0);',
+          '  base = mix(base, texture2D(weatherMap, wl), weatherMix * inW);',
+        ]
+      : []),
+    ...(opts.light
+      ? [
+          '  vec4 lc = lightViewProj * vec4(vWorld, 1.0);',
+          '  vec2 m = lc.xy / lc.w * 0.5 + 0.5;',
+          '  m.y = 1.0 - m.y;',
+          '  vec3 s = sRGBTransferOETF(base).rgb;',
+          '  s *= mix(vec3(1.0), moonRgb, moonK);',
+          '  float side = clamp((m.x - tintSide.y) / (tintSide.x - tintSide.y), 0.0, 1.0);',
+          '  vec3 tintHere = mix(mix(vec3(1.0), tintRgb, tintFar), tintRgb, side);',
+          '  s *= mix(vec3(1.0), tintHere, tintK);',
+          '  vec3 pool = poolRgb * 0.5 * (1.0 - clamp(length((m - poolAt) / poolR), 0.0, 1.0)) * poolK;',
+          '  s = 1.0 - (1.0 - s) * (1.0 - pool);',
+          '  float keep = max(keepAt(m, lightKeep[0]), max(keepAt(m, lightKeep[1]), keepAt(m, lightKeep[2])));',
+          '  base.rgb = mix(sRGBTransferEOTF(vec4(s, 1.0)).rgb, base.rgb, keep);',
+        ]
+      : []),
     // In sRGB, as CSS brightness() dims the Tier 1 still, so the two tiers dim alike.
     ...(opts.dim
       ? [

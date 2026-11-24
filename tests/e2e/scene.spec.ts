@@ -1,6 +1,6 @@
 import { DESK_OBJECTS } from '../../content/objects';
 import { expect, test, type Page } from './fixtures';
-import { gotoDesk, hotspot, panelTitle, path } from './desk';
+import { atNight, gotoDesk, hotspot, panelTitle, path } from './desk';
 
 /** The live scene: product code under /scene. */
 
@@ -186,7 +186,7 @@ test.describe('?tier=2 without WebGL', () => {
 });
 
 test('?tier=2 shows the lamp mode chosen before the scene was ready', async ({ page }) => {
-  await page.addInitScript(() => localStorage.setItem('desk-theme', 'lamp'));
+  await atNight(page);
   await gotoDesk(page, '/?tier=2');
   await waitLive(page);
   await expect(live(page)).toHaveAttribute('data-lamp', 'true');
@@ -232,8 +232,8 @@ test('?tier=2 leaves bare desk to the page: no pointer target, scroll and zoom i
 test('?tier=2 with lamp chosen first: the scene is already lamp-lit when it appears', async ({
   page,
 }) => {
+  await atNight(page);
   await page.addInitScript(() => {
-    localStorage.setItem('desk-theme', 'lamp');
     // The canvas's day↔lamp blend at the moment the layer turns visible.
     new MutationObserver((_, obs) => {
       const live = document.querySelector('.desk-still__live');

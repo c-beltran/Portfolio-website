@@ -1239,6 +1239,101 @@ html:has(.desk-still) body {
 }
 
 /*
+ * The room's light over the still (RoomLight.tsx), under the window's weather: the weather's tint
+ * on daylight, stronger toward the window; moonlight on the day render at night with the lamp off;
+ * the lamp's warm pool by day. The screens keep their own light (the mask). Before hydration the
+ * moon and the pool come from <html>'s light; the weather's tint fades in when the weather comes.
+ */
+.room-light {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* The mask on each layer, not the box: a masked box would blend its layers in isolation. */
+.room-light > i {
+  position: absolute;
+  inset: 0;
+  display: block;
+  -webkit-mask: var(--rl-mask) 0 0 / 100% 100% no-repeat;
+  mask: var(--rl-mask) 0 0 / 100% 100% no-repeat luminance;
+  -webkit-mask-source-type: luminance;
+}
+
+.room-light__tint {
+  background: linear-gradient(
+    to right,
+    color-mix(in srgb, rgb(var(--tint-rgb, 255 255 255)) var(--far-share), #fff) var(--side-to),
+    rgb(var(--tint-rgb, 255 255 255)) var(--side-from)
+  );
+  mix-blend-mode: multiply;
+  opacity: var(--tint-k, 0);
+  transition: opacity 2s ease-in-out;
+}
+
+.room-light__moon {
+  background: rgb(var(--moon-rgb));
+  mix-blend-mode: multiply;
+  opacity: var(--moon, 0);
+  transition: opacity 0.6s ease-in-out;
+}
+
+:root[data-time='night'][data-theme='day'] .room-light__moon {
+  opacity: var(--moon, 1);
+}
+
+.room-light__pool {
+  background: radial-gradient(
+    ellipse var(--pool-r) at var(--pool-at),
+    rgb(var(--pool-rgb) / 0.5),
+    transparent
+  );
+  mix-blend-mode: screen;
+  opacity: var(--pool, 0);
+  transition: opacity 0.6s ease-in-out;
+}
+
+:root[data-lamp='on'][data-theme='day'] .room-light__pool {
+  opacity: var(--pool, 1);
+}
+
+/*
+ * The visitor's weather in the window (WeatherWindow.tsx): seen only through the glass (an SVG
+ * clip traced from the rendered mask), at the mask's place on the master; the canvas inside is laid onto the window's patch of sky by a
+ * matrix3d from its top-left corner. It fades in once drawn.
+ */
+.weather-window {
+  position: absolute;
+  left: calc(var(--px0) * 100%);
+  top: calc(var(--py0) * 100%);
+  width: calc(var(--pw) * 100%);
+  height: calc(var(--ph) * 100%);
+  overflow: hidden;
+  pointer-events: none;
+  clip-path: url(#weather-glass);
+  opacity: 0;
+  transition: opacity 0.6s ease-out;
+}
+
+.weather-window[data-drawn] {
+  opacity: 1;
+}
+
+.weather-window__glass {
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+
+.weather-window canvas {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: block;
+  transform-origin: 0 0;
+}
+
+/*
  * ---- Steam over the mug, and the pause that WCAG 2.2.2 asks of motion that
  * never ends. Placed in master fractions from the mug's bounds (Steam.tsx); it follows the glance.
  * Only transform and opacity animate. None of it exists under reduced motion. ----

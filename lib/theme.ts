@@ -26,8 +26,6 @@ export type TokenName =
   | 'screenPaper'
   | 'screenInk';
 
-export const THEME_STORAGE_KEY = 'desk-theme';
-
 /** The day and lamp palettes. */
 export const TOKENS: Record<ThemeName, Record<TokenName, string>> = {
   day: {
@@ -114,14 +112,19 @@ const vars = (theme: ThemeName) =>
     .map(([k, v]) => `${cssName(k)}:${v}`)
     .join(';');
 
-/** Theme variables, generated from TOKENS so the CSS can never drift from the tested values. */
+/** The monitor's paper belongs to the render on show (data-theme), not to the page palette. */
+const paper = (theme: ThemeName) =>
+  `--screen-paper:${TOKENS[theme].screenPaper};--screen-ink:${TOKENS[theme].screenInk}`;
+
+/**
+ * Theme variables, generated from TOKENS so the CSS can never drift from the tested values. The
+ * palette follows the time of day (data-time); the monitor's paper follows the render.
+ */
 export function themeCss(): string {
   return [
-    `:root,:root[data-theme="day"]{${vars('day')};color-scheme:light}`,
-    `:root[data-theme="lamp"]{${vars('lamp')};color-scheme:dark}`,
-    `@media (prefers-color-scheme: dark){:root:not([data-theme]){${vars('lamp')};color-scheme:dark}}`,
+    `:root,:root[data-time="day"]{${vars('day')};color-scheme:light}`,
+    `:root[data-time="night"]{${vars('lamp')};color-scheme:dark}`,
+    `:root[data-theme="day"]{${paper('day')}}`,
+    `:root[data-theme="lamp"]{${paper('lamp')}}`,
   ].join('\n');
 }
-
-/** Runs inline in <head> before first paint: stored choice, else the OS setting. Never throws. */
-export const THEME_SCRIPT = `(function(){var t;try{t=localStorage.getItem('${THEME_STORAGE_KEY}')}catch(e){}if(t!=='day'&&t!=='lamp'){try{t=matchMedia('(prefers-color-scheme: dark)').matches?'lamp':'day'}catch(e){t='day'}}document.documentElement.dataset.theme=t})();`;

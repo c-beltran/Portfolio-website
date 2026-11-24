@@ -6,7 +6,8 @@ import { titleFor } from '@/lib/deskRoutes';
 import { HINT_SCRIPT } from '@/components/desk/hint';
 import { labelFocusCss, ultrawideOnlyCss } from '@/content/deskLayout';
 import { framingCss } from '@/content/scene/framingCss';
-import { THEME_SCRIPT, themeCss } from '@/lib/theme';
+import { LIGHT_SCRIPT } from '@/lib/light';
+import { themeCss } from '@/lib/theme';
 import './globals.css';
 
 const display = Schibsted_Grotesk({
@@ -46,7 +47,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       className={`${display.variable} ${body.variable} ${mono.variable}`}
     >
       <head>
-        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+        <script dangerouslySetInnerHTML={{ __html: LIGHT_SCRIPT }} />
         <script dangerouslySetInnerHTML={{ __html: HINT_SCRIPT }} />
         <style dangerouslySetInnerHTML={{ __html: themeCss() }} />
         {/* The seat framing: CSS only, so Tier 1 needs no script. */}

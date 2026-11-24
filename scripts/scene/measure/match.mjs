@@ -4,7 +4,11 @@
 // Never committed. Target: meanAbs ≤ 6 and over40 ≤ 3% on every frame.
 // Serves the built export itself on a spare port (and stops it), unless given a base URL.
 //
-//   node scripts/scene/measure/match.mjs <out dir> [base url]
+//   node scripts/scene/measure/match.mjs <out dir> [base url] [extra query, e.g. weather=overcast]
+//
+// Four lights: day, lamp (night, lamp on), day-lamp (day, lamp on: its pool) and night-dark
+// (night, lamp off: moonlit). The weather is forced (clear unless the extra query says otherwise),
+// so the weather service is never asked.
 import { spawn } from 'node:child_process';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -12,7 +16,14 @@ import { chromium } from '@playwright/test';
 import sharp from 'sharp';
 import { diff } from './diff.mjs';
 
-const [OUT, GIVEN] = process.argv.slice(2);
+const [OUT, GIVEN_ARG, EXTRA = 'weather=clear'] = process.argv.slice(2);
+const GIVEN = GIVEN_ARG && GIVEN_ARG !== '-' ? GIVEN_ARG : undefined;
+const LIGHTS = [
+  { mode: 'day', time: 'day' },
+  { mode: 'lamp', time: 'night' },
+  { mode: 'day-lamp', time: 'day', lamp: 'on' },
+  { mode: 'night-dark', time: 'night', lamp: 'off' },
+];
 if (!OUT) throw new Error('usage: match.mjs <out dir> [base url]');
 mkdirSync(OUT, { recursive: true });
 const PORT = 4176;
@@ -55,22 +66,22 @@ const browser = await chromium.launch();
 const results = {};
 try {
   for (const f of FRAMES) {
-    for (const mode of ['day', 'lamp']) {
+    for (const { mode, time, lamp } of LIGHTS) {
       const name = `${f.name}-${mode}`;
       const ctx = await browser.newContext({ viewport: f.viewport, deviceScaleFactor: f.dpr });
-      await ctx.addInitScript((m) => {
-        localStorage.setItem('desk-theme', m);
+      await ctx.addInitScript((l) => {
+        if (l) sessionStorage.setItem('desk-lamp', l);
         sessionStorage.setItem('desk-hint-seen', '1');
-      }, mode);
+      }, lamp ?? null);
       const page = await ctx.newPage();
-      await page.goto(`${BASE}/?tier=2`);
+      await page.goto(`${BASE}/?tier=2&time=${time}&${EXTRA}`);
       await page.locator('.desk-still__live[data-ready="true"]').waitFor({ timeout: 60_000 });
       if (f.pan !== undefined)
         await page.locator('.desk-still').evaluate((el, pan) => {
           el.scrollLeft = ((pan + 1) / 2) * (el.scrollWidth - el.clientWidth);
         }, f.pan);
       const live1 = await page.addStyleTag({ content: LIVE });
-      await page.waitForTimeout(1500); // past the fade-in, the lamp cross-fade and the re-frame
+      await page.waitForTimeout(2500); // past the fade-in, the lamp cross-fade, the re-frame and the tint
       const shot = await page.screenshot();
       await live1.evaluate((el) => el.remove());
       await page.addStyleTag({ content: STILL });
@@ -79,7 +90,7 @@ try {
           (i) => getComputedStyle(i).display === 'none' || (i.complete && i.naturalWidth > 0),
         ),
       );
-      await page.waitForTimeout(700); // past the lamp photo's cross-fade
+      await page.waitForTimeout(2500); // past the lamp photo's cross-fade and the room's tint
       const stillShot = await page.screenshot();
       await ctx.close();
 
