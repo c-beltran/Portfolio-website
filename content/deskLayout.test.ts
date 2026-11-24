@@ -30,6 +30,7 @@ const ITEMS: DeskItemId[] = [
   'board',
   'mug',
   'lightbar',
+  'diploma',
 ];
 /** Front object first: the smaller, nearer one stacks over the one behind it. */
 const IN_FRONT: [DeskItemId, DeskItemId][] = [

@@ -118,6 +118,7 @@ describe('scene.glb', () => {
     expect(meshNodes.sort()).toEqual([
       'board',
       'desk',
+      'diploma',
       'monitor',
       'props',
       'room',

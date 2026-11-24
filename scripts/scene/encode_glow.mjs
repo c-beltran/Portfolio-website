@@ -26,6 +26,7 @@ const ITEMS = [
   'car',
   'ball',
   'board',
+  'diploma',
   'mug',
 ];
 

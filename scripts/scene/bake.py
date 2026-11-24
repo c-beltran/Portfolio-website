@@ -19,7 +19,7 @@ one mover at a time. They export to their own GLB with the hierarchy and the cli
 
 Never saves the .blend: the scene is changed in memory only. Outputs:
   <out-dir>/<group>-<mode>.png, <out-dir>/<mover>-open-<mode>.png,
-  <glb> (meshes named room, desk, monitor, props, screen, board, sky; one UV map, the
+  <glb> (meshes named room, desk, monitor, props, screen, board, diploma, sky; one UV map, the
   bake's; placeholder materials) and <movers-glb> (each pivot over its parts, plus phone_screen;
   a clip per mover; no materials).
 """
@@ -45,7 +45,7 @@ from bake_logic import GROUPS, MOVERS, STATICS, backdrop_covers, group_for, lift
 ASSETS = Path.home() / "Portfolio-assets"
 # Atlas sizes (px). The screen keeps the editor image's aspect (3440x1440).
 SIZES = {"room": (1024, 1024), "desk": (2048, 2048), "monitor": (2048, 2048), "props": (2048, 2048),
-         "screen": (2048, 858), "board": (1024, 1024), "sky": (256, 256), "kit": (1024, 1024), "phone": (512, 512),
+         "screen": (2048, 858), "board": (1024, 1024), "diploma": (1024, 1024), "sky": (256, 256), "kit": (1024, 1024), "phone": (512, 512),
          "badge": (256, 256), "photo": (512, 512), "notepad": (512, 512), "card": (256, 256),
          "car": (512, 512), "ball": (256, 256), "mug": (512, 512)}
 # The movers opened, close to the eye: on demand (public/opened/bake), not the first load.
@@ -143,7 +143,8 @@ def to_plain_meshes(objs):
 
 
 def drop_backs(o):
-    """The board's faces against the wall are never seen: without them the magnets get their atlas."""
+    """The faces of something hung on the wall (the board, the diploma) that lie against it are never
+    seen: without them the rest gets the atlas."""
     import bmesh
 
     bm = bmesh.new()
@@ -153,7 +154,7 @@ def drop_backs(o):
     bmesh.ops.delete(bm, geom=unseen, context="FACES")
     bm.to_mesh(o.data)
     bm.free()
-    print(f"  board: dropped {len(unseen)} faces against the wall")
+    print(f"  {o.name}: dropped {len(unseen)} faces against the wall")
 
 
 def fallback_material():
@@ -367,7 +368,7 @@ def sky_backdrop():
 
 # The frame each camera renders (export_cameras.py, stills): what world_to_camera_view projects into.
 FRAMES = {"cam_overview": (2560, 1440), "cam_phone": (1080, 1080),
-          **{f"cam_{lean}": (3300, 3300) for lean in ("monitor", "cv", "board")}}  # the lean-ins render square
+          **{f"cam_{lean}": (3300, 3300) for lean in ("monitor", "cv", "board", "diploma")}}  # the lean-ins render square
 
 
 def window_corners():
@@ -543,7 +544,8 @@ def main():
     for k in g:
         g[k] = join_group(to_plain_meshes(g[k]), k) if g[k] else []
     drop_backs(g["board"][0])
-    for k in ("room", "desk", "monitor", "props", "board"):
+    drop_backs(g["diploma"][0])
+    for k in ("room", "desk", "monitor", "props", "board", "diploma"):
         add_bake_uv(g[k])
     add_bake_uv(g["screen"], unwrap=False)
     for parts in movers.values():

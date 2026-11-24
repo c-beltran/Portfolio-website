@@ -31,6 +31,16 @@ const n = (value: number) => value.toLocaleString('en-US');
 const verifiedMerges = (r: { mergedPRs: number; allPRsMergedByCarlos: boolean }) =>
   r.mergedPRs > 0 && r.allPRsMergedByCarlos;
 
+/** Carlos's degree, in parts (the diploma's face sets them one per line). */
+export const EDUCATION = {
+  degree: 'Bachelor of Science',
+  field: 'Computer Science',
+  college: 'Queens College',
+  system: 'The City University of New York',
+  systemShort: 'CUNY',
+  date: 'May 2019',
+} as const;
+
 export const facts: Record<FactId, string | ((s: Stats) => string)> = {
   F01: 'At the same company since July 2019: Meredith, then Dotdash Meredith, now People Inc.',
   F02: 'Senior Software Engineer, Performance Engineering on the Ad Platform',
@@ -72,6 +82,8 @@ export const facts: Record<FactId, string | ((s: Stats) => string)> = {
   // the board's middle magnet
   H05: 'From El Salvador: his native roots',
   H06: 'Coffee addict',
+  // the diploma above the board
+  E01: `${EDUCATION.degree} in ${EDUCATION.field}, ${EDUCATION.college}, ${EDUCATION.system} (${EDUCATION.systemShort}), ${EDUCATION.date}`,
 };
 
 export function renderFact(id: FactId, s: Stats = STATS): string {

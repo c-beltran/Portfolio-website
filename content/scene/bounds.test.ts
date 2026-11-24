@@ -19,9 +19,12 @@ const OBJECTS = [
   'obj_board',
   // the mug (Coffee)
   'obj_mug',
+  // the diploma above the board (opens the CV)
+  'obj_diploma',
 ] as const;
 /** Shown only in ultrawide windows: the ball lies by the left wall. */
 const ULTRAWIDE_ONLY = new Set(['obj_ball']);
+
 const apart = (a: Box, b: Box) => a.x1 <= b.x0 || b.x1 <= a.x0 || a.y1 <= b.y0 || b.y1 <= a.y0;
 
 const ASPECT = 1440 / 2560; // any aspect: the search itself

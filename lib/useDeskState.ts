@@ -1,7 +1,7 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useSyncExternalStore } from 'react';
 import type { SectionSlug } from '@/content/objects';
 import { slugFromPath, titleFor } from './deskRoutes';
 
@@ -20,12 +20,34 @@ const focusBelongsToDesk = () =>
   focusIsLost() || !!document.activeElement?.closest('nav[aria-label="Sections"]');
 
 /**
+ * What opened the section, when it wasn't its own object (a wall piece: the diploma opens the CV),
+ * kept in the history entry's state, so Back and Forward restore it and a shared link opens the
+ * section's own object. Next keeps a raw pushState's own state alongside its tree.
+ */
+const VIA_EVENT = 'desk-via';
+const viaNow = (): string | null => {
+  const v = (window.history.state as { via?: unknown } | null)?.via;
+  return typeof v === 'string' ? v : null;
+};
+const onVia = (f: () => void) => {
+  window.addEventListener('popstate', f);
+  window.addEventListener(VIA_EVENT, f);
+  return () => {
+    window.removeEventListener('popstate', f);
+    window.removeEventListener(VIA_EVENT, f);
+  };
+};
+
+/**
  * The desk's selection IS the URL. Next 16 keeps usePathname in sync with raw
  * history.pushState and popstate (verified in a spike), including when Next restores a
  * saved router tree on Back from another route, so the selection can never disagree with the URL.
  */
 export function useDeskState() {
   const selected = slugFromPath(usePathname() ?? '/');
+  // null while hydrating (the server knows no history), then the entry's own
+  const viaState = useSyncExternalStore(onVia, viaNow, () => null);
+  const via = selected ? viaState : null;
   const previous = useRef<SectionSlug | null>(selected);
   const focusPanel = useRef(false);
   /** The selection Next has committed; the URL can run ahead of it while a navigation is pending. */
@@ -65,11 +87,13 @@ export function useDeskState() {
   }, []);
 
   const open = useCallback(
-    (slug: SectionSlug) =>
+    (slug: SectionSlug, by?: string) =>
       navigate(() => {
-        if (slugFromPath(window.location.pathname) === slug) return;
+        const nextVia = by ?? null;
+        if (slugFromPath(window.location.pathname) === slug && viaNow() === nextVia) return;
         focusPanel.current = true;
-        window.history.pushState(null, '', `/${slug}`);
+        window.history.pushState(nextVia ? { via: nextVia } : null, '', `/${slug}`);
+        window.dispatchEvent(new Event(VIA_EVENT));
       }),
     [navigate],
   );
@@ -79,6 +103,7 @@ export function useDeskState() {
       navigate(() => {
         if (slugFromPath(window.location.pathname) === null) return;
         window.history.pushState(null, '', '/');
+        window.dispatchEvent(new Event(VIA_EVENT));
       }),
     [navigate],
   );
@@ -101,5 +126,5 @@ export function useDeskState() {
     };
   }, [close]);
 
-  return { selected, open, close };
+  return { selected, via, open, close };
 }

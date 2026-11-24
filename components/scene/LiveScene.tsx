@@ -18,7 +18,7 @@ import { panOf } from '@/components/desk/pan';
 import { glanceShift, glanceTarget, useGlance, type Glance } from './glance';
 import { hfov } from './transition';
 
-const GROUPS = ['room', 'desk', 'monitor', 'props', 'screen', 'board', 'sky'] as const;
+const GROUPS = ['room', 'desk', 'monitor', 'props', 'screen', 'board', 'diploma', 'sky'] as const;
 type Group = (typeof GROUPS)[number];
 /** The objects that come forward, in their own GLB (Movers.tsx). */
 const MOVERS = MOVER_IDS;

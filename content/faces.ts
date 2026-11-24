@@ -1,12 +1,12 @@
-import { renderFact, tenSecondFacts } from './facts';
+import { EDUCATION, renderFact, tenSecondFacts } from './facts';
 import { headerSummary, LINKS, RESUME_TODO, showResume, showResumeTodo } from './links';
 
 /**
- * The words on the faces of opened objects: the badge's back, the card's back and the two
- * monitor halves once the view leans in. Real HTML laid on each render (OpenedFace.tsx); the panel
+ * The words on the faces of opened objects: the badge's back, the card's back, the two
+ * monitor halves and the diploma once the view leans in. Real HTML laid on each render (OpenedFace.tsx); the panel
  * carries the same words, so the faces stay out of the Tab order.
  */
-export const FACE_IDS = ['badge', 'card', 'monitor', 'cv'] as const;
+export const FACE_IDS = ['badge', 'card', 'monitor', 'cv', 'diploma'] as const;
 export type FaceId = (typeof FACE_IDS)[number];
 
 export const NAME = 'Carlos Beltran';
@@ -69,4 +69,10 @@ export function buildScreen(): {
     checksTodo: "[TODO: Carlos: a real run's checks (these stand in)]",
     session: '[TODO: Carlos: the session excerpt; you approve the exact text]',
   };
+}
+
+/** The diploma's paper, set as a diploma is: the college, its university, the degree, the field, the date. */
+export function diplomaFace(): { lines: string[] } {
+  const e = EDUCATION;
+  return { lines: [e.college, e.system, e.degree, e.field, e.date] };
 }

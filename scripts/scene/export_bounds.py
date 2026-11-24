@@ -33,7 +33,7 @@ from screen_geo import screen_meshes, screen_point, screen_rect  # noqa: E402
 import sky_geo as SKY  # noqa: E402
 
 OBJECTS = ["obj_monitor", "obj_kit", "obj_phone", "obj_badge", "obj_photo", "obj_notepad", "obj_card", "obj_lightbar",
-           "obj_car", "obj_ball", "obj_board", "obj_mug"]  # the car, the ball, the board
+           "obj_car", "obj_ball", "obj_board", "obj_mug", "obj_diploma"]  # the car, the ball, the board, the diploma
 # Decoration projected for the tests only (written under "decor", never a hotspot): the plant must
 # show in every window; the board must hang above the laptop.
 DECOR = ["deco_plant", "deco_laptop"]

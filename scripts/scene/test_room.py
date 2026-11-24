@@ -172,7 +172,7 @@ class Board(unittest.TestCase):
 
 
 class Diploma(unittest.TestCase):
-    """The framed diploma above the board: generic, no words, on the plain part of the back wall."""
+    """The framed diploma just above the board: generic, no words, on the plain part of the back wall."""
 
     WINDOW_X0 = -0.1  # build_room's window: its left mullion
     BACK_WALL_Y = 0.95
@@ -186,10 +186,11 @@ class Diploma(unittest.TestCase):
         self.assertAlmostEqual(cy + depth / 2 + 0.0, self.BACK_WALL_Y, delta=0.001)
 
     def test_diploma_clear_of_board_and_window(self):
+        """Just above the board (both below the top of what every window shows), clear of the window."""
         x0, z0, x1, z1 = self.box(R.DIPLOMA)
         bx0, bz0, bx1, bz1 = self.box(R.BOARD)
         apart = max(bx0 - x1, x0 - bx1, bz0 - z1, z0 - bz1)
-        self.assertGreaterEqual(apart, 0.05)
+        self.assertGreaterEqual(apart, 0.015)  # stacked just above it, a hand's width apart
         self.assertLessEqual(x1, self.WINDOW_X0 - 0.05)
 
     def test_diploma_paper_is_landscape(self):

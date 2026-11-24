@@ -81,7 +81,7 @@ export class MomentRig {
   /** Whether the open mover's face (if it has one) is laid on it: part of data-settled. */
   private facePlaced = false;
   /** When each lean-in was last opened (a counter): the camera folds them in this order. */
-  private openedAt: Record<LeanId, number> = { monitor: 0, cv: 0, board: 0 };
+  private openedAt: Record<LeanId, number> = { monitor: 0, cv: 0, board: 0, diploma: 0 };
   private opens = 0;
   /** Each lean-in's last art box, kept for its way back once its slot has gone. */
   private leanBoxes = new Map<LeanId, DOMRect>();

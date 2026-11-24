@@ -1,12 +1,21 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { renderFact, tenSecondFacts } from './facts';
-import { FACE_IDS, NAME, TITLE, badgeBack, buildScreen, cardBack, cvScreen } from './faces';
+import {
+  FACE_IDS,
+  NAME,
+  TITLE,
+  badgeBack,
+  buildScreen,
+  cardBack,
+  cvScreen,
+  diplomaFace,
+} from './faces';
 import { LINKS } from './links';
 
 describe('faces', () => {
-  it('are on the badge, the card and the two monitor halves', () => {
-    expect(FACE_IDS).toEqual(['badge', 'card', 'monitor', 'cv']);
+  it('are on the badge, the card, the two monitor halves and the diploma', () => {
+    expect(FACE_IDS).toEqual(['badge', 'card', 'monitor', 'cv', 'diploma']);
     expect([NAME, TITLE]).toEqual(['Carlos Beltran', 'Senior Software Engineer']);
   });
 
@@ -38,5 +47,17 @@ describe('faces', () => {
     expect(b.checks).toHaveLength(4);
     for (const c of b.checks) expect(steps.some((s) => s.startsWith(c))).toBe(true);
     for (const t of [b.spec, b.pr, b.session, b.checksTodo]) expect(t).toMatch(/^\[TODO: /);
+  });
+});
+
+describe('the diploma', () => {
+  it('carries the degree, in diploma order', () => {
+    expect(diplomaFace().lines).toEqual([
+      'Queens College',
+      'The City University of New York',
+      'Bachelor of Science',
+      'Computer Science',
+      'May 2019',
+    ]);
   });
 });

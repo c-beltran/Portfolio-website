@@ -1215,6 +1215,56 @@ html:has(.desk-still) body {
   font-size: max(12px, 4cqh);
 }
 
+/*
+ * The diploma: a face over the top of its rendered paper, in the paper's own colour as rendered
+ * (the wall it hangs on is in shade, so its lines are cream, like gold lettering), set as a diploma.
+ * Sampled from public/opened/diploma-<mode>-800.webp.
+ */
+.face--diploma {
+  height: 76%;
+  padding: 7cqh 6cqw 0;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 1.2cqh;
+  background: #5d4534;
+  color: #f0e4cc;
+  font-family: Georgia, 'Times New Roman', serif;
+  text-align: center;
+  font-size: max(11px, 5cqh);
+  line-height: 1.15;
+}
+
+:root[data-theme='lamp'] .face--diploma {
+  background: #2a2115;
+  color: #eadcc2;
+}
+
+.face--diploma .face__college {
+  font-size: max(16px, 11cqh);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.face--diploma .face__system {
+  font-size: max(11px, 5cqh);
+  font-style: italic;
+  margin-bottom: 4cqh;
+}
+
+.face--diploma .face__degree {
+  font-size: max(13px, 7.5cqh);
+}
+
+.face--diploma .face__field {
+  font-size: max(14px, 9cqh);
+  font-weight: 700;
+}
+
+.face--diploma .face__date {
+  margin-top: 2cqh;
+  font-size: max(11px, 5cqh);
+}
+
 .face__name {
   font-family: var(--font-display), var(--font-inter), sans-serif;
   font-weight: 900;

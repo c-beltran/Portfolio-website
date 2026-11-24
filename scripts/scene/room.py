@@ -15,19 +15,20 @@ CAR = {"at": (0.40, 0.20), "length": 0.20, "heading_deg": 60}
 # The plant on the window sill (top at z 0.55), on the stretch nearest the monitor that the seat sees.
 PLANT = {"at": (0.98, 0.88, 0.55)}
 
-# The board hangs on the back wall (y 0.95) left of the monitor, above the laptop.
-BOARD = {"centre": (-0.99, 0.944, 1.15), "size": (0.40, 0.28), "depth": 0.012, "frame": 0.015}
-# The diploma hangs above the board, centred on it: a dark frame, a mat and cream paper with lines
-# that read as a certificate's but say nothing, and a plain gold seal. No words, crest or logo: the
-# page lays the degree on it as HTML when the view leans in.
-DIPLOMA = {"centre": (-0.99, 0.944, 1.53), "size": (0.34, 0.28), "depth": 0.012, "frame": 0.018, "mat": 0.03}
-MAGNET = {"r": 0.035, "t": 0.006}
-HOME_R = 0.042  # a fifth bigger than the others
+# The board hangs on the back wall (y 0.95) left of the monitor, above the laptop, the diploma above it.
+BOARD = {"centre": (-0.99, 0.944, 1.058), "size": (0.34, 0.238), "depth": 0.012, "frame": 0.015}
+# The diploma hangs just above the board, the two stacked on the wall left of the monitor, both
+# below the top of what every window shows: a dark frame, a mat and cream paper with lines that read
+# as a certificate's but say nothing, and a plain gold seal. No words, crest or logo: the page lays
+# the degree on it as HTML when the view leans in.
+DIPLOMA = {"centre": (-0.99, 0.944, 1.2875), "size": (0.22, 0.175), "depth": 0.012, "frame": 0.013, "mat": 0.017}
+MAGNET = {"r": 0.028, "t": 0.006}
+HOME_R = 0.034  # a fifth bigger than the others
 PLACES = ("egypt", "italy", "colombia", "guatemala", "canada", "mexico", "puerto_rico", "aruba")
 # Home: a ninth magnet in the board's middle.
 HOME = "el_salvador"
 BOARD_PLACES = PLACES + (HOME,)
-ROW = 0.075  # the two rows sit this far above and below the centre, leaving home room between them
+ROW = 0.065  # the two rows sit this far above and below the centre, leaving home room between them
 
 # A hand-placed look: each magnet sits a few millimetres off its grid point.
 _NUDGE = ((0.003, -0.004), (-0.002, 0.005), (0.004, 0.002), (-0.003, -0.003), (0.002, 0.004), (-0.004, -0.002), (0.003, 0.003), (-0.002, -0.005), (0.001, -0.001))
@@ -347,7 +348,7 @@ _STROKES = (
     ("sign_0", 0.86, -0.29, 0.24, 0.006, "sign"),
     ("sign_1", 0.86, 0.29, 0.24, 0.006, "sign"),
 )
-SEAL_R = 0.017
+SEAL_R = 0.011
 
 
 def diploma_parts():

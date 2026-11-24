@@ -1,5 +1,6 @@
 import { LAYOUT } from './deskLayout';
 import { DESK_OBJECTS, type SectionSlug } from './objects';
+import { wallPiece } from './wall';
 import art from './scene/opened-art.json';
 import { screenAffine, type Pt, type Region } from './scene/screenAffine';
 
@@ -17,8 +18,8 @@ export const MOVER_IDS = [
 ] as const;
 export type MoverId = (typeof MOVER_IDS)[number];
 
-/** The fixed things the view leans in to, square to their face: the two monitor halves, the board. */
-export const LEAN_IDS = ['monitor', 'cv', 'board'] as const;
+/** The fixed things the view leans in to, square to their face: the two monitor halves, the board, the diploma. */
+export const LEAN_IDS = ['monitor', 'cv', 'board', 'diploma'] as const;
 export type LeanId = (typeof LEAN_IDS)[number];
 
 /** Every clickable object either comes forward or is leaned in to: never a panel alone. */
@@ -57,8 +58,13 @@ const ART = art as unknown as Record<OpenedId, OpenedArt>;
 
 const isOpened = (id: string): id is OpenedId => (OPENED_IDS as readonly string[]).includes(id);
 
-/** The object a section brings forward or leans in to, or null on the desk. */
-export function openedFor(slug: SectionSlug | null): OpenedId | null {
+/**
+ * The object a section brings forward or leans in to, or null on the desk. `via` names a wall
+ * piece that opened the section instead of its own object (the diploma, for the CV).
+ */
+export function openedFor(slug: SectionSlug | null, via?: string | null): OpenedId | null {
+  const piece = wallPiece(via);
+  if (piece && piece.opens === slug && isOpened(piece.id)) return piece.id;
   const id = DESK_OBJECTS.find((o) => o.slug === slug)?.id;
   return id && isOpened(id) ? id : null;
 }
@@ -98,7 +104,8 @@ export function faceBox(id: OpenedId): {
   const f = screenAffine(
     a.screen as Pt[],
     { w: a.aspect, h: 1 },
-    isLean(id) ? LEAN_REGION : undefined,
+    // a lean-in's screen is the whole face it zooms to; the diploma's is already its paper
+    isLean(id) && id !== 'diploma' ? LEAN_REGION : undefined,
   );
   // Art-height units → percents of the art box (its width is aspect × its height).
   return {

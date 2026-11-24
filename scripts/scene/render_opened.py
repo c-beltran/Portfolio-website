@@ -4,7 +4,7 @@ when they click; the patch that hides it on the seat still while it is out; a le
 of the resting terminal.
 
     Blender -b ~/Portfolio-assets/blend/workspace.blend --python scripts/scene/render_opened.py -- \
-        --object <mover>|monitor|cv|board --mode day|lamp --out <png> [--patch | --loop 1|2|3] [--samples 384]
+        --object <mover>|monitor|cv|board|diploma --mode day|lamp --out <png> [--patch | --loop 1|2|3] [--samples 384]
 
 Opened (the default): the mover's pivot at opened.canonical_pose and its clip at the last frame;
 the camera at the seat's eye, turned as the seat camera is (so it looks straight at the pivot),
@@ -14,8 +14,8 @@ records focalPx (the frame's focal length in px); `screen`, the corners in px (T
 HTML or the clip is laid on (the phone's clip quad, the badge's and the card's backs); and for the
 mug, `steam`: where its coffee is (centre and width, px).
 
-A lean-in (monitor, cv, board): through cam_<id> as built, square, the whole scene drawn. The
-sidecar records focalPx and `screen`: the corners of what it zooms to.
+A lean-in (monitor, cv, board, diploma): through cam_<id> as built, square, the whole scene drawn. The
+sidecar records focalPx and `screen`: the corners of what it zooms to (the diploma's: its paper).
 
 --loop k: the seat camera with the monitor showing terminal frame k, cropped to the terminal pane
 plus PATCH_PAD. The sidecar records that rect, master-normalised, y down.
@@ -48,7 +48,7 @@ import screen_art as A  # noqa: E402
 import screen_geo  # noqa: E402
 from bake_logic import MOVERS as PIVOTS  # noqa: E402
 
-LEANS = ("monitor", "cv", "board")
+LEANS = ("monitor", "cv", "board", "diploma")
 CLIP_END = {"kit": MV.frames(MV.KIT_OPEN_S), "phone": MV.frames(MV.PHONE_TURN_S),
             **{clip.split("_")[0]: MV.frames(c[1]) for clip, c in {**FM.CLIPS, **RV.CLIPS}.items()}}
 # Square frame of the opened render, large enough that each object's crop is at least 1600 px wide,
@@ -167,6 +167,11 @@ def lean(a, scene):
     scene.frame_set(0)
     fov = 2 * math.atan(cam.data.sensor_width / 2 / cam.data.lens)
     corners = screen_geo.lean_corners(bpy.context.evaluated_depsgraph_get())[a.object]
+    if a.object == "diploma":
+        # the camera frames the whole frame; the page lays the degree on the paper
+        import room
+
+        corners = [Vector(c) for c in room.diploma_paper_corners()]
     to_px = lambda co: (lambda v: [v.x * SIZE, (1 - v.y) * SIZE])(world_to_camera_view(scene, cam, co))  # noqa: E731
     return {"focalPx": (SIZE / 2) / math.tan(fov / 2), "size": SIZE, "fovDeg": math.degrees(fov), "screen": [to_px(c) for c in corners]}
 

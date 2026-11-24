@@ -45,6 +45,11 @@ class GroupFor(unittest.TestCase):
             self.assertIn(mover, GROUPS)
             self.assertEqual(group_for(f"{mover}_part", f"obj_{mover}", False), mover)
 
+    def test_the_diploma_has_its_own_group(self):
+        self.assertIn("diploma", GROUPS)
+        self.assertEqual(group_for("diploma_paper", "obj_diploma", False), "diploma")
+        self.assertEqual(group_for("diploma_seal", "obj_diploma", False), "diploma")
+
     def test_the_board_has_its_own_group(self):
         self.assertIn("board", GROUPS)
         self.assertEqual(group_for("magnet_egypt_face", "obj_board", False), "board")

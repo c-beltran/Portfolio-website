@@ -21,15 +21,16 @@ You sit in Carlos's chair. The desk shows the work, and the room shows the perso
 | Monitor, left  | How I build | Zooms in                | Yes   |
 | Monitor, right | CV          | Zooms in                | Yes   |
 | Magnet board   | Travel      | Zooms in                | Yes   |
+| Diploma        | CV          | Zooms in                | Yes   |
 | Badge          | Experience  | Comes forward           | Yes   |
 | Photo          | About       | Comes forward           | Yes   |
 | Notepad        | This site   | Comes forward           | Yes   |
 | Business card  | Contact     | Comes forward           | Yes   |
-| Model car      | Cars        | Comes forward           | Yes   |
-| Soccer ball    | Soccer      | Comes forward           | Yes   |
-| Mug            | Coffee      | Comes forward           | Yes   |
+| Model car      | Cars        | Comes forward, spins    | Yes   |
+| Soccer ball    | Soccer      | Comes forward, spins    | Yes   |
+| Mug            | Coffee      | Comes forward, spins    | Yes   |
 
-Objects marked planned open their section's panel today. The light bar is a switch for day and lamp light.
+Objects marked planned open their section's panel today. The light bar is a switch for day and lamp light. The diploma hangs above the board and opens the CV with its degree written on it; it isn't a second Sections entry. Once the car, the ball or the mug has come forward, a drag, a flick or the arrow keys spin it; the still view loads that one object in 3D only then.
 
 ## Two renderers, one scene
 

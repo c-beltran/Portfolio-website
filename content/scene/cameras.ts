@@ -17,7 +17,7 @@ export type SceneCamera = {
   screen?: Vec3[];
 };
 
-export type CameraId = 'overview' | 'phone' | 'monitor' | 'cv' | 'board' | 'seat';
+export type CameraId = 'overview' | 'phone' | 'monitor' | 'cv' | 'board' | 'diploma' | 'seat';
 
 export const CAMERAS = data as Record<CameraId, SceneCamera>;
 

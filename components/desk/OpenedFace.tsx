@@ -4,12 +4,14 @@ import { BadgeBack } from './faces/BadgeBack';
 import { BuildScreen } from './faces/BuildScreen';
 import { CardBack } from './faces/CardBack';
 import { CvScreen } from './faces/CvScreen';
+import { DiplomaFace } from './faces/DiplomaFace';
 
 const FACES: Record<FaceId, () => React.JSX.Element> = {
   badge: BadgeBack,
   card: CardBack,
   monitor: BuildScreen,
   cv: CvScreen,
+  diploma: DiplomaFace,
 };
 
 const isFace = (id: string): id is FaceId => (FACE_IDS as readonly string[]).includes(id);
