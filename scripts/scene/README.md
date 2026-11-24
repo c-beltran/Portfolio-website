@@ -18,7 +18,9 @@ Run in this order. Each script's header gives its arguments.
 
 Use `--python-exit-code 1` with Blender, which otherwise exits 0 when a script throws.
 
-Geometry lives in modules without `bpy` (`room.py`, `movers.py`, `framing.py`, `opened.py`), tested with `python3 -I scripts/scene/test_<name>.py`.
+The window's weather draws on the patch of sky the window shows: `export_bounds.py` writes its corners (`quads.sky`) and its place on the live desk's sky plane (`skyUv`, from `sky_geo.py`); `render_masks.py --only sky` and `encode_sky.mjs` make its glass mask.
+
+Geometry lives in modules without `bpy` (`room.py`, `movers.py`, `framing.py`, `opened.py`, `sky_geo.py`), tested with `python3 -I scripts/scene/test_<name>.py`.
 
 ## Downloads
 

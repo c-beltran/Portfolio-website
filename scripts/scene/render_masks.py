@@ -7,8 +7,8 @@ which follows the object's shape:
 
 Workbench, flat: the object white, everything else black (so what stands in front of it cuts it,
 as on the still), at a quarter of the master's resolution (framing.py). The monitor's screen is one
-mask, mask-screen.png; encode_glow.mjs splits it into its two halves (How I build, the CV). Writes
-mask-<item>.png. Never saves the .blend.
+mask, mask-screen.png; encode_glow.mjs splits it into its two halves (How I build, the CV). The window's
+sky is mask-sky.png, for the weather (encode_sky.mjs). Writes mask-<item>.png (--only <item> for one). Never saves the .blend.
 """
 
 import argparse
@@ -45,6 +45,7 @@ def main():
     argv = sys.argv[sys.argv.index("--") + 1 :] if "--" in sys.argv else []
     p = argparse.ArgumentParser()
     p.add_argument("--out", default=str(Path.home() / "Portfolio-assets" / "renders" / "masks"))
+    p.add_argument("--only", help="render just this mask (an item, screen or sky)")
     a = p.parse_args(argv)
     Path(a.out).mkdir(parents=True, exist_ok=True)
     scene = bpy.context.scene
@@ -64,8 +65,14 @@ def main():
     meshes = [o for o in scene.objects if o.type in ("MESH", "CURVE") and not o.hide_render]
     targets = {item: set([bpy.data.objects[name], *bpy.data.objects[name].children_recursive]) for item, name in ITEMS.items()}
     targets["screen"] = {o for o in meshes if is_screen(o)}
+    # The window's sky: everything black, so the only see-through pixels are the window's, with the
+    # frame, monitor, light bar and plant cutting them as on the still (the room is closed; the sky
+    # is the world). encode_sky.mjs reads it from the alpha.
+    targets["sky"] = set()
+    if a.only:
+        targets = {a.only: targets[a.only]}
     for item, mine in targets.items():
-        if not mine:
+        if not mine and item != "sky":
             raise SystemExit(f"render_masks: nothing for {item}")
         for o in meshes:
             o.color = (1, 1, 1, 1) if o in mine else (0, 0, 0, 1)
