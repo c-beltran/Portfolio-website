@@ -170,7 +170,15 @@ export function bakedMaterial(day: THREE.Texture, lamp: THREE.Texture, opts: Pro
       residualWeight: { value: residual.weight ?? 1 },
     });
   }
-  if (opts.dim) uniforms.dim = { value: 0 };
+  if (opts.dim)
+    Object.assign(uniforms, {
+      dim: { value: 0 },
+      // A lean-in's art box (drawing-buffer px, y up) left undimmed, feathered by dimFeather px.
+      dimClear: { value: new THREE.Vector4(0, 0, 0, 0) },
+      dimFeather: { value: 0 },
+      // How open the hole is (its lean-in's eased travel), so it fades in and out with the move.
+      dimClearK: { value: 0 },
+    });
   if (opts.opened)
     Object.assign(uniforms, {
       openDay: { value: black() },
@@ -191,7 +199,14 @@ export function bakedMaterial(day: THREE.Texture, lamp: THREE.Texture, opts: Pro
         ]
       : ['uniform float fade;']),
     ...(residual ? [RESIDUAL_GLSL] : []),
-    ...(opts.dim ? ['uniform float dim;'] : []),
+    ...(opts.dim
+      ? [
+          'uniform float dim;',
+          'uniform vec4 dimClear;',
+          'uniform float dimFeather;',
+          'uniform float dimClearK;',
+        ]
+      : []),
     ...(opts.opened
       ? [
           'uniform sampler2D openDay;',
@@ -225,7 +240,14 @@ export function bakedMaterial(day: THREE.Texture, lamp: THREE.Texture, opts: Pro
     // In sRGB, as CSS brightness() dims the Tier 1 still, so the two tiers dim alike.
     ...(opts.dim
       ? [
-          `  base.rgb = sRGBTransferEOTF(vec4(sRGBTransferOETF(base).rgb * (1.0 - ${(1 - DIM_LEVEL).toFixed(2)} * dim), 1.0)).rgb;`,
+          '  float dimHere = dim;',
+          '  if (dimClear.z > dimClear.x && dimClear.w > dimClear.y) {',
+          '    vec2 p = gl_FragCoord.xy;',
+          '    vec2 lo = smoothstep(dimClear.xy, dimClear.xy + dimFeather, p);',
+          '    vec2 hi = 1.0 - smoothstep(dimClear.zw - dimFeather, dimClear.zw, p);',
+          '    dimHere *= 1.0 - dimClearK * lo.x * lo.y * hi.x * hi.y;',
+          '  }',
+          `  base.rgb = sRGBTransferEOTF(vec4(sRGBTransferOETF(base).rgb * (1.0 - ${(1 - DIM_LEVEL).toFixed(2)} * dimHere), 1.0)).rgb;`,
         ]
       : []),
     '  gl_FragColor = base;',

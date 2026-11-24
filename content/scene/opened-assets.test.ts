@@ -1,6 +1,7 @@
 import { existsSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { MOVER_IDS } from '../opened';
 
 /**
  * What an object that comes forward loads on demand, never on the
@@ -22,7 +23,10 @@ describe('the phone clip', () => {
 });
 
 describe('on-demand opened assets', () => {
-  for (const id of ['kit', 'phone']) {
+  it('covers all nine movers', () => {
+    expect(MOVER_IDS).toHaveLength(9);
+  });
+  for (const id of MOVER_IDS ?? []) {
     it(`the ${id}'s opened bakes fit 400 kB`, () => {
       expect(existsSync(BAKE)).toBe(true);
       const mine = readdirSync(BAKE).filter((f) => f.startsWith(`${id}-open-`));

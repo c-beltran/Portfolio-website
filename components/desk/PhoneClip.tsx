@@ -1,8 +1,7 @@
 'use client';
 
-import { useEffect, useRef, type CSSProperties } from 'react';
-import { artOf } from '@/content/opened';
-import { screenAffine, type Pt } from '@/content/scene/screenAffine';
+import { useEffect, useRef } from 'react';
+import { faceBox } from '@/content/opened';
 
 /** The clip's element id: the panel's Pause/Play button (ClipControl) finds it by this. */
 export const CLIP_ID = 'power-walk-clip';
@@ -76,19 +75,9 @@ export function PhoneClip({ leaving }: { leaving?: boolean }) {
   useEffect(() => {
     if (leaving) video.current?.pause();
   }, [leaving]);
-  const a = artOf('phone');
-  const f = screenAffine(a.screen as Pt[], { w: a.aspect, h: 1 });
-  // Art-height units → percents of the art box (its width is aspect × its height).
-  const style = {
-    left: `${(f.x / a.aspect) * 100}%`,
-    top: `${f.y * 100}%`,
-    width: `${(f.w / a.aspect) * 100}%`,
-    height: `${f.h * 100}%`,
-    transform: `matrix(${f.matrix.join(', ')}, 0, 0)`,
-  } as CSSProperties;
   return (
     <>
-      <canvas ref={screen} className="phone-clip" style={style} />
+      <canvas ref={screen} className="phone-clip" style={faceBox('phone')} />
       <video
         id={CLIP_ID}
         ref={video}

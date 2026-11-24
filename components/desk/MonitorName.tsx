@@ -1,4 +1,5 @@
 import type { CSSProperties } from 'react';
+import { NAME, TITLE } from '@/content/faces';
 import seat from '@/content/scene/bounds-seat.json';
 import { master } from '@/content/scene/framing';
 import { NAME_REGION, screenAffine, type Pt } from '@/content/scene/screenAffine';
@@ -23,8 +24,8 @@ export function MonitorName() {
   } as CSSProperties;
   return (
     <div className="monitor-name" style={style}>
-      <h1 className="monitor-name__name">Carlos Beltran</h1>
-      <p className="monitor-name__title">Senior Software Engineer</p>
+      <h1 className="monitor-name__name">{NAME}</h1>
+      <p className="monitor-name__title">{TITLE}</p>
     </div>
   );
 }

@@ -116,6 +116,119 @@ test.describe('coming forward live', () => {
     expect(Number(kit)).toBe(0);
   });
 
+  for (const [id, label] of [
+    ['badge', 'Experience'],
+    ['photo', 'About'],
+    ['notepad', 'This site'],
+    ['card', 'Contact'],
+  ] as const)
+    test(`?tier=2: the ${id} comes out and plays its clip, then goes back`, async ({ page }) => {
+      await gotoDesk(page, '/?tier=2');
+      await waitLive(page);
+      await drawerButton(page, label).press('Enter');
+      await expect.poll(async () => (await hook(page)).open, { timeout: LONG }).toBe(id);
+      await expect.poll(async () => (await hook(page)).travel, { timeout: LONG }).toBe(1);
+      await expect.poll(async () => (await hook(page)).clip, { timeout: LONG }).toBe(1);
+      await expect(canvas(page)).toHaveAttribute('data-settled', id, { timeout: LONG });
+      await page.keyboard.press('Escape');
+      await expect
+        .poll(
+          async () => {
+            const h = await hook(page);
+            return [h.travel, h.clip];
+          },
+          { timeout: LONG },
+        )
+        .toEqual([0, 0]);
+      await expect(canvas(page)).not.toHaveAttribute('data-settled');
+    });
+
+  test('?tier=2: a direct load of /experience starts with the badge out and its face shown', async ({
+    page,
+  }) => {
+    await gotoDesk(page, '/experience?tier=2');
+    await waitLive(page);
+    const first = await hook(page);
+    expect(first.open).toBe('badge');
+    expect(first.travel).toBe(1);
+    await expect(canvas(page)).toHaveAttribute('data-settled', 'badge', { timeout: LONG });
+    await expect(page.locator('.opened__face[data-face="badge"]')).toBeVisible();
+    await expect(page.locator('.opened__face[data-face="badge"]')).toHaveAttribute('data-live', '');
+  });
+
+  test('?tier=2: while the badge is out, the kit and the phone on the desk dim with the room', async ({
+    page,
+  }) => {
+    await gotoDesk(page, '/experience?tier=2');
+    await waitLive(page);
+    await expect(canvas(page)).toHaveAttribute('data-settled', 'badge', { timeout: LONG });
+    const d = await canvas(page).evaluate((c: HTMLCanvasElement) => ({
+      all: c.dataset.dim,
+      kit: c.dataset.dimKit,
+      phone: c.dataset.dimPhone,
+      badge: c.dataset.dimBadge,
+    }));
+    expect(d).toEqual({ all: '1.00', kit: '1.00', phone: '1.00', badge: '0.00' });
+  });
+
+  test("?tier=2: the card's face lies on the live card", async ({ page }) => {
+    await gotoDesk(page, '/contact?tier=2');
+    await waitLive(page);
+    await expect(canvas(page)).toHaveAttribute('data-settled', 'card', { timeout: LONG });
+    const face = page.locator('.opened__face[data-face="card"]');
+    await expect(face).toHaveAttribute('data-live', '');
+    const f = (await face.boundingBox())!;
+    await face.evaluate((el) => ((el as HTMLElement).style.visibility = 'hidden'));
+    await page.waitForTimeout(300);
+    const shot = await page.screenshot();
+    const lum = await page.evaluate(
+      async ({ png, pts }) => {
+        const img = new Image();
+        img.src = `data:image/png;base64,${png}`;
+        await img.decode();
+        const c = document.createElement('canvas');
+        [c.width, c.height] = [img.width, img.height];
+        const g = c.getContext('2d')!;
+        g.drawImage(img, 0, 0);
+        const s = img.width / innerWidth;
+        return pts.map(([x, y]) => {
+          const [r, gg, b] = g.getImageData(Math.round(x * s), Math.round(y * s), 1, 1).data;
+          return (0.2126 * r! + 0.7152 * gg! + 0.0722 * b!) / 255;
+        });
+      },
+      {
+        png: shot.toString('base64'),
+        pts: [
+          ...[0.2, 0.5, 0.8].flatMap((u) =>
+            [0.2, 0.5, 0.8].map((v) => [f.x + f.width * u, f.y + f.height * v]),
+          ),
+          [f.x + f.width / 2, f.y - 20],
+          [f.x + f.width / 2, f.y + f.height + 20],
+        ] as [number, number][],
+      },
+    );
+    // The card's back is a warm tan in the bake: lit card inside, the dimmed desk just outside.
+    // The face's nine points are all on the card (one even tan), brighter than just outside.
+    const [inside, outside] = [lum.slice(0, 9), lum.slice(9)];
+    expect(Math.max(...inside) - Math.min(...inside)).toBeLessThan(0.12);
+    for (const l of inside) {
+      expect(l).toBeGreaterThan(0.35);
+      expect(l).toBeGreaterThan(Math.max(...outside) + 0.08);
+    }
+  });
+
+  test('?tier=2: from the badge to the card, one goes back as the other comes out', async ({
+    page,
+  }) => {
+    await gotoDesk(page, '/experience?tier=2');
+    await waitLive(page);
+    await drawerButton(page, 'Contact').press('Enter');
+    await expect.poll(async () => (await hook(page)).open, { timeout: LONG }).toBe('card');
+    await expect.poll(async () => (await hook(page)).travel, { timeout: LONG }).toBe(1);
+    const badge = await canvas(page).evaluate((c: HTMLCanvasElement) => c.dataset.travelBadge);
+    expect(Number(badge)).toBe(0);
+  });
+
   test('?tier=2: the glance is off while something is out', async ({ page }) => {
     await gotoDesk(page, '/potaflow?tier=2');
     await waitLive(page);

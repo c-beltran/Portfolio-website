@@ -12,6 +12,7 @@ import sys
 
 import bpy
 from mathutils import Vector
+from mathutils.geometry import barycentric_transform, intersect_point_tri_2d
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import room as R  # noqa: E402
@@ -34,9 +35,9 @@ if not get("deco_coaster_mug"):
     problems.append("deco_coaster_mug missing")
 
 # The soccer ball on the floor by the left wall: a sphere of white and black panels.
-ball = get("obj_ball")
+ball = get("ball_skin")
 if not ball:
-    problems.append("no obj_ball")
+    problems.append("no ball_skin")
 else:
     centre = Vector(R.BALL["at"])
     pts = [ball.matrix_world @ v.co for v in ball.data.vertices]
@@ -98,7 +99,13 @@ else:
     cy = (min(p.y for p in pts) + max(p.y for p in pts)) / 2
     if math.hypot(cx - R.CAR["at"][0], cy - R.CAR["at"][1]) > 0.005:
         problems.append(f"obj_car: footprint centred at ({cx:.3f}, {cy:.3f}), not {R.CAR['at']}")
-    lamps = [o.matrix_world @ v.co for o in meshes if any(m and m.name == "car_lamp_front" for m in o.data.materials) for v in o.data.vertices]
+    lamps = [
+        o.matrix_world @ o.data.vertices[i].co
+        for o in meshes
+        for p in o.data.polygons
+        if o.data.materials[p.material_index] and o.data.materials[p.material_index].name == "car_lamp_front"
+        for i in set(p.vertices)
+    ]
     if not lamps:
         problems.append("obj_car: no car_lamp_front faces")
     else:
@@ -129,6 +136,109 @@ else:
         problems.append(f"deco_plant: footprint centred at ({cx:.3f}, {cy:.3f}), not {R.PLANT['at'][:2]}")
     if not 0.25 <= hi_z - lo_z <= 0.29:
         problems.append(f"deco_plant: {hi_z - lo_z:.3f} m tall")
+
+deps = bpy.context.evaluated_depsgraph_get()
+
+
+def triangles(o):
+    ev = o.evaluated_get(deps)
+    me = ev.to_mesh()
+    me.calc_loop_triangles()
+    uv = me.uv_layers.active.data if me.uv_layers.active else None
+    out = [
+        (tuple(ev.matrix_world @ me.vertices[v].co for v in t.vertices), tuple(uv[i].uv.copy() for i in t.loops) if uv else None, t.material_index)
+        for t in me.loop_triangles
+    ]
+    ev.to_mesh_clear()
+    return out
+
+
+# The monitor's image is upright: its document pane's title bar (the greyer strip) is at the top.
+mon = get("obj_monitor")
+screen = [
+    (pts, uv, o.data.materials[i])
+    for o in (mon.children_recursive if mon else [])
+    if o.type == "MESH" and any(m and m.get("screen") for m in o.data.materials)
+    for pts, uv, i in triangles(o)
+    if o.data.materials[i] and o.data.materials[i].get("screen")
+]
+if screen:
+    image = next(nd.image for nd in screen[0][2].node_tree.nodes if nd.type == "TEX_IMAGE")
+    w, h = image.size
+    px = image.pixels[:]
+
+    def shown(v):
+        p = Vector((0.75, v))
+        for pts, uv, _ in screen:
+            if intersect_point_tri_2d(p, *uv):
+                z = barycentric_transform(p.to_3d(), *[q.to_3d() for q in uv], *pts).z
+                i = (int(v * h) * w + int(0.75 * w)) * image.channels
+                return z, sum(px[i : i + 3])
+        raise SystemExit(f"monitor screen: nothing shows v {v}")
+
+    (high_z, high), (low_z, low) = sorted((shown(0.012), shown(0.985)), reverse=True)
+    if not high < low - 0.05:
+        problems.append("obj_monitor: the screen's image is upside down")
+else:
+    problems.append("obj_monitor: no screen")
+
+# The laptop's page covers its screen, the right way round.
+laptop = get("deco_laptop")
+if laptop:
+    body = max((o for o in laptop.children_recursive if o.type == "MESH"), key=lambda o: len(o.data.polygons))
+    panel = sorted(
+        ((pts, uv) for pts, uv, _ in triangles(body) if (pts[1] - pts[0]).cross(pts[2] - pts[0]).normalized().y < -0.9),
+        key=lambda t: -(t[0][1] - t[0][0]).cross(t[0][2] - t[0][0]).length,
+    )[:3]
+    mat = body.data.materials[0]
+    to_page = {}
+    for link in mat.node_tree.links:
+        if link.from_node.type == "MAP_RANGE" and link.to_node.type == "COMBXYZ":
+            lo, hi = link.from_node.inputs["From Min"].default_value, link.from_node.inputs["From Max"].default_value
+            src = next(x.from_socket.name for x in mat.node_tree.links if x.to_node == link.from_node and x.to_socket.name == "Value")
+            to_page[link.to_socket.name] = (src, lo, hi)
+    corners = [(p, uv) for pts, uvs in panel for p, uv in zip(pts, uvs)]
+    top = max(p.z for p, _ in corners)
+    bottom = min(p.z for p, _ in corners)
+    left, right = min(p.x for p, _ in corners), max(p.x for p, _ in corners)
+    for p, uv in corners:
+        at = []
+        for axis in ("X", "Y"):
+            src, lo, hi = to_page[axis]
+            at.append(((uv.x if src == "X" else uv.y) - lo) / (hi - lo))
+        if not all(-0.01 <= a <= 1.01 for a in at):
+            problems.append(f"deco_laptop: the page misses the screen at ({p.x:.3f}, {p.z:.3f})")
+            break
+        for a, v, lo, hi, name in ((at[0], p.x, left, right, "left to right"), (at[1], p.z, bottom, top, "bottom to top")):
+            f = (v - lo) / (hi - lo)
+            if (f < 0.1 and a > 0.1) or (f > 0.9 and a < 0.9):
+                problems.append(f"deco_laptop: the page doesn't run {name} on the screen")
+                break
+        else:
+            continue
+        break
+
+# Nothing stands between the board's lean-in camera and any magnet.
+cam = get("cam_board")
+if not cam:
+    problems.append("no cam_board")
+elif board:
+    eye = cam.matrix_world.translation
+    for place in R.BOARD_PLACES:
+        face = get(f"magnet_{place}_face")
+        if not face:
+            continue
+        pts = [face.matrix_world @ v.co for v in face.data.vertices]
+        mid = sum(pts, Vector()) / len(pts)
+        for p in [mid] + [mid.lerp(q, 0.95) for q in pts[::8]]:
+            d = p - eye
+            hit, _, _, _, o, _ = bpy.context.scene.ray_cast(deps, eye, d.normalized(), distance=d.length + 0.001)
+            root = o.original if hit else None
+            while root and root.parent:
+                root = root.parent
+            if root and root.name != "obj_board":
+                problems.append(f"cam_board: {o.name} hides magnet_{place}")
+                break
 
 for p in problems:
     print("CHECK_ROOM", p)

@@ -14,20 +14,20 @@ You sit in Carlos's chair. The desk shows the work, and the room shows the perso
 
 ## Objects
 
-| Object         | Section     | On click                | Built   |
-| -------------- | ----------- | ----------------------- | ------- |
-| Test kit       | Potaflow    | Comes forward and opens | Yes     |
-| Phone          | Power Walk  | Comes forward and turns | Yes     |
-| Monitor, left  | How I build | Zooms in                | Planned |
-| Monitor, right | CV          | Zooms in                | Planned |
-| Magnet board   | Travel      | Zooms in                | Planned |
-| Badge          | Experience  | Comes forward           | Planned |
-| Photo          | About       | Comes forward           | Planned |
-| Notepad        | This site   | Comes forward           | Planned |
-| Business card  | Contact     | Comes forward           | Planned |
-| Model car      | Cars        | Comes forward           | Planned |
-| Soccer ball    | Soccer      | Comes forward           | Planned |
-| Mug            | Coffee      | Comes forward           | Planned |
+| Object         | Section     | On click                | Built |
+| -------------- | ----------- | ----------------------- | ----- |
+| Test kit       | Potaflow    | Comes forward and opens | Yes   |
+| Phone          | Power Walk  | Comes forward and turns | Yes   |
+| Monitor, left  | How I build | Zooms in                | Yes   |
+| Monitor, right | CV          | Zooms in                | Yes   |
+| Magnet board   | Travel      | Zooms in                | Yes   |
+| Badge          | Experience  | Comes forward           | Yes   |
+| Photo          | About       | Comes forward           | Yes   |
+| Notepad        | This site   | Comes forward           | Yes   |
+| Business card  | Contact     | Comes forward           | Yes   |
+| Model car      | Cars        | Comes forward           | Yes   |
+| Soccer ball    | Soccer      | Comes forward           | Yes   |
+| Mug            | Coffee      | Comes forward           | Yes   |
 
 Objects marked planned open their section's panel today. The light bar is a switch for day and lamp light.
 

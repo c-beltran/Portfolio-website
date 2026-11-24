@@ -11,17 +11,17 @@ render's light, colour and a view-independent sheen) and saved through the scene
 The monitor screen bakes on its own UVs at full size (the close-up reads it). The window gets a
 backdrop plane carrying the sky gradient.
 
-The movers (the kit case and the phone, which come forward) bake on their
-own: each rigid part becomes one mesh under its pivot (kit_base and kit_lid; phone_body), one bake
+The movers (the objects that come forward: bake_logic.MOVERS) bake on their
+own: each rigid part becomes one mesh under its pivot or its clip's owner (PARTS), one bake
 UV is packed across a mover's parts, and each mover is baked twice per mode: at rest (frame 0),
 and in its opened pose (opened.canonical_pose in front of the seat, its clip at the last frame),
 one mover at a time. They export to their own GLB with the hierarchy and the clips.
 
 Never saves the .blend: the scene is changed in memory only. Outputs:
   <out-dir>/<group>-<mode>.png, <out-dir>/<mover>-open-<mode>.png,
-  <glb> (meshes named room, desk, monitor, props, screen, sky; one UV map, the
-  bake's; placeholder materials) and <movers-glb> (obj_kit › kit_base, kit_lid; obj_phone ›
-  phone_spin › phone_body, phone_screen; the clips kit_open and phone_turn; no materials).
+  <glb> (meshes named room, desk, monitor, props, screen, board, sky; one UV map, the
+  bake's; placeholder materials) and <movers-glb> (each pivot over its parts, plus phone_screen;
+  a clip per mover; no materials).
 """
 
 import argparse
@@ -34,21 +34,28 @@ import bpy
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
+import flat_movers as FM  # noqa: E402
 import movers as MV  # noqa: E402
 import opened as OP  # noqa: E402
 import render as R  # noqa: E402  (mode settings: world, lights, screen strength, exposure)
-from bake_logic import GROUPS, MOVERS, backdrop_covers, group_for, lift_for  # noqa: E402
+import room_movers as RV  # noqa: E402
+from bake_logic import GROUPS, MOVERS, STATICS, backdrop_covers, group_for, lift_for  # noqa: E402
 
 ASSETS = Path.home() / "Portfolio-assets"
 # Atlas sizes (px). The screen keeps the editor image's aspect (3440x1440).
 SIZES = {"room": (1024, 1024), "desk": (2048, 2048), "monitor": (2048, 2048), "props": (2048, 2048),
-         "screen": (2048, 858), "sky": (256, 256), "kit": (1024, 1024), "phone": (512, 512)}
+         "screen": (2048, 858), "board": (1024, 1024), "sky": (256, 256), "kit": (1024, 1024), "phone": (512, 512),
+         "badge": (256, 256), "photo": (512, 512), "notepad": (512, 512), "card": (256, 256),
+         "car": (512, 512), "ball": (256, 256), "mug": (512, 512)}
 # The movers opened, close to the eye: on demand (public/opened/bake), not the first load.
-OPEN_SIZES = {"kit": (2048, 2048), "phone": (1024, 1024)}
+OPEN_SIZES = {m: (2048, 2048) if m == "kit" else (1024, 1024) for m in MOVERS}
 # Each mover's rigid parts: one mesh each, under the part's parent (an Empty part takes its parent's
 # origin). kit_lid keeps its hinge origin and the clip kit_open.
-PARTS = {"kit": ("kit_base", "kit_lid"), "phone": ("phone_body",)}
-CLIP_END = {"kit": MV.frames(MV.KIT_OPEN_S), "phone": MV.frames(MV.PHONE_TURN_S)}
+PARTS = {"kit": ("kit_base", "kit_lid"), "phone": ("phone_body",), "badge": ("badge_card",), "photo": ("photo_frame",),
+         "notepad": ("notepad_block", "notepad_page"), "card": ("card_body",), "car": ("car_body",),
+         "ball": ("ball_skin",), "mug": ("mug_body",)}
+CLIP_END = {"kit": MV.frames(MV.KIT_OPEN_S), "phone": MV.frames(MV.PHONE_TURN_S),
+            **{clip.split("_")[0]: MV.frames(c[1]) for clip, c in {**FM.CLIPS, **RV.CLIPS}.items()}}
 HEAVY_TRIS = 50000  # decimate an imported model above this (the mouse and phone ship ~100k+; the monitor keeps its 45k)
 HEAVY_TARGET = 8000
 
@@ -84,7 +91,7 @@ def groups():
         k = group_for(o.name, top(o).name, is_screen(o))
         if k is not None:
             g[k].append(o)
-    for k in ("room", "desk", "monitor", "props", "screen"):
+    for k in STATICS:
         if not g[k]:
             raise SystemExit(f"bake: group {k} is empty (object names changed?)")
     return g
@@ -132,6 +139,20 @@ def to_plain_meshes(objs):
     select(out)
     bpy.ops.object.convert(target="MESH")
     return [bpy.data.objects[n] for n in names]
+
+
+def drop_backs(o):
+    """The board's faces against the wall are never seen: without them the magnets get their atlas."""
+    import bmesh
+
+    bm = bmesh.new()
+    bm.from_mesh(o.data)
+    m = o.matrix_world.to_3x3()
+    unseen = [f for f in bm.faces if (m @ f.normal).normalized().y > 0.99]
+    bmesh.ops.delete(bm, geom=unseen, context="FACES")
+    bm.to_mesh(o.data)
+    bm.free()
+    print(f"  board: dropped {len(unseen)} faces against the wall")
 
 
 def fallback_material():
@@ -344,7 +365,8 @@ def sky_backdrop():
 
 
 # The frame each camera renders (export_cameras.py, stills): what world_to_camera_view projects into.
-FRAMES = {"cam_overview": (2560, 1440), "cam_phone": (1080, 1080), "cam_monitor": (2560, 1440)}
+FRAMES = {"cam_overview": (2560, 1440), "cam_phone": (1080, 1080),
+          **{f"cam_{lean}": (3300, 3300) for lean in ("monitor", "cv", "board")}}  # the lean-ins render square
 
 
 def window_corners():
@@ -519,7 +541,8 @@ def main():
     lift([o for objs in g.values() for o in objs])
     for k in g:
         g[k] = join_group(to_plain_meshes(g[k]), k) if g[k] else []
-    for k in ("room", "desk", "monitor", "props"):
+    drop_backs(g["board"][0])
+    for k in ("room", "desk", "monitor", "props", "board"):
         add_bake_uv(g[k])
     add_bake_uv(g["screen"], unwrap=False)
     for parts in movers.values():
@@ -533,7 +556,7 @@ def main():
     for mode in a.modes.split(","):
         R.set_mode(scene, mode)
         sky_material_for(sky, scene.world)
-        for name in ("room", "desk", "monitor", "props", "screen", "sky"):
+        for name in (*STATICS, "sky"):
             w, h = (max(64, int(v * a.scale)) for v in SIZES[name])
             img = bpy.data.images.new(f"{name}-{mode}", w, h, float_buffer=True, alpha=False)
             if name == "sky":

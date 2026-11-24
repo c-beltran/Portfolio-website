@@ -1,5 +1,5 @@
 import { expect, test, type Page } from './fixtures';
-import { desk, gotoDesk, hotspot, panelTitle, path } from './desk';
+import { clickFelt, desk, gotoDesk, hotspot, panelTitle, path } from './desk';
 
 /** WCAG 2.5.5's 44 CSS px, less float noise: a hotspot floored at exactly 44px can measure 43.99998 at a sub-pixel position. */
 const MIN_PX = 44 - 0.01;
@@ -89,20 +89,23 @@ test.describe('phone bottom sheet', () => {
     await expect(back).toBeInViewport();
   });
 
-  // An object that stays on the desk (with the kit or the phone out, the dimmed desk is one
-  // close target instead; forward.spec).
-  test('an object above the open sheet switches sections', async ({ page }) => {
+  // While an object is out, the dimmed desk is one close target: a second click opens another.
+  test('an object above the open sheet closes the open one first', async ({ page }) => {
     await gotoDesk(page, '/');
     await hotspot(page, 'photo').click();
     await expect.poll(() => panelPlace(page)).toBe('sheet');
+    await expect(page.locator('main.desk')).toHaveAttribute('data-open', 'photo');
     // The monitor stands above the sheet's top edge in the straight-ahead view.
     const [m, sheet] = [
       await hotspot(page, 'monitor').boundingBox(),
       await panel(page).boundingBox(),
     ];
     expect(m!.y + m!.height / 2).toBeLessThan(sheet!.y);
+    // the first click, on the dimmed desk beside the photo (a click on the photo keeps it out)
+    await clickFelt(page);
+    await expect.poll(() => path(page)).toBe('/');
     await hotspot(page, 'monitor').click();
-    expect(path(page)).toBe('/how-i-build');
+    await expect.poll(() => path(page)).toBe('/how-i-build');
   });
 
   test('a direct load paints the sheet already open, with no slide-in', async ({ page }) => {
@@ -124,30 +127,30 @@ test.describe('phone bottom sheet', () => {
       await page.evaluate(() => (window as unknown as { transitions: string[] }).transitions),
     ).toEqual([]);
     expect(await panel(page).evaluate((el) => getComputedStyle(el).transform)).toBe('none');
-    // The open object glows (one that stays on the desk: the kit and the phone come forward
-    // instead). The glow replaced the ring; its masks arrive after the page.
-    await expect
-      .poll(() =>
-        page
-          .locator('.desk-glow[data-item="badge"]')
-          .evaluate((el) => Number(getComputedStyle(el).opacity)),
-      )
-      .toBe(1);
+    // Every section opens with its object above a 58dvh panel.
+    await expect(page.locator('main.desk')).toHaveAttribute('data-open', 'badge');
+    const [H, a, p] = [
+      await page.evaluate(() => innerHeight),
+      (await page.locator('.opened__art').boundingBox())!,
+      (await panel(page).boundingBox())!,
+    ];
+    expect(a.y + a.height).toBeLessThanOrEqual(p.y + 0.5);
+    expect(Math.abs(p.height - 0.58 * H)).toBeLessThanOrEqual(2);
   });
 
-  // A section whose object stays on the desk; a forward object's panel fades in instead.
+  // The object comes out above, and the sheet rises in from below.
   test('the first section opened slides the sheet up', async ({ page }) => {
     await gotoDesk(page, '/');
     await panel(page).evaluate((el) => {
       (window as unknown as { slid: string[] }).slid = [];
-      (el as HTMLElement).addEventListener('transitionrun', (e) =>
-        (window as unknown as { slid: string[] }).slid.push(e.propertyName),
+      (el as HTMLElement).addEventListener('animationstart', (e) =>
+        (window as unknown as { slid: string[] }).slid.push(e.animationName),
       );
     });
     await hotspot(page, 'badge').click();
     await expect
       .poll(() => page.evaluate(() => (window as unknown as { slid: string[] }).slid))
-      .toContain('transform');
+      .toContain('panel-in-from-below');
   });
 
   test('the empty sheet stays in the accessibility tree as a live region', async ({ page }) => {

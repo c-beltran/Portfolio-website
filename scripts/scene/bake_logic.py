@@ -1,13 +1,15 @@
 """Pure helpers for bake.py (no bpy), so they can be unit-tested: scripts/scene/test_bake.py."""
 
-GROUPS = ("room", "desk", "monitor", "props", "screen", "kit", "phone")
 # The objects that come forward: each bakes into its own atlas, at rest
 # and opened, and exports on its own with its hierarchy and clip (bake.py export_movers).
-MOVERS = {"kit": "obj_kit", "phone": "obj_phone"}
+MOVERS = {m: f"obj_{m}" for m in ("kit", "phone", "badge", "photo", "notepad", "card", "car", "ball", "mug")}
+# The statics' atlases (the board has its own, so the magnets read close up), then the movers'.
+STATICS = ("room", "desk", "monitor", "props", "screen", "board")
+GROUPS = STATICS + tuple(MOVERS)
 
-# Objects lifted in the bake only (metres): obj_badge lies in the mat's plane (both 0.750–0.753 m),
-# which Cycles happens to draw but a depth buffer can't separate. Half a millimetre, unseen.
-LIFTS = {"obj_badge": 0.0005}
+# Objects lifted in the bake only (metres), where two faces share a plane that a depth buffer
+# can't separate. None today.
+LIFTS = {}
 
 
 def group_for(name: str, top: str, is_screen: bool) -> str:
@@ -27,6 +29,8 @@ def group_for(name: str, top: str, is_screen: bool) -> str:
         return "screen" if is_screen else "monitor"
     if top == "obj_lightbar":
         return "monitor"
+    if top == "obj_board":
+        return "board"
     return "props"
 
 

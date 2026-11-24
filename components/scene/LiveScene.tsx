@@ -1,23 +1,25 @@
 'use client';
 
 import { useGLTF, useTexture } from '@react-three/drei';
-import { Canvas, useThree } from '@react-three/fiber';
-import { Suspense, useCallback, useEffect, useMemo, useRef } from 'react';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
+import { Suspense, useCallback, useEffect, useMemo, useRef, type RefObject } from 'react';
 import * as THREE from 'three';
 import { bakedMaterial } from './materials';
 import { Movers } from './Movers';
-import type { OpenedId } from '@/content/opened';
+import type { MomentRig } from './MomentRig';
+import { leanCamera, leanView, stateOf, type CamState, type ScreenBox } from './lean';
+import { MOVER_IDS, type LeanId, type MoverId, type OpenedId } from '@/content/opened';
 import { CAMERAS, type Vec3 } from '@/content/scene/cameras';
 import { master, viewOffset } from '@/content/scene/framing';
 import { panOf } from '@/components/desk/pan';
 import { glanceShift, glanceTarget, useGlance, type Glance } from './glance';
 import { hfov } from './transition';
 
-const GROUPS = ['room', 'desk', 'monitor', 'props', 'screen', 'sky'] as const;
+const GROUPS = ['room', 'desk', 'monitor', 'props', 'screen', 'board', 'sky'] as const;
 type Group = (typeof GROUPS)[number];
 /** The objects that come forward, in their own GLB (Movers.tsx). */
-const MOVERS = ['kit', 'phone'] as const;
-type Mover = (typeof MOVERS)[number];
+const MOVERS = MOVER_IDS;
+type Mover = MoverId;
 // The phone's dark glass, under the clip quad: the residual corrects it toward the still.
 const PHONE_GLASS = '#0b0c0e';
 const tex = (g: Group | Mover, mode: 'day' | 'lamp') => `/scene/bake/${g}-${mode}.webp`;
@@ -83,11 +85,13 @@ function Scene({
   onReady,
   capture,
   open,
+  rigRef,
 }: {
   lamp: boolean;
   onReady: () => void;
   capture: boolean;
   open: OpenedId | null;
+  rigRef: RefObject<MomentRig | null>;
 }) {
   const { scene } = useGLTF('/scene/scene.glb');
   const glossy = Object.entries(GLOSSY) as [Group, Glossy][];
@@ -126,11 +130,12 @@ function Scene({
         bakedMaterial(textures[m0 + 2 * i]!, textures[m0 + 2 * i + 1]!, {
           residual,
           opened: true,
+          dim: true,
         }),
       ]),
     ) as Record<Mover, THREE.ShaderMaterial>;
     const glassTex = flat(PHONE_GLASS);
-    const phoneScreen = bakedMaterial(glassTex, glassTex, { residual, opened: true });
+    const phoneScreen = bakedMaterial(glassTex, glassTex, { residual, opened: true, dim: true });
     return { ...baked, ...moving, phoneScreen };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [textures]);
@@ -139,7 +144,7 @@ function Scene({
     scene.traverse((o) => {
       if (!(o instanceof THREE.Mesh)) return;
       const g = (o.name in materials ? o.name : o.parent?.name) as keyof typeof materials;
-      // an unknown mesh takes the props bake (the water glass, its last special case, went in 2b)
+      // an unknown mesh takes the props bake (no mesh needs one)
       o.material = materials[g] ?? materials.props;
     });
     invalidate();
@@ -171,9 +176,18 @@ function Scene({
   return (
     <>
       <primitive object={scene} />
-      <Movers open={open} materials={materials} statics={statics} />
+      <Movers open={open} materials={materials} statics={statics} rigRef={rigRef} />
     </>
   );
+}
+
+/** Put a camera state on the live camera (its projection included, as R3F leaves it to us). */
+function setCam(camera: THREE.PerspectiveCamera, s: CamState) {
+  camera.position.fromArray(s.position);
+  camera.quaternion.fromArray(s.quaternion);
+  camera.projectionMatrix.fromArray(s.projection);
+  camera.projectionMatrixInverse.copy(camera.projectionMatrix).invert();
+  camera.updateMatrixWorld();
 }
 
 /** A 1×1 colour standing in for a bake: sRGB bytes, as the bakes are (materials.ts lightmap). */
@@ -191,11 +205,23 @@ function flat(hex: string): THREE.Texture {
  * turns the camera a few degrees, and the DOM overlays (hotspots, the name) move by the matching
  * screen distance through --gx/--gy on .desk-still.
  */
-function Rig({ capture, open }: { capture: boolean; open: OpenedId | null }) {
+function Rig({
+  capture,
+  open,
+  rigRef,
+}: {
+  capture: boolean;
+  open: OpenedId | null;
+  rigRef: RefObject<MomentRig | null>;
+}) {
   const get = useThree((s) => s.get);
   const size = useThree((s) => s.size);
   const glance = useRef<Glance>({ yaw: 0, pitch: 0 });
   const still = useMemo(() => document.querySelector<HTMLElement>('.desk-still'), []);
+  // The seat camera as last aimed, and each lean-in's last art box (a closing one's slot goes).
+  const seatCam = useRef<CamState | null>(null);
+  const boxes = useRef(new Map<LeanId, ScreenBox>());
+  const leaned = useRef(false);
 
   const frame = useCallback(() => {
     const { camera: cam, size, invalidate } = get();
@@ -213,12 +239,43 @@ function Rig({ capture, open }: { capture: boolean; open: OpenedId | null }) {
     const seat = CAMERAS.seat;
     const g = glance.current;
     aimSeat(camera, o, W, H, glanceTarget(seat.eye, seat.target, g.yaw, g.pitch));
+    camera.updateMatrixWorld();
+    seatCam.current = stateOf(camera);
+    leaned.current = false;
     invalidate();
     // The overlays follow the turn: focal length in pixels of the full frame.
     const [dx, dy] = glanceShift(g.yaw, g.pitch, o.fullW / 2 / Math.tan(hfov(seat) / 2));
     still?.style.setProperty('--gx', `${dx.toFixed(2)}px`);
     still?.style.setProperty('--gy', `${dy.toFixed(2)}px`);
   }, [get, still, capture]);
+
+  // Before Movers fits its objects (priority −1, so R3F still renders): lean the camera in from
+  // the seat for each lean-in on its way (MomentRig.lean), or put it back at the seat.
+  useFrame(() => {
+    const rig = rigRef.current;
+    const from = seatCam.current;
+    if (capture || !rig || !from) return;
+    const camera = get().camera as THREE.PerspectiveCamera;
+    const leans = rig.lean();
+    if (!leans.length) {
+      if (leaned.current) setCam(camera, from);
+      leaned.current = false;
+      return;
+    }
+    const c = get().gl.domElement.getBoundingClientRect();
+    const canvas = { left: c.left, top: c.top, width: c.width, height: c.height };
+    const states = leans.flatMap((l) => {
+      const r = document
+        .querySelector<HTMLElement>(`.opened[data-id="${l.id}"] .opened__art`)
+        ?.getBoundingClientRect();
+      if (r && r.height > 0)
+        boxes.current.set(l.id, { left: r.left, top: r.top, width: r.width, height: r.height });
+      const b = boxes.current.get(l.id);
+      return b ? [{ state: leanView(l.id, b, canvas), k: l.k }] : [];
+    });
+    setCam(camera, leanCamera(from, states));
+    leaned.current = true;
+  }, -1);
 
   // On mount and every resize; the portrait pan re-frames on the desk's scroll.
   useEffect(frame, [frame, size.width, size.height]);
@@ -256,6 +313,7 @@ export default function LiveScene(props: {
 }) {
   const open = props.open ?? null;
   const capture = !!props.capture;
+  const rigRef = useRef<MomentRig | null>(null);
   return (
     <Canvas
       // Never a pointer target: the hotspots and the page own every pointer and touch.
@@ -271,9 +329,15 @@ export default function LiveScene(props: {
       camera={{ near: 0.05, far: 20 }}
     >
       <Suspense fallback={null}>
-        <Scene lamp={props.lamp} onReady={props.onReady} capture={capture} open={open} />
+        <Scene
+          lamp={props.lamp}
+          onReady={props.onReady}
+          capture={capture}
+          open={open}
+          rigRef={rigRef}
+        />
       </Suspense>
-      <Rig capture={capture} open={open} />
+      <Rig capture={capture} open={open} rigRef={rigRef} />
     </Canvas>
   );
 }

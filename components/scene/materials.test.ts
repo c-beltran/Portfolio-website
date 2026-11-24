@@ -5,6 +5,13 @@ import { bakedMaterial, setOpenedBake } from './materials';
 const tex = () => new THREE.Texture();
 
 describe('bakedMaterial', () => {
+  it("gives a mover's material the dim uniform when asked", () => {
+    const t = new THREE.Texture();
+    const m = bakedMaterial(t, t, { opened: true, dim: true });
+    expect(m.uniforms.dim?.value).toBe(0);
+    expect(m.fragmentShader).toContain('uniform float dim;');
+  });
+
   it('is the plain baked shader by default', () => {
     const m = bakedMaterial(tex(), tex());
     expect(Object.keys(m.uniforms).sort()).toEqual(['day', 'fade', 'lamp']);
@@ -88,8 +95,23 @@ describe('coming forward: the dim and the opened bake', () => {
     expect(m.fragmentShader).toContain('base = mix(base, opened, openMix);');
     // in sRGB, as CSS brightness() scales the Tier 1 still: the two dims look the same
     expect(m.fragmentShader).toContain(
-      'base.rgb = sRGBTransferEOTF(vec4(sRGBTransferOETF(base).rgb * (1.0 - 0.55 * dim), 1.0)).rgb;',
+      'base.rgb = sRGBTransferEOTF(vec4(sRGBTransferOETF(base).rgb * (1.0 - 0.55 * dimHere), 1.0)).rgb;',
     );
+  });
+
+  it('keeps a hole in the dim for a lean-in only with dim, and none for a zero rect', () => {
+    const plain = bakedMaterial(t(), t());
+    expect(plain.uniforms).not.toHaveProperty('dimClear');
+    expect(plain.uniforms).not.toHaveProperty('dimFeather');
+    const m = bakedMaterial(t(), t(), { dim: true });
+    expect((m.uniforms.dimClear!.value as THREE.Vector4).toArray()).toEqual([0, 0, 0, 0]);
+    expect(m.uniforms.dimFeather!.value).toBe(0);
+    expect(m.fragmentShader).toContain('uniform vec4 dimClear;');
+    // the hole opens and closes with its lean-in's travel, never all at once
+    expect(m.uniforms.dimClearK!.value).toBe(0);
+    expect(m.fragmentShader).toContain('dimHere *= 1.0 - dimClearK * lo.x * lo.y * hi.x * hi.y;');
+    // a zero-area rect skips the hole: the whole frame dims
+    expect(m.fragmentShader).toContain('if (dimClear.z > dimClear.x && dimClear.w > dimClear.y)');
   });
 
   it('decodes a video from sRGB in the shader (three uploads video textures linear)', () => {

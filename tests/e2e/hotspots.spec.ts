@@ -65,10 +65,10 @@ test.describe('still desk hotspots', () => {
     }
   });
 
-  // On a section whose object stays put: while the kit or the phone is out, the dimmed desk (the
-  // light bar included) is one close target and the lamp is in the Sections list (forward.spec).
+  // On the desk: while an object is out, the dimmed desk (the light bar included) is one close
+  // target and the lamp is in the Sections list.
   test('the desk lamp switches lamp mode without navigating', async ({ page }) => {
-    await gotoDesk(page, '/experience');
+    await gotoDesk(page, '/');
     const start = await historyLength(page);
     const before = await page.evaluate(() => document.documentElement.dataset.theme);
     await hotspot(page, 'lightbar').click();
@@ -77,8 +77,7 @@ test.describe('still desk hotspots', () => {
     const pressed = String(after === 'lamp');
     await expect(hotspot(page, 'lightbar')).toHaveAttribute('aria-pressed', pressed);
     await expect(drawerLamp(page)).toHaveAttribute('aria-pressed', pressed);
-    expect(path(page)).toBe('/experience');
-    await expect(panelTitle(page)).toContainText('Same desk since July 2019');
+    expect(path(page)).toBe('/');
     expect(await historyLength(page)).toBe(start);
     await drawerLamp(page).focus();
     await page.keyboard.press('Enter');
@@ -88,17 +87,27 @@ test.describe('still desk hotspots', () => {
     );
   });
 
-  test('clicking the desk lamp never focuses the hidden desk; Esc still refocuses the drawer', async ({
-    page,
-  }) => {
-    await gotoDesk(page, '/experience');
+  test('clicking the desk lamp never focuses the hidden desk', async ({ page }) => {
+    await gotoDesk(page, '/');
     await hotspot(page, 'lightbar').click();
     expect(await page.evaluate(() => !!document.activeElement?.closest('.desk-still__layer'))).toBe(
       false,
     );
-    await page.keyboard.press('Escape');
-    await expect.poll(() => path(page)).toBe('/');
-    await expect(drawerButton(page, 'Experience')).toBeFocused();
+  });
+
+  test("while the badge is out, the Sections list's Lamp toggles the lamp and the badge stays out", async ({
+    page,
+  }) => {
+    await gotoDesk(page, '/experience');
+    const before = await page.evaluate(() => document.documentElement.dataset.theme);
+    await drawerLamp(page).focus();
+    await page.keyboard.press('Enter');
+    await expect
+      .poll(() => page.evaluate(() => document.documentElement.dataset.theme))
+      .not.toBe(before);
+    expect(path(page)).toBe('/experience');
+    await expect(page.locator('main.desk')).toHaveAttribute('data-open', 'badge');
+    await expect(panelTitle(page)).toContainText('Same desk since July 2019');
   });
 
   test('a same-tick burst of clicks keeps only the latest navigation pending', async ({ page }) => {

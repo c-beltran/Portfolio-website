@@ -25,16 +25,13 @@ import sys
 
 import bpy
 from bpy_extras.object_utils import world_to_camera_view
-from mathutils import Vector
-from mathutils.geometry import barycentric_transform, intersect_point_tri_2d
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import framing  # noqa: E402
+from screen_geo import screen_meshes, screen_point, screen_rect  # noqa: E402
 
 OBJECTS = ["obj_monitor", "obj_kit", "obj_phone", "obj_badge", "obj_photo", "obj_notepad", "obj_card", "obj_lightbar",
            "obj_car", "obj_ball", "obj_board", "obj_mug"]  # the car, the ball, the board
-# Clickable objects the build names as decoration: the mug became Coffee after it was baked.
-BUILT_AS = {"obj_mug": "deco_mug"}
 # Decoration projected for the tests only (written under "decor", never a hotspot): the plant must
 # show in every window; the board must hang above the laptop.
 DECOR = ["deco_plant", "deco_laptop"]
@@ -63,12 +60,9 @@ def args():
 
 
 def meshes(o):
-    out = [m for m in [o, *o.children_recursive] if m.type == "MESH"]
     if o.name == "obj_monitor":
-        out = [m for m in out if any(mat and mat.get("screen") for mat in m.data.materials)]
-        if not out:
-            raise SystemExit("obj_monitor: no mesh with a screen material")
-    return out
+        return screen_meshes(o)
+    return [m for m in [o, *o.children_recursive] if m.type == "MESH"]
 
 
 def project(scene, cam, o, depsgraph):
@@ -95,51 +89,12 @@ def to_frame(scene, cam, p):
     return q.x, 1 - q.y
 
 
-def screen_triangles(o, depsgraph):
-    """The monitor screen's triangles as (uv triangle, world triangle), plus its UV extent."""
-    tris, us, vs = [], [], []
-    for m in meshes(o):
-        ev = m.evaluated_get(depsgraph)
-        me = ev.to_mesh()
-        mw = ev.matrix_world
-        me.calc_loop_triangles()
-        uvl = me.uv_layers.active.data
-        for t in me.loop_triangles:
-            mat = me.materials[t.material_index]
-            if not (mat and mat.get("screen")):
-                continue
-            uv = tuple(uvl[li].uv.copy() for li in t.loops)
-            tris.append((uv, tuple(mw @ me.vertices[vi].co for vi in t.vertices)))
-            us += [c.x for c in uv]
-            vs += [c.y for c in uv]
-        ev.to_mesh_clear()
-    return tris, (min(us), max(us)), (min(vs), max(vs))
-
-
-def screen_point(tris, u, v):
-    """The world point on the screen showing image coordinate (u, v) (v up)."""
-    p = Vector((u, v))
-    for (a, b, c), (A, B, C) in tris:
-        if intersect_point_tri_2d(p, a, b, c):
-            return barycentric_transform(p.to_3d(), a.to_3d(), b.to_3d(), c.to_3d(), A, B, C)
-    raise SystemExit(f"monitor screen: no face shows uv ({u:.4f}, {v:.4f})")
-
-
 def monitor_halves(scene, cam, o, depsgraph):
     """The screen split at the image's midline (materials.py: the right half is the CV page):
     boxes for the left half (obj_monitor) and the right (obj_cv), and the right half's corners
     (top-left, top-right, bottom-right, bottom-left), normalised to the frame."""
-    tris, (u0, u1), (v0, v1) = screen_triangles(o, depsgraph)
-    # The UV outline isn't a perfect rectangle: inset until the corners and midline ends are on it.
-    covered = lambda u, v: any(intersect_point_tri_2d(Vector((u, v)), *t[0]) for t in tris)
-    for eps in (1e-4, 5e-4, 1e-3, 2e-3, 5e-3, 1e-2, 2e-2):
-        a, b, lo, hi = u0 + eps, u1 - eps, v0 + eps, v1 - eps
-        if all(covered(u, v) for u in (a, 0.5, b) for v in (lo, hi)):
-            break
-    else:
-        raise SystemExit("monitor screen: its UVs don't cover a rectangle")
+    tris, (u0, u1, v0, v1), eps = screen_rect(o, depsgraph)
     print(f"  monitor screen: UV rectangle inset by {eps}")
-    u0, u1, v0, v1 = a, b, lo, hi
     c = lambda x: round(min(1.0, max(0.0, x)), 5)
 
     def box(ua, ub, n=24):
@@ -219,10 +174,10 @@ def main():
     cam = bpy.data.objects[cam_name]
     depsgraph = bpy.context.evaluated_depsgraph_get()
     aspect = scene.render.resolution_y / scene.render.resolution_x
-    boxes = {name: project(scene, cam, bpy.data.objects[BUILT_AS.get(name, name)], depsgraph) for name in OBJECTS}
+    boxes = {name: project(scene, cam, bpy.data.objects[name], depsgraph) for name in OBJECTS}
     quads = None
     if a.camera == "seat":
-        # The seat's monitor is two hotspots: How I build (left) and the CV page (right, design 4.2).
+        # The seat's monitor is two hotspots: How I build (left) and the CV page (right).
         boxes["obj_monitor"], boxes["obj_cv"], right = monitor_halves(scene, cam, bpy.data.objects["obj_monitor"], depsgraph)
         quads = {"screen_right": right}
     width = min_free_width(boxes, aspect)

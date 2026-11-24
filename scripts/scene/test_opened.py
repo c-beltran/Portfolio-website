@@ -45,7 +45,7 @@ class Canonical(unittest.TestCase):
             # tipped up: the face leans toward the camera's up, never down
             self.assertGreaterEqual(dot(face, UP), -1e-9, name)
             # and its up axis points the camera's way up
-            self.assertGreater(dot(O.rotate(q, O.AXES[p["up"]]), UP), 0.5, name)
+            self.assertAlmostEqual(dot(O.rotate(q, O.AXES[p["up"]]), UP), math.cos(math.radians(p["tilt_deg"])), places=6, msg=name)
 
     def test_distance(self):
         for name, p in O.PRESENT.items():
@@ -59,6 +59,13 @@ class Canonical(unittest.TestCase):
             {
                 "kit": {"face": "+Z", "up": "+Y", "tilt_deg": 40, "d0": 0.42},
                 "phone": {"face": "screen", "up": "long", "tilt_deg": 0, "d0": 0.30},
+                "badge": {"face": "+Z", "up": "+Y", "tilt_deg": 0, "d0": 0.22},
+                "photo": {"face": "+Z", "up": "+Y", "tilt_deg": 0, "d0": 0.36},
+                "notepad": {"face": "+Z", "up": "+Y", "tilt_deg": 40, "d0": 0.42},
+                "card": {"face": "+Z", "up": "+Y", "tilt_deg": 0, "d0": 0.22},
+                "car": {"face": "+Z", "up": "+Y", "tilt_deg": 70, "d0": 0.38},  # 20° above side-on
+                "ball": {"face": "+Z", "up": "+Y", "tilt_deg": 0, "d0": 0.40},
+                "mug": {"face": "+Z", "up": "+Y", "tilt_deg": 35, "d0": 0.34},  # you look into the coffee
             },
         )
 

@@ -1,3 +1,4 @@
+import { MOVER_IDS, type MoverId, type OpenedId } from '@/content/opened';
 import { MOVE_MS } from './transition';
 
 /**
@@ -19,17 +20,37 @@ const clamp01 = (x: number) => (x < EPS ? 0 : x > 1 - EPS ? 1 : x);
 
 /**
  * One step of the moment. Opening: the object travels for MOVE_MS (0.9 s), then its clip plays over
- * clipMs. Closing: travel and clip fold back together over MOVE_MS. Either way it moves on from
- * wherever it is, so a reversal mid-move never jumps.
+ * clipMs (none when clipMs ≤ 0: the clip is 1 from the step the travel arrives). Closing: travel
+ * and clip fold back together over MOVE_MS. Either way it moves on from wherever it is, so a
+ * reversal mid-move never jumps.
  */
 export function stepMoment(m: Moment, open: boolean, dtMs: number, clipMs: number): Moment {
   const dt = Math.min(Math.max(dtMs, 0), MAX_STEP_MS);
   if (open) {
     const travel = clamp01(m.travel + dt / MOVE_MS);
+    if (clipMs <= 0) return { travel, clip: travel === 1 ? 1 : m.clip };
     // The clip waits for the travel; any time left in this step after arriving goes to the clip.
     const over = m.travel + dt / MOVE_MS - 1;
     const spare = m.travel >= 1 ? dt : over > EPS ? over * MOVE_MS : 0;
     return { travel, clip: clamp01(m.clip + spare / clipMs) };
   }
   return { travel: clamp01(m.travel - dt / MOVE_MS), clip: clamp01(m.clip - dt / MOVE_MS) };
+}
+
+/**
+ * How dim each part of the live scene is, from every object's eased travel: the room by the
+ * furthest out, and each mover by the furthest out among the others, so the one that's out
+ * isn't dimmed (a view leaning in dims them all).
+ */
+export function dimsFor(travels: Partial<Record<OpenedId, number>>): {
+  statics: number;
+  movers: Record<MoverId, number>;
+} {
+  const entries = Object.entries(travels) as [OpenedId, number][];
+  const most = (skip?: OpenedId) =>
+    entries.reduce((m, [id, k]) => (id === skip ? m : Math.max(m, k)), 0);
+  return {
+    statics: most(),
+    movers: Object.fromEntries(MOVER_IDS.map((id) => [id, most(id)])) as Record<MoverId, number>,
+  };
 }

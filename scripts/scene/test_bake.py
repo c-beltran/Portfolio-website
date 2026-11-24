@@ -40,6 +40,19 @@ class GroupFor(unittest.TestCase):
         self.assertEqual(group_for("kit_lid", "obj_kit", False), "kit")
         self.assertEqual(group_for("Object_20", "obj_phone", False), "phone")
 
+    def test_each_new_mover_has_its_group(self):
+        for mover in ("badge", "photo", "notepad", "card", "car", "ball", "mug"):
+            self.assertIn(mover, GROUPS)
+            self.assertEqual(group_for(f"{mover}_part", f"obj_{mover}", False), mover)
+
+    def test_the_board_has_its_own_group(self):
+        self.assertIn("board", GROUPS)
+        self.assertEqual(group_for("magnet_egypt_face", "obj_board", False), "board")
+
+    def test_what_stays_on_the_desk_stays_with_the_props(self):
+        for name in ("deco_lanyard", "deco_lanyard_ring", "deco_coaster_mug"):
+            self.assertEqual(group_for(name, name, False), "props")
+
     def test_the_clip_quad_is_never_baked(self):
         self.assertIsNone(group_for("phone_screen", "obj_phone", False))
 
@@ -60,8 +73,8 @@ class BackdropCovers(unittest.TestCase):
 
 
 class LiftFor(unittest.TestCase):
-    def test_lifts_the_badge_off_the_mat(self):
-        self.assertAlmostEqual(lift_for("obj_badge"), 0.0005)
+    def test_the_badge_rests_on_the_mat_unlifted(self):
+        self.assertEqual(lift_for("obj_badge"), 0.0)
 
     def test_leaves_everything_else(self):
         self.assertEqual(lift_for("obj_card"), 0.0)

@@ -3,9 +3,10 @@ import { join } from 'node:path';
 import sharp from 'sharp';
 import { describe, expect, it } from 'vitest';
 import { meshKey } from '../../components/scene/moverParts';
+import poses from './opened-poses.json';
 
 /**
- * The movers: the kit case and the phone export on their own, with
+ * The movers: every object that comes forward exports on its own, with
  * their hierarchy and clips, so the live scene can bring them forward. Read from the GLB's JSON
  * chunk, without three.
  */
@@ -63,11 +64,33 @@ describe('movers.glb', () => {
     expect(parentOf(g, 'phone_spin')).toBe('obj_phone');
     expect(parentOf(g, 'phone_body')).toBe('phone_spin');
     expect(parentOf(g, 'phone_screen')).toBe('phone_spin');
+    for (const [pivot, ...parts] of [
+      ['obj_badge', 'badge_flip', 'badge_card'],
+      ['obj_photo', 'photo_tilt', 'photo_frame'],
+      ['obj_card', 'card_flip', 'card_body'],
+      ['obj_car', 'car_turn', 'car_body'],
+      ['obj_ball', 'ball_roll', 'ball_skin'],
+      ['obj_mug', 'mug_tip', 'mug_body'],
+    ] as const) {
+      expect(parentOf(g, pivot)).toBeNull();
+      expect(parentOf(g, parts[0])).toBe(pivot);
+      expect(parentOf(g, parts[1])).toBe(parts[0]);
+    }
+    expect(parentOf(g, 'obj_notepad')).toBeNull();
+    expect(parentOf(g, 'notepad_block')).toBe('obj_notepad');
+    expect(parentOf(g, 'notepad_page')).toBe('obj_notepad');
   });
 
   for (const [clip, owner, seconds] of [
     ['kit_open', 'kit_lid', 0.8],
     ['phone_turn', 'phone_spin', 0.5],
+    ['badge_flip', 'badge_flip', 0.6],
+    ['photo_tilt', 'photo_tilt', 0.4],
+    ['notepad_lift', 'notepad_page', 0.7],
+    ['card_flip', 'card_flip', 0.6],
+    ['car_turn', 'car_turn', 0.8],
+    ['ball_roll', 'ball_roll', 0.8],
+    ['mug_tip', 'mug_tip', 0.5],
   ] as const) {
     it(`carries ${clip} on ${owner}, ${seconds} s long`, () => {
       const a = g.animations?.find((x) => x.name === clip);
@@ -84,13 +107,43 @@ describe('movers.glb', () => {
 describe('scene.glb', () => {
   it('no longer holds the movers', () => {
     const names = gltf('scene/scene.glb').nodes.map((n) => n.name ?? '');
-    expect(names.filter((n) => /^(kit|phone|obj_kit|obj_phone)/.test(n))).toEqual([]);
+    expect(
+      names.filter((n) => /^(kit|phone|badge|photo|notepad|card|car|ball|mug|obj_)/.test(n)),
+    ).toEqual([]);
   });
   // the water glass is gone, so its glass and water meshes go too
   it('holds exactly the baked groups and the sky, with no glass or water', () => {
     const g = gltf('scene/scene.glb');
     const meshNodes = g.nodes.filter((n) => n.mesh !== undefined).map((n) => n.name ?? '');
-    expect(meshNodes.sort()).toEqual(['desk', 'monitor', 'props', 'room', 'screen', 'sky']);
+    expect(meshNodes.sort()).toEqual([
+      'board',
+      'desk',
+      'monitor',
+      'props',
+      'room',
+      'screen',
+      'sky',
+    ]);
+  });
+});
+
+describe('opened-poses.json', () => {
+  const all = poses as unknown as Record<
+    string,
+    { clip: string; clipMs: number; face?: { part: string; corners: number[][] } }
+  >;
+  it.each(['kit', 'phone', 'badge', 'photo', 'notepad', 'card', 'car', 'ball', 'mug'])(
+    'has the %s, with a clip movers.glb carries',
+    (id) => {
+      const clips = gltf('scene/movers.glb').animations?.map((a) => a.name);
+      expect(all[id]?.clipMs).toBeGreaterThan(0);
+      expect(clips).toContain(all[id]!.clip);
+    },
+  );
+  it.each(['badge', 'card'])("has the four corners of the %s's back", (id) => {
+    expect(all[id]?.face?.corners).toHaveLength(4);
+    // in the frame of its flip, which the optimizer's quantizing can't rescale
+    expect(all[id]?.face?.part).toBe(`${id}_flip`);
   });
 });
 
@@ -104,6 +157,23 @@ describe('the movers’ bakes', () => {
     ['opened/bake/kit-open-lamp.webp', 2048],
     ['opened/bake/phone-open-day.webp', 1024],
     ['opened/bake/phone-open-lamp.webp', 1024],
+    ...(['day', 'lamp'] as const).flatMap((mode) => [
+      [`scene/bake/board-${mode}.webp`, 1024] as const,
+      ...(
+        [
+          ['badge', 256],
+          ['photo', 512],
+          ['notepad', 512],
+          ['card', 256],
+          ['car', 512],
+          ['ball', 256],
+          ['mug', 512],
+        ] as const
+      ).flatMap(([id, rest]) => [
+        [`scene/bake/${id}-${mode}.webp`, rest] as const,
+        [`opened/bake/${id}-open-${mode}.webp`, 1024] as const,
+      ]),
+    ]),
   ] as const) {
     it(`${file} is ${size}²`, async () => {
       const p = join(PUBLIC, file);
